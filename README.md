@@ -4,7 +4,7 @@
 
 ---
 
-### Instrukcja i użyteczne komendy:
+### **Instrukcja i użyteczne komendy.**
 
 ---
 
