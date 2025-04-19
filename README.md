@@ -27,14 +27,16 @@ cd Projekt-TAB-2025
 
 ## Praca nad projektem:
 
-1. Dodanie nowej gałęzi w lokalnym repozytorium:
+1. Zarządzanie gałęziami:
+
+- Dodanie nowej gałęzi w lokalnym repozytorium:
 
 
 ```
 git checkout -b nazwa-galezi
 ```
 
-2. Pobranie istniejącej gałęzi z GitHub:
+- Pobranie istniejącej gałęzi z GitHub:
 
 ```
 git fetch origin nazwa-galezi
@@ -46,31 +48,37 @@ git fetch origin nazwa-galezi
 git checkout nazwa-galezi
 ```
 
-3. Wyświetlenie gałęzi w lokalnym repozytorium:
+- Zaktualizowanie lokalnej gałęzi z GitHub:
+
+```
+git pull origin nazwa-galezi
+```
+
+- Wyświetlenie gałęzi w lokalnym repozytorium:
 
 ```
 git branch
 ```
 
-4. Przejście na inną, istniejącą gałąź:
+- Przejście na inną, istniejącą gałąź:
 
 ```
 git switch nazwa-galezi
 ```
 
-5. Usunięcie gałęzi w lokalnym repozytorium:
+- Usunięcie gałęzi w lokalnym repozytorium:
 
 ```
 git branch -d nazwa-galezi
 ```
 
-6. Sprawdzenie stanu plików w lokalnym repozytorium:
+2. Sprawdzenie stanu plików w lokalnym repozytorium:
 
 ```
 git status
 ```
 
-7. Dodanie zmienionych plików:
+3. Dodanie zmienionych plików:
 
 
 ```
@@ -83,13 +91,13 @@ git add nazwa-pliku
 git add .
 ```
 
-8. Zapisanie zmian lokalnie:
+4. Zapisanie zmian lokalnie:
 
 ```
 git commit -m "Opis zmian."
 ```
 
-9. Przeglądanie commitów w lokalnym repozytorium:
+5. Przeglądanie commitów w lokalnym repozytorium:
 
 ```
 git log
@@ -101,10 +109,11 @@ git log
 git log -p
 ```
 
-10. Wysłanie zmian na GitHub:
+6. Wysłanie zmian na GitHub:
 
 ```
 git push origin nazwa-galezi
 ```
+
 ---
 
