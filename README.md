@@ -1,4 +1,4 @@
-### TAB-sem6-2025-s21
+### Projekt-TAB-2025
 
 ## Projekt z przedmiotu TAB.
 
@@ -14,13 +14,13 @@
 2. Wprowadź komendę (gitbash, terminal, etc.): 
 
 ```
-git clone https://github.com/jakub1t/TAB-sem6-2025-s21.git
+git clone https://github.com/jakub1t/Projekt-TAB-2025.git
 ```
 
 3. Żeby pracować nad projektem wejdź do folderu projektu, na przykład komendą: 
 
 ```
-cd TAB-sem6-2025-s21
+cd Projekt-TAB-2025
 ```
 
  w celu sprawdzenia można wpisać:
