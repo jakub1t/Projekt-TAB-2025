@@ -23,11 +23,6 @@ git clone https://github.com/jakub1t/Projekt-TAB-2025.git
 cd Projekt-TAB-2025
 ```
 
- w celu sprawdzenia można wpisać:
-
-```
-git status
-```
 ---
 
 ## Praca nad projektem:
