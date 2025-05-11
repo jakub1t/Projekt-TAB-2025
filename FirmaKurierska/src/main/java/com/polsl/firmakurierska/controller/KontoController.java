@@ -5,6 +5,8 @@ import com.polsl.firmakurierska.repository.KontoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -24,6 +26,15 @@ public class KontoController {
     @GetMapping("/{login}")
     public Optional<Konto> getKontoByLogin(@PathVariable String login) {
         return kontoRepository.findByLogin(login);
+    }
+
+
+    @GetMapping("/all")
+    public List<Konto> getAllKonto() {
+        List<Konto> accounts = new ArrayList<>();
+        kontoRepository.findAll().forEach(accounts::add);;
+
+        return accounts;
     }
 
     
