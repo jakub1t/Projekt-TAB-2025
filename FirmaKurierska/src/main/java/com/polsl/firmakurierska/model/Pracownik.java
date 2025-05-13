@@ -21,11 +21,10 @@ public class Pracownik {
 	private String nazwisko; 
 	@Column(unique = true) 
 	private String pesel; 
-	//////////////////  
-	@ManyToOne(cascade = CascadeType.ALL)
 	
-	   @JoinColumn(name = "stanowisko_id")  
-	   private Stanowisko stanowisko;
+	@ManyToOne(cascade = CascadeType.ALL)
+	@JoinColumn(name = "stanowisko_id")  
+	private Stanowisko stanowisko;
 	
 	@OneToOne
     @JoinColumn(name = "konto_id", unique = true)

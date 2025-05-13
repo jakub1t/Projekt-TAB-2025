@@ -38,5 +38,5 @@ public interface PracownikRepository extends CrudRepository<Pracownik, Integer> 
 
 	void deleteByPesel(String pesel);
 	
-//	 List<Pracownik> findByStanowiskoId(Integer stanowiskoId); 
+
 }

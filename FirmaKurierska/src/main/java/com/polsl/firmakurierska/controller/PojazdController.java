@@ -1,5 +1,7 @@
 package com.polsl.firmakurierska.controller;
 
+import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Pojazd;
 import com.polsl.firmakurierska.repository.PojazdRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @RestController
 @RequestMapping("/pojazd")
@@ -15,24 +19,33 @@ public class PojazdController {
     @Autowired
     PojazdRepository pojazdRepository;
 
-    @GetMapping("/all")
+    @GetMapping
     public Iterable<Pojazd> getAll() {
         return pojazdRepository.findAll();
     }
 
     @PostMapping
     public Pojazd add(@RequestBody Pojazd pojazd) {
+    	if(pojazd == null) {
+    		throw new BadRequestException("Pojazd nie może być pusty");
+    	}
         return pojazdRepository.save(pojazd);
     }
 
     @GetMapping("/{id}")
-    public Optional<Pojazd> getById(@PathVariable Integer id) {
-        return pojazdRepository.findById(id);
+    public Pojazd getById(@PathVariable Integer id) {
+    	return pojazdRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pojazdu o ID " + id + " nie istnieje"));
     }
+
 
     @PutMapping("/{id}")
     public Pojazd update(@PathVariable Integer id, @RequestBody Pojazd updated) {
-        Pojazd pojazd = pojazdRepository.findById(id).orElseThrow();
+    	if(updated == null) {
+    		throw new BadRequestException("Dane pojazdu nie mogą być puste");
+    	}
+    	Pojazd pojazd = pojazdRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Nie znaleziono pojazdu o ID " + id));
         pojazd.setTypPojazdu(updated.getTypPojazdu());
         pojazd.setPojemnosc(updated.getPojemnosc());
         pojazd.setMarka(updated.getMarka());
@@ -43,61 +56,93 @@ public class PojazdController {
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Integer id) {
+    	if(!pojazdRepository.existsById(id)) {
+    		throw new ResourceNotFoundException("Nie znaleziono pojazdu o ID " + id);
+    	}
         pojazdRepository.deleteById(id);
     }
 
-    @GetMapping("/typ/{typ}")
-    public List<Pojazd> getByTyp(@PathVariable String typ) {
-        return pojazdRepository.findByTypPojazdu(typ);
+    @GetMapping("/szukaj")
+    public List<Pojazd> searchPojazdy(
+            @RequestParam(required = false) String typ,
+            @RequestParam(required = false) String marka,
+            @RequestParam(required = false) String model,
+            @RequestParam(required = false) String nrRejestr
+    ) {
+        if (typ != null) {
+            List<Pojazd> list = pojazdRepository.findByTypPojazdu(typ);
+            if (list.isEmpty()) {
+                throw new ResourceNotFoundException("Nie znaleziono pojazdów o typie: " + typ);
+            }
+            return list;
+        }
+        if (marka != null) {
+            List<Pojazd> list = pojazdRepository.findByMarka(marka);
+            if (list.isEmpty()) {
+                throw new ResourceNotFoundException("Nie znaleziono pojazdów marki: " + marka);
+            }
+            return list;
+        }
+        if (model != null) {
+            List<Pojazd> list = pojazdRepository.findByModel(model);
+            if (list.isEmpty()) {
+                throw new ResourceNotFoundException("Nie znaleziono pojazdów o modelu: " + model);
+            }
+            return list;
+        }
+        if (nrRejestr != null) {
+            Optional<Pojazd> pojazd = pojazdRepository.findByNrRejestr(nrRejestr);
+            return pojazd.map(List::of)
+                    .orElseThrow(() -> new ResourceNotFoundException("Nie znaleziono pojazdu o numerze rejestracyjnym: " + nrRejestr));
+        }
+
+        throw new BadRequestException("Przynajmniej jeden parametr (typ, marka, model, nrRejestr) musi być podany.");
     }
 
-    @GetMapping("/marka/{marka}")
-    public List<Pojazd> getByMarka(@PathVariable String marka) {
-        return pojazdRepository.findByMarka(marka);
+
+    @GetMapping("/pojemnosc/filter")
+    public List<Pojazd> getByPojemnosc(
+            @RequestParam(required = false) Double greaterThan,
+            @RequestParam(required = false) Double lessThan,
+            @RequestParam(required = false) Double min,
+            @RequestParam(required = false) Double max
+    ) {
+        if (min != null && max != null && min > max) {
+            throw new IllegalArgumentException("Minimalna pojemność nie może być większa niż maksymalna.");
+        }
+
+        List<Pojazd> pojazdy = StreamSupport.stream(pojazdRepository.findAll().spliterator(), false)
+                                           .collect(Collectors.toList());
+
+        if (greaterThan != null) {
+            pojazdy = pojazdy.stream()
+                    .filter(p -> p.getPojemnosc() > greaterThan)
+                    .collect(Collectors.toList());
+        }
+
+        if (lessThan != null) {
+            pojazdy = pojazdy.stream()
+                    .filter(p -> p.getPojemnosc() < lessThan)
+                    .collect(Collectors.toList());
+        }
+
+        if (min != null && max != null) {
+            pojazdy = pojazdy.stream()
+                    .filter(p -> p.getPojemnosc() >= min && p.getPojemnosc() <= max)
+                    .collect(Collectors.toList());
+        }
+
+        if (pojazdy.isEmpty()) {
+            throw new ResourceNotFoundException("Nie znaleziono pojazdów spełniających podane kryteria pojemności.");
+        }
+
+        return pojazdy;
     }
 
-    @GetMapping("/model/{model}")
-    public List<Pojazd> getByModel(@PathVariable String model) {
-        return pojazdRepository.findByModel(model);
-    }
-
-    @GetMapping("/rejestr/{nr}")
-    public Optional<Pojazd> getByNrRejestr(@PathVariable String nr) {
-        return pojazdRepository.findByNrRejestr(nr);
-    }
-
-    @GetMapping("/pojemnosc/greater/{value}")
-    public List<Pojazd> getByPojemnoscGreater(@PathVariable double value) {
-        return pojazdRepository.findByPojemnoscGreaterThan(value);
-    }
-
-    @GetMapping("/pojemnosc/less/{value}")
-    public List<Pojazd> getByPojemnoscLess(@PathVariable double value) {
-        return pojazdRepository.findByPojemnoscLessThan(value);
-    }
-
-    @GetMapping("/pojemnosc/between/{min}/{max}")
-    public List<Pojazd> getByPojemnoscBetween(@PathVariable double min, @PathVariable double max) {
-        return pojazdRepository.findByPojemnoscBetween(min, max);
-    }
-
-    @GetMapping("/exists/{nr}")
-    public boolean existsByNr(@PathVariable String nr) {
-        return pojazdRepository.existsByNrRejestr(nr);
-    }
-
-    @GetMapping("/count/marka/{marka}")
-    public long countByMarka(@PathVariable String marka) {
-        return pojazdRepository.countByMarka(marka);
-    }
-
-    @GetMapping("/count/typ/{typ}")
-    public long countByTyp(@PathVariable String typ) {
-        return pojazdRepository.countByTypPojazdu(typ);
-    }
 
     @DeleteMapping("/rejestr/{nr}")
     public void deleteByNrRejestr(@PathVariable String nr) {
         pojazdRepository.deleteByNrRejestr(nr);
     }
+
 }

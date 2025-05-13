@@ -10,7 +10,7 @@ import org.springframework.context.annotation.ComponentScan;
 @SpringBootApplication(scanBasePackages = "com.polsl.firmakurierska")
 @EnableJpaRepositories("com.polsl.firmakurierska.repository")
 @EntityScan("com.polsl.firmakurierska.model")
-@ComponentScan({"com.polsl.firmakurierska.repository","com.polsl.firmakurierska.controller"})
+@ComponentScan({"com.polsl.firmakurierska.repository","com.polsl.firmakurierska.controller","com.polsl.firmakurierska.exception"})
 public class FirmaKurierskaApplication {
 
 	public static void main(String[] args) {

@@ -20,4 +20,6 @@ public class Konto {
 	@Column(unique = true)
 	private String haslo;
 	
+	
+	
 }

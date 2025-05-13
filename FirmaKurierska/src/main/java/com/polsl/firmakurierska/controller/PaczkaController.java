@@ -1,5 +1,8 @@
 package com.polsl.firmakurierska.controller;
 
+import com.polsl.firmakurierska.dto.PaczkaDTO;
+import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Paczka;
 import com.polsl.firmakurierska.repository.PaczkaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,7 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @RestController
 @RequestMapping("/paczka")
@@ -16,79 +20,92 @@ public class PaczkaController {
     @Autowired
     PaczkaRepository paczkaRepository;
     
-    @GetMapping("/all")
-    public Iterable<Paczka> getAllPaczki() {
-        return paczkaRepository.findAll();
+    @GetMapping
+    public List<PaczkaDTO> getAllPaczki() {
+    	List<PaczkaDTO> paczki = StreamSupport.stream(paczkaRepository.findAll().spliterator(), false)
+                .map(PaczkaDTO::new)
+                .collect(Collectors.toList());
+        if(paczki.isEmpty()) {
+        	throw new ResourceNotFoundException("Brak paczek w bazie");
+        }
+        return paczki;
     }
-
-    //proba zapisu
+ 
+    @GetMapping("/{id}")
+    public PaczkaDTO getPaczkaById(@PathVariable String id) {
+        try {
+            Integer pid = Integer.parseInt(id);
+            Paczka paczka = paczkaRepository.findById(pid)
+            		.orElseThrow(() -> new ResourceNotFoundException("Paczka o ID \" + pid + \" nie znaleziona"));
+            return new PaczkaDTO(paczka);
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("ID " + id + " ma nieprawidłowy format. Oczekiwano liczby całkowitej.");
+        }
+    }
+    
+    
     @PostMapping("/savePaczka")
     public ResponseEntity<String> savePaczka(@RequestBody List<Paczka> paczkaData){
+    	if(paczkaData == null ||paczkaData.isEmpty()) {
+    		throw new BadRequestException("Lista paczek nie może być pusta.");
+    	}
     	paczkaRepository.saveAll(paczkaData);
     	return ResponseEntity.ok("Data saved");
     }
     
     @PostMapping
     public Paczka addPaczka(@RequestBody Paczka paczka) {
+    	if(paczka == null) {
+    		throw new BadRequestException("Dane paczki nie mogą być puste.");
+    	}
         return paczkaRepository.save(paczka);
     }
-
-    @GetMapping("/{id}")
-    public Optional<Paczka> getById(@PathVariable Integer id) {
-        return paczkaRepository.findById(id);
-    }
-
+ 
     @PutMapping("/{id}")
     public Paczka updatePaczka(@PathVariable Integer id, @RequestBody Paczka paczkaDetails) {
-        Paczka paczka = paczkaRepository.findById(id).orElseThrow();
+        Paczka paczka = paczkaRepository.findById(id)
+        		.orElseThrow(() -> new ResourceNotFoundException("Paczka o ID " + id + " nie istnieje"));
+        if (paczkaDetails.getWagaPaczki() <= 0) {
+            throw new BadRequestException("Waga paczki musi być większa niż 0.");
+        }
         paczka.setWagaPaczki(paczkaDetails.getWagaPaczki());
         return paczkaRepository.save(paczka);
     }
 
     @DeleteMapping("/{id}")
     public void deletePaczka(@PathVariable Integer id) {
+    	if(!paczkaRepository.existsById(id)) {
+    		throw new ResourceNotFoundException("Paczka o ID " + id + " nie istnieje");
+    	}
         paczkaRepository.deleteById(id);
     }
 
-    @GetMapping("/waga/{waga}")
-    public List<Paczka> getByWaga(@PathVariable double waga) {
-        return paczkaRepository.findByWagaPaczki(waga);
-    }
+    @GetMapping("/waga")
+    public List<Paczka> filterByWaga(
+            @RequestParam(required = false) Double equal,
+            @RequestParam(required = false) Double greater,
+            @RequestParam(required = false) Double less,
+            @RequestParam(required = false) Double min,
+            @RequestParam(required = false) Double max
+    ) {
+        List<Paczka> paczki;
 
-    @GetMapping("/waga/greater/{waga}")
-    public List<Paczka> getByWagaGreater(@PathVariable double waga) {
-        return paczkaRepository.findByWagaPaczkiGreaterThan(waga);
-    }
-
-    @GetMapping("/waga/less/{waga}")
-    public List<Paczka> getByWagaLess(@PathVariable double waga) {
-        return paczkaRepository.findByWagaPaczkiLessThan(waga);
-    }
-
-    @GetMapping("/waga/between/{min}/{max}")
-    public List<Paczka> getByWagaRange(@PathVariable double min, @PathVariable double max) {
-        return paczkaRepository.findByWagaPaczkiBetween(min, max);
-    }
-
-    @GetMapping("/exists/{waga}")
-    public boolean exists(@PathVariable double waga) {
-        return paczkaRepository.existsByWagaPaczki(waga);
-    }
-
-    @GetMapping("/count/{waga}")
-    public long count(@PathVariable double waga) {
-        return paczkaRepository.countByWagaPaczki(waga);
-    }
-    
-    
-    @GetMapping("/{id}/dostawa")
-    public ResponseEntity<?> getDostawaForPaczka(@PathVariable Integer id) {
-        Optional<Paczka> paczkaOptional = paczkaRepository.findById(id);
-        if (paczkaOptional.isPresent()) {
-            Paczka paczka = paczkaOptional.get();
-            return ResponseEntity.ok(paczka.getDostawa());
+        if (equal != null) {
+            paczki = paczkaRepository.findByWagaPaczki(equal);
+        } else if (greater != null) {
+            paczki = paczkaRepository.findByWagaPaczkiGreaterThan(greater);
+        } else if (less != null) {
+            paczki = paczkaRepository.findByWagaPaczkiLessThan(less);
+        } else if (min != null && max != null) {
+            paczki = paczkaRepository.findByWagaPaczkiBetween(min, max);
         } else {
-            return ResponseEntity.notFound().build();
+            throw new BadRequestException("Musisz podać przynajmniej jeden parametr: equal, greater, less lub min i max.");
         }
+
+        if (paczki.isEmpty()) {
+            throw new ResourceNotFoundException("Brak paczek spełniających podane kryterium wagi.");
+        }
+
+        return paczki;
     }
 }
