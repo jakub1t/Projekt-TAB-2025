@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/stanowisko")
@@ -85,6 +86,4 @@ public class StanowiskoController {
       Stanowisko update = stanowiskoRepository.save(stanowisko);
       return ResponseEntity.ok(update);
     }
-
-    
 }

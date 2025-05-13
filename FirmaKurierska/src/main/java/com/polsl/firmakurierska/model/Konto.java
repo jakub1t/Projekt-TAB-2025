@@ -19,7 +19,4 @@ public class Konto {
 	private String login;
 	@Column(unique = true)
 	private String haslo;
-	
-	
-	
 }

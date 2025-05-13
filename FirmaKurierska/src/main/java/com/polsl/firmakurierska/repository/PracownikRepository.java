@@ -37,6 +37,4 @@ public interface PracownikRepository extends CrudRepository<Pracownik, Integer> 
     long countByNazwisko(String nazwisko);
 
 	void deleteByPesel(String pesel);
-	
-
 }

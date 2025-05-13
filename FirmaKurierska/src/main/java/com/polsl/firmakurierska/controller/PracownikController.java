@@ -190,8 +190,4 @@ public class PracownikController {
         return ResponseEntity.ok(CollectionModel.of(dtoList,
                 linkTo(methodOn(PracownikController.class).searchPracownicy(imie, nazwisko, pesel, imieStartsWith)).withSelfRel()));
     }
-
-
-
-    
 }

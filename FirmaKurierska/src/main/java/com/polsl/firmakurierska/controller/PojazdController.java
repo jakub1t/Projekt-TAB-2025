@@ -144,5 +144,4 @@ public class PojazdController {
     public void deleteByNrRejestr(@PathVariable String nr) {
         pojazdRepository.deleteByNrRejestr(nr);
     }
-
 }

@@ -11,6 +11,9 @@ import java.util.stream.StreamSupport;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/konto")
@@ -19,11 +22,14 @@ public class KontoController {
     @Autowired
     KontoRepository kontoRepository;
 
-    @GetMapping
-    public Iterable<Konto> getAllKonta() {
-        return kontoRepository.findAll();
+    @GetMapping("/all")
+    public List<Konto> getAllKonta() {
+        List<Konto> accounts = new ArrayList<>();
+        kontoRepository.findAll().forEach(accounts::add);;
+
+        return accounts;
     }
-    
+  
     @GetMapping("/{id}")
     public Konto getKontoById(@PathVariable Integer id) {
         return kontoRepository.findById(id)
@@ -81,5 +87,4 @@ public class KontoController {
                 })
                 .orElseThrow(() -> new ResourceNotFoundException("Konto o loginie '" + login + "' nie istnieje"));
     }
-
 }
