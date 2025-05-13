@@ -16,4 +16,10 @@ public interface KlientRepository extends CrudRepository<Klient, Integer> {
     List<Klient> findByImieKAndNazwiskoK(String imieK, String nazwiskoK);
 
     boolean existsByImieKAndNazwiskoK(String imieK, String nazwiskoK);
+
+    List<Klient> findByImieKIgnoreCase(String imieK);
+
+    List<Klient> findByNazwiskoKIgnoreCase(String nazwiskoK);
+
+    List<Klient> findByImieKAndNazwiskoKIgnoreCase(String imieK, String nazwiskoK);
 }

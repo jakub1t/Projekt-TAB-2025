@@ -1,14 +1,22 @@
 package com.polsl.firmakurierska.controller;
 
+import com.polsl.firmakurierska.dto.DostawaDTO;
+import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Dostawa;
 import com.polsl.firmakurierska.repository.DostawaRepository;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @RestController
 @RequestMapping("/dostawa")
@@ -16,75 +24,183 @@ public class DostawaController {
 
     @Autowired
     DostawaRepository dostawaRepository;
- 
-    @Transactional
+
+    @GetMapping
+    public @ResponseBody Iterable<DostawaDTO> getAllDostawy() {
+        return StreamSupport.stream(dostawaRepository.findAll().spliterator(), false)
+                .map(DostawaDTO::new)
+                .collect(Collectors.toList());
+    }
+
     @GetMapping("/{id}")
-    public Dostawa getDostawaById(@PathVariable Integer id) {
-        return dostawaRepository.findById(id).orElse(null);
+    public ResponseEntity<DostawaDTO> getDostawaById(@PathVariable String id) {
+        try {
+            Integer did = Integer.parseInt(id);
+            Dostawa dostawa = dostawaRepository.findById(did)
+                    .orElseThrow(() -> new ResourceNotFoundException("Dostawa o ID " + did + " nie istnieje."));
+            return ResponseEntity.ok(new DostawaDTO(dostawa));
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("Nieprawidłowy format ID: '" + id + "'. ID musi być liczbą całkowitą.");
+        }
     }
 
-    @GetMapping("/all")
-    public List<Dostawa> getAllDostawy() {
-        return (List<Dostawa>) dostawaRepository.findAll();
+
+    @PostMapping("/add")
+    public ResponseEntity<Object> addDostawa(@RequestBody DostawaDTO dto) {
+        try {
+            // Convert the Iterable to a List and then check if the delivery already exists
+            List<Dostawa> existingDostawy = new ArrayList<>();
+            dostawaRepository.findAll().forEach(existingDostawy::add);
+
+            boolean exists = existingDostawy.stream().anyMatch(d ->
+                    dto.getPunktA().equals(d.getPunktA()) &&
+                    dto.getPunktB().equals(d.getPunktB()) &&
+                    dto.getDataWyruszenia().equals(d.getDataWyruszenia()) &&
+                    dto.getTermin().equals(d.getTermin())
+            );
+
+            if (exists) {
+                // If the delivery already exists, return a BadRequestException
+                throw new BadRequestException("Taka dostawa już istnieje.");
+            }
+
+            // If no duplicate found, create the new delivery
+            Dostawa dostawa = new Dostawa();
+            dostawa.setPunktA(dto.getPunktA());
+            dostawa.setPunktB(dto.getPunktB());
+            dostawa.setDataWyruszenia(dto.getDataWyruszenia());
+            dostawa.setTermin(dto.getTermin());
+            dostawa.setStatus(dto.getStatus()); // Add status here
+
+            // Save the new delivery to the repository
+            Dostawa savedDostawa = dostawaRepository.save(dostawa);
+            return ResponseEntity.status(HttpStatus.CREATED).body(new DostawaDTO(savedDostawa));
+
+        } catch (BadRequestException e) {
+            throw e; // If a duplicate is found, throw a BadRequestException
+        } catch (Exception e) {
+            // If there's another error, throw a BadRequestException
+            throw new BadRequestException("Nie udało się utworzyć dostawy: " + e.getMessage());
+        }
     }
 
-    @PostMapping
-    public Dostawa addDostawa(@RequestBody Dostawa dostawa) {
-        return dostawaRepository.save(dostawa);
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<String> deleteDostawa(@PathVariable String id) {
+        try {
+            Integer did = Integer.parseInt(id);
+            Dostawa dostawa = dostawaRepository.findById(did)
+                    .orElseThrow(() -> new ResourceNotFoundException("Dostawa o ID " + did + " nie istnieje."));
+            dostawaRepository.delete(dostawa);
+            return ResponseEntity.ok("Dostawa o ID " + did + " została usunięta.");
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("ID musi być liczbą całkowitą: " + id);
+        }
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteDostawa(@PathVariable Integer id) {
-        dostawaRepository.deleteById(id);
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<String> updateDostawa(@PathVariable String id, @RequestBody DostawaDTO dto) {
+        try {
+            Integer did = Integer.parseInt(id);
+            Dostawa dostawa = dostawaRepository.findById(did)
+            		.orElseThrow(() -> new ResourceNotFoundException("Dostawa o ID " + did + " nie istnieje."));	
+
+            if (dto.getPunktA() != null) {
+                dostawa.setPunktA(dto.getPunktA());
+            }
+            if (dto.getPunktB() != null) {
+                dostawa.setPunktB(dto.getPunktB());
+            }
+            if (dto.getDataWyruszenia() != null) {
+                dostawa.setDataWyruszenia(dto.getDataWyruszenia());
+            }
+            if (dto.getTermin() != null) {
+                dostawa.setTermin(dto.getTermin());
+            }
+            if (dto.getStatus() != null) {
+                dostawa.setStatus(dto.getStatus());
+            }
+
+            dostawaRepository.save(dostawa);
+            return ResponseEntity.ok("Dostawa o ID " + did + " została zaktualizowana.");
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("ID musi być liczbą całkowitą: " + id);
+        }
     }
 
-    @GetMapping("/punktA/{punktA}")
-    public List<Dostawa> getByPunktA(@PathVariable String punktA) {
-        return dostawaRepository.findByPunktA(punktA);
+    // -----------------------------------
+    // Wyszukiwanie według różnych kryteriów
+    // -----------------------------------
+    private LocalDate parseDate(String input, String fieldName) {
+        try {
+            return LocalDate.parse(input);
+        } catch (DateTimeParseException e) {
+            throw new BadRequestException("Nieprawidłowy format daty w polu: " + fieldName + ". Oczekiwany format: yyyy-MM-dd.");
+        }
     }
 
-    @GetMapping("/punktB/{punktB}")
-    public List<Dostawa> getByPunktB(@PathVariable String punktB) {
-        return dostawaRepository.findByPunktB(punktB);
-    }
+    
+    @GetMapping("/filter")
+    public ResponseEntity<List<DostawaDTO>> filterDostawy(
+            @RequestParam(required = false) String punktA,
+            @RequestParam(required = false) String punktB,
+            @RequestParam(required = false) String dataWyruszenia,
+            @RequestParam(required = false) String termin,
+            @RequestParam(required = false) String sort) {
 
-    @GetMapping("/dataWyruszenia/{data}")
-    public List<Dostawa> getByDataWyruszenia(@PathVariable String data) {
-        return dostawaRepository.findByDataWyruszenia(LocalDate.parse(data));
-    }
+        try {
+        	List<Dostawa> wynik = new ArrayList<>();
+        	dostawaRepository.findAll().forEach(wynik::add);
+        	
+            // Filtrowanie punktA
+            if (punktA != null) {
+                wynik = wynik.stream()
+                        .filter(d -> punktA.equals(d.getPunktA()))
+                        .collect(Collectors.toList());
+            }
 
-    @GetMapping("/termin/{data}")
-    public List<Dostawa> getByTermin(@PathVariable String data) {
-        return dostawaRepository.findByTermin(LocalDate.parse(data));
-    }
+            // Filtrowanie punktB
+            if (punktB != null) {
+                wynik = wynik.stream()
+                        .filter(d -> punktB.equals(d.getPunktB()))
+                        .collect(Collectors.toList());
+            }
 
-    @GetMapping("/dataPrzed/{data}")
-    public List<Dostawa> getByDataWyruszeniaBefore(@PathVariable String data) {
-        return dostawaRepository.findByDataWyruszeniaBefore(LocalDate.parse(data));
-    }
+            // Filtrowanie po dataWyruszenia
+            if (dataWyruszenia != null) {
+                LocalDate date = parseDate(dataWyruszenia, "dataWyruszenia");
+                wynik = wynik.stream()
+                        .filter(d -> date.equals(d.getDataWyruszenia()))
+                        .collect(Collectors.toList());
+            }
 
-    @GetMapping("/terminPo/{data}")
-    public List<Dostawa> getByTerminAfter(@PathVariable String data) {
-        return dostawaRepository.findByTerminAfter(LocalDate.parse(data));
-    }
+            // Filtrowanie po termin
+            if (termin != null) {
+                LocalDate date = parseDate(termin, "termin");
+                wynik = wynik.stream()
+                        .filter(d -> date.equals(d.getTermin()))
+                        .collect(Collectors.toList());
+            }
 
-    @GetMapping("/dataZakres/{start}/{end}")
-    public List<Dostawa> getByDataWyruszeniaBetween(@PathVariable String start, @PathVariable String end) {
-        return dostawaRepository.findByDataWyruszeniaBetween(LocalDate.parse(start), LocalDate.parse(end));
-    }
+            //Sortowanie
+            if ("asc".equalsIgnoreCase(sort)) {
+                wynik.sort(Comparator.comparing(Dostawa::getTermin));
+            } else if ("desc".equalsIgnoreCase(sort)) {
+                wynik.sort(Comparator.comparing(Dostawa::getTermin).reversed());
+            }
 
-    @GetMapping("/trasa/{punktA}/{punktB}")
-    public List<Dostawa> getByPunktAAndPunktB(@PathVariable String punktA, @PathVariable String punktB) {
-        return dostawaRepository.findByPunktAAndPunktB(punktA, punktB);
-    }
+            if (wynik.isEmpty()) {
+                throw new ResourceNotFoundException("Brak dostaw spełniających podane kryteria.");
+            }
 
-    @GetMapping("/terminAsc")
-    public List<Dostawa> getAllOrderedByTerminAsc() {
-        return dostawaRepository.findAllByOrderByTerminAsc();
-    }
+            List<DostawaDTO> dtoList = wynik.stream().map(DostawaDTO::new).collect(Collectors.toList());
+            return ResponseEntity.ok(dtoList);
 
-    @GetMapping("/terminDesc")
-    public List<Dostawa> getAllOrderedByTerminDesc() {
-        return dostawaRepository.findAllByOrderByTerminDesc();
+        } catch (BadRequestException | ResourceNotFoundException ex) {
+            throw ex; // obsłużone w GlobalExceptionHandler
+        } catch (Exception e) {
+            throw new BadRequestException("Błąd filtrowania: " + e.getMessage());
+        }
     }
 }

@@ -13,7 +13,7 @@ INSERT INTO producent (nazwa_producenta) VALUES ('Asus');
 -- Stanowisko
 INSERT INTO stanowisko (nazwa_stanowiska) VALUES ('Kierowca');
 INSERT INTO stanowisko (nazwa_stanowiska) VALUES ('Magazynier');
-INSERT INTO stanowisko (nazwa_stanowiska) VALUES ('Kurjer');
+INSERT INTO stanowisko (nazwa_stanowiska) VALUES ('Kurier');
 INSERT INTO stanowisko (nazwa_stanowiska) VALUES ('Pracownik biurowy');
 INSERT INTO stanowisko (nazwa_stanowiska) VALUES ('Manager');
 
@@ -75,11 +75,11 @@ INSERT INTO paczka (waga_paczki, fk_dostawa_id, fk_klient_id) VALUES (7.8, 1, 3)
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
 VALUES (1,2, 2.5, 'Elektronika', 'Słuchawki bezprzewodowe', 'SN12345');
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
-VALUES (1,3, 1.2, 'Książki', 'Harry Potter', 'SN67890');
+VALUES (2,3, 1.2, 'Książki', 'Harry Potter', 'SN67890');
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
-VALUES (1,4, 0.5, 'Kosmetyki', 'Krem do rąk', 'SN54321');
+VALUES (3,4, 0.5, 'Kosmetyki', 'Krem do rąk', 'SN54321');
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
-VALUES (1,1, 5.0, 'Jedzenie', 'Czekolada', 'Wawel');
+VALUES (4,1, 5.0, 'Jedzenie', 'Czekolada', 'Wawel');
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
 VALUES (1,5, 3, 'Zabawka', 'Pluszak', 'Toys');
 

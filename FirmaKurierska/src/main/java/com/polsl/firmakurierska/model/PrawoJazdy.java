@@ -18,11 +18,11 @@ public class PrawoJazdy {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer idKaty;
+	private Integer idKat;
 	
 	private String kategoria;
 	
-	@ManyToMany(mappedBy = "prawoJazdy")
+	@ManyToMany(mappedBy = "prawoJazdy", fetch = FetchType.EAGER)
 	@JsonIgnore
     private Set<Pracownik> pracownicy;
 }

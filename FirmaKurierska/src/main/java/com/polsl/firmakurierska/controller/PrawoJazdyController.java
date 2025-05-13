@@ -1,5 +1,8 @@
 package com.polsl.firmakurierska.controller;
 
+import com.polsl.firmakurierska.dto.PrawoJazdyDTO;
+import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.PrawoJazdy;
 import com.polsl.firmakurierska.repository.PrawoJazdyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,9 +12,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @RestController
-@RequestMapping("/prawajazdy")
+@RequestMapping("/prawojazdy")
 public class PrawoJazdyController {
 
     @Autowired
@@ -19,58 +24,73 @@ public class PrawoJazdyController {
 
     @PostMapping
     public ResponseEntity<PrawoJazdy> createPrawoJazdy(@RequestBody PrawoJazdy prawoJazdy) {
+    	if(prawoJazdy.getKategoria() == null || prawoJazdy.getKategoria().isBlank()) {
+    		throw new BadRequestException("Kategoria prawa jazdy nie może być pusta.");
+    	}
         PrawoJazdy savedPrawoJazdy = prawoJazdyRepository.save(prawoJazdy);
         return new ResponseEntity<>(savedPrawoJazdy, HttpStatus.CREATED);
     }
-
+    
     @GetMapping
-    public List<PrawoJazdy> getAllPrawoJazdy() {
-        return (List<PrawoJazdy>) prawoJazdyRepository.findAll();
+    public @ResponseBody Iterable<PrawoJazdyDTO> getAllPrawoJazdy() {
+        return StreamSupport.stream(prawoJazdyRepository.findAll().spliterator(), false)
+                .map(PrawoJazdyDTO::new)
+                .collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PrawoJazdy> getPrawoJazdyById(@PathVariable Integer id) {
-        Optional<PrawoJazdy> prawoJazdy = prawoJazdyRepository.findById(id);
-        if (prawoJazdy.isPresent()) {
-            return new ResponseEntity<>(prawoJazdy.get(), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    public ResponseEntity<PrawoJazdyDTO> getPrawoJazdyById(@PathVariable String id) {
+        Integer parsedId;
+        try {
+            parsedId = Integer.parseInt(id);
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("Nieprawidłowy format ID: '" + id + "'. Wymagana liczba całkowita.");
         }
+
+        PrawoJazdy prawoJazdy = prawoJazdyRepository.findById(parsedId)
+                .orElseThrow(() -> new ResourceNotFoundException("Prawo jazdy o ID " + parsedId + " nie istnieje"));
+
+        return ResponseEntity.ok(new PrawoJazdyDTO(prawoJazdy));
     }
 
-    @GetMapping("/kategoria/{kategoria}")
-    public List<PrawoJazdy> getPrawoJazdyByKategoria(@PathVariable String kategoria) {
+    @GetMapping("/kategoria")
+    public List<PrawoJazdy> getPrawoJazdyByKategoria(@RequestParam String kategoria) {
+    	if(!prawoJazdyRepository.existsByKategoria(kategoria) ) {
+    		throw new ResourceNotFoundException("Prawo jazdy o kategorii " + kategoria + " nie istnieje");
+    	}
         return prawoJazdyRepository.findByKategoria(kategoria);
     }
 
-    @GetMapping("/count/{kategoria}")
-    public long countByKategoria(@PathVariable String kategoria) {
+    @GetMapping("/count")
+    public long countByKategoria(@RequestParam String kategoria) {
+    	if(!prawoJazdyRepository.existsByKategoria(kategoria) ) {
+    		throw new ResourceNotFoundException("Prawo jazdy o kategorii " + kategoria + " nie istnieje");
+    	}
         return prawoJazdyRepository.countByKategoria(kategoria);
-    }
-
-    @GetMapping("/exists/{kategoria}")
-    public boolean existsByKategoria(@PathVariable String kategoria) {
-        return prawoJazdyRepository.existsByKategoria(kategoria);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<PrawoJazdy> updatePrawoJazdy(@PathVariable Integer id, @RequestBody PrawoJazdy prawoJazdy) {
-        if (prawoJazdyRepository.existsById(id)) {
-            prawoJazdy.setIdKaty(id);
-            PrawoJazdy updatedPrawoJazdy = prawoJazdyRepository.save(prawoJazdy);
-            return new ResponseEntity<>(updatedPrawoJazdy, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        if (!prawoJazdyRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Prawo jazdy o ID " + id + " nie istnieje");
         }
+
+        if (prawoJazdy.getKategoria() == null || prawoJazdy.getKategoria().isBlank()) {
+            throw new BadRequestException("Kategoria prawa jazdy nie może być pusta.");
+        }
+
+        prawoJazdy.setIdKat(id);
+        PrawoJazdy updated = prawoJazdyRepository.save(prawoJazdy);
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePrawoJazdy(@PathVariable Integer id) {
-        if (prawoJazdyRepository.existsById(id)) {
-            prawoJazdyRepository.deleteById(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        if (!prawoJazdyRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Prawo jazdy o ID " + id + " nie istnieje");
         }
+
+        prawoJazdyRepository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

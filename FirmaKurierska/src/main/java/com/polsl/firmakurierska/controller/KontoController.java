@@ -1,10 +1,16 @@
 package com.polsl.firmakurierska.controller;
 
+import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Konto;
 import com.polsl.firmakurierska.repository.KontoRepository;
+
+import jakarta.transaction.Transactional;
+
+import java.util.stream.StreamSupport;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -16,43 +22,69 @@ public class KontoController {
     @Autowired
     KontoRepository kontoRepository;
 
-    
-    @PostMapping
-    public Konto createKonto(@RequestBody Konto konto) {
-        return kontoRepository.save(konto);
-    }
-
-    
-    @GetMapping("/{login}")
-    public Optional<Konto> getKontoByLogin(@PathVariable String login) {
-        return kontoRepository.findByLogin(login);
-    }
-
-
     @GetMapping("/all")
-    public List<Konto> getAllKonto() {
+    public List<Konto> getAllKonta() {
         List<Konto> accounts = new ArrayList<>();
         kontoRepository.findAll().forEach(accounts::add);;
 
         return accounts;
     }
-
-    
-    @GetMapping("/exists/{login}")
-    public boolean kontoExists(@PathVariable String login) {
-        return kontoRepository.existsByLogin(login);
+  
+    @GetMapping("/{id}")
+    public Konto getKontoById(@PathVariable Integer id) {
+        return kontoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Konto o ID " + id + " nie istnieje"));
     }
 
-    // Logowanie (login + hasło)
-    @PostMapping("/login")
-    public String login(@RequestBody Konto konto) {
-        boolean correct = kontoRepository.findByLoginAndHaslo(konto.getLogin(), konto.getHaslo()).isPresent();
-        return correct ? "Zalogowano pomyślnie" : "Błędny login lub hasło";
+    @GetMapping("/login")
+    public Konto getKontoByLogin(@RequestParam String login) {
+        return kontoRepository.findByLogin(login)
+                .orElseThrow(() -> new ResourceNotFoundException("Konto o loginie '" + login + "' nie istnieje"));
     }
 
-    
-    @DeleteMapping("/{login}")
-    public void deleteKonto(@PathVariable String login) {
+    @PostMapping
+    public Konto login(@RequestBody Konto konto) {
+        if (konto.getLogin() == null || konto.getHaslo() == null) {
+            throw new BadRequestException("Login i hasło nie mogą być puste");
+        }
+
+        if (kontoRepository.existsByHaslo(konto.getHaslo())) {
+            throw new BadRequestException("To hasło jest już używane. Wybierz inne.");
+        }
+
+        return kontoRepository.save(konto);
+    }
+
+    @DeleteMapping("/login")
+    @Transactional
+    public void deleteKonto(@RequestParam String login) {
+        if (!kontoRepository.existsByLogin(login)) {
+            throw new ResourceNotFoundException("Konto o loginie '" + login + "' nie istnieje");
+        }
         kontoRepository.deleteByLogin(login);
+    }
+
+    @PutMapping("/update/{login}")
+    public Konto updateKonto(@PathVariable String login, @RequestBody Konto newData) {
+        if (newData.getHaslo() == null || newData.getHaslo().isEmpty()) {
+            throw new BadRequestException("Hasło nie może być puste");
+        }
+
+        kontoRepository.findByLogin(login).orElseThrow(() ->
+                new ResourceNotFoundException("Konto o loginie '" + login + "' nie istnieje"));
+
+        boolean hasloZajete = StreamSupport.stream(kontoRepository.findAll().spliterator(), false)
+                .anyMatch(k -> k.getHaslo().equals(newData.getHaslo()) && !k.getLogin().equals(login));
+
+        if (hasloZajete) {
+            throw new BadRequestException("To hasło jest już używane przez inne konto.");
+        }
+
+        return kontoRepository.findByLogin(login)
+                .map(konto -> {
+                    konto.setHaslo(newData.getHaslo());
+                    return kontoRepository.save(konto);
+                })
+                .orElseThrow(() -> new ResourceNotFoundException("Konto o loginie '" + login + "' nie istnieje"));
     }
 }

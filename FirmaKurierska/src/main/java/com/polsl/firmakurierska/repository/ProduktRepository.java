@@ -29,4 +29,6 @@ public interface ProduktRepository extends CrudRepository<Produkt, Integer> {
     long countByNazwaProduktu(String nazwaProduktu);
 
     void deleteByNrSeryjny(String nrSeryjny);
+    
+    boolean existsByProducent_IdProducenta(Integer idProducenta);
 }

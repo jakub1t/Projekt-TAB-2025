@@ -22,8 +22,8 @@ public class Stanowisko {
 	
 	@Column(name = "nazwaStanowiska")
 	private String nazwaStanowiska;
-	
-	@OneToMany(mappedBy = "stanowisko", cascade = CascadeType.ALL)
+  
+	@OneToMany(mappedBy = "stanowisko", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonIgnore
 	private List<Pracownik> pracownik;
 	}
