@@ -1,6 +1,5 @@
 package com.polsl.firmakurierska;
 
-import org.springframework.boot.SpringApplication;
 import java.awt.BorderLayout;
 import java.util.List;
 
@@ -41,7 +40,7 @@ public class FirmaKurierskaApplication implements CommandLineRunner {
     public void run(String... args) {
 
 		// Get list of all accounts
-		List<Konto> accounts = kontoController.getAllKonto();
+		List<Konto> accounts = kontoController.getAllKonta();
 		// Print logins to console
 		accounts.forEach(account -> System.out.println(account.getLogin()));
 
