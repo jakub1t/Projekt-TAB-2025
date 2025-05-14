@@ -49,6 +49,7 @@ public class Hello_world extends Application {
 
 
             if (loginSuccessful) {
+                //httpFindAccType(nick.getText());
                 new AdminPanel().start(new Stage());
             }
             
@@ -87,8 +88,6 @@ public class Hello_world extends Application {
         String bazaUrl = "http://localhost:8080/konto/login";
 
         String reqString = "{\"login\": \"" + nick + "\",\"haslo\": \"" + pass + "\"}";
-
-        System.out.println(reqString);
 
         boolean success = false;
 
@@ -138,8 +137,30 @@ public class Hello_world extends Application {
 
     }
 
-    private int httpFindAccType(String nick) {
+    private int httpFindAccType(String nick) throws URISyntaxException {
+        // find konto_id by login
+        // find pracownik by konto_id
+        // find stanowisko_nazwa
 
-        return 0;
+        int accType = 0;
+
+        String bazaUrl = "http://localhost:8080/konto/login";
+
+        try {
+            URL obj = new URI(bazaUrl).toURL();
+
+            HttpURLConnection konnect = (HttpURLConnection)obj.openConnection();
+
+            konnect.setRequestMethod("POST");
+            konnect.setDoOutput(true);
+            konnect.setRequestProperty("Content-Type", "application/json");
+        }
+        catch (IOException e) {
+
+            System.out.println(e.toString());
+            e.printStackTrace();
+        }
+
+        return accType;
     }
 }
