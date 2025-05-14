@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.polsl.firmakurierska.view.hello_world;
 
 import javafx.geometry.Insets;
@@ -39,6 +35,21 @@ public class PackageFormWindow {
 
     /** Pokazuje główne okno dodawania paczki */
     public void show() {
+        // --- Pole na imię klienta ---
+        TextField firstNameField = new TextField();
+        firstNameField.setPromptText("np. Jan");
+        VBox firstNameBox = createInputCard("Imię klienta:", firstNameField);
+
+        // --- Pole na nazwisko klienta ---
+        TextField lastNameField = new TextField();
+        lastNameField.setPromptText("np. Kowalski");
+        VBox lastNameBox = createInputCard("Nazwisko klienta:", lastNameField);
+
+        // --- Pole na nazwę paczki ---
+        TextField packageNameField = new TextField();
+        packageNameField.setPromptText("np. Paczka nr 1");
+        VBox packageNameBox = createInputCard("Nazwa paczki:", packageNameField);
+
         // --- Pole na wagę paczki ---
         TextField weightField = new TextField();
         weightField.setPromptText("np. 2.5 kg");
@@ -54,7 +65,6 @@ public class PackageFormWindow {
         // --- Przycisk dodawania nowego produktu ---
         Button addProductBtn = new Button("Dodaj produkt");
         addProductBtn.setOnAction(e -> {
-            // otwieramy osobne okno do wprowadzenia danych produktu
             new ProductFormWindow().show(product -> {
                 products.add(product);
                 productsList.getChildren().add(createProductCard(product));
@@ -67,6 +77,9 @@ public class PackageFormWindow {
         Button savePackageBtn = new Button("Dodaj paczkę");
         savePackageBtn.setOnAction(e -> {
             System.out.println("Nowa paczka:");
+            System.out.println("Imię klienta: " + firstNameField.getText());
+            System.out.println("Nazwisko klienta: " + lastNameField.getText());
+            System.out.println("Nazwa: " + packageNameField.getText());
             System.out.println("Waga: " + weightField.getText());
             for (Product p : products) {
                 System.out.printf(" - %s | %s | %s | %s | %s%n",
@@ -78,6 +91,9 @@ public class PackageFormWindow {
 
         // --- Układ wszystkich elementów ---
         VBox container = new VBox(15,
+            firstNameBox,
+            lastNameBox,
+            packageNameBox,
             weightBox,
             new Label("Produkty:"), productsScroll, addProdBox,
             saveBox
@@ -90,7 +106,7 @@ public class PackageFormWindow {
 
         Stage stage = new Stage();
         stage.setTitle("Formularz paczki");
-        stage.setScene(new Scene(root, 400, 500));
+        stage.setScene(new Scene(root, 400, 740));
         stage.show();
     }
 

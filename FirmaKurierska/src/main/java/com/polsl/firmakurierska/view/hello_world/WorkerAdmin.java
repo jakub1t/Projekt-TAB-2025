@@ -33,7 +33,6 @@ public class WorkerAdmin extends Application {
 
         Button dodajPaczkeBtn = new Button("Dodaj paczkę");
         dodajPaczkeBtn.setOnAction(e -> new PackageFormWindow().show());
-
         VBox paczkiCol = buildColumn("Paczki", paczkiScroll, dodajPaczkeBtn, "#f4f4f4");
 
         // ===== KOL 2: POJAZDY =====
@@ -43,14 +42,13 @@ public class WorkerAdmin extends Application {
         pojazdyScroll.setFitToWidth(true);
         pojazdyScroll.setPrefHeight(300);
 
-        String[] pojazdyArray = { "Pojazd A", "Pojazd B", "Pojazd C" };
+        final String[] pojazdyArray = { "Pojazd A", "Pojazd B", "Pojazd C" };
         for (String name : pojazdyArray) {
             pojazdyList.getChildren().add(createVehicleItem(name));
         }
 
         Button dodajPojazdBtn = new Button("Dodaj pojazd");
         dodajPojazdBtn.setOnAction(e -> new VehicleFormWindow().show());
-
         VBox pojazdyCol = buildColumn("Pojazdy", pojazdyScroll, dodajPojazdBtn, "#eaeaea");
 
         // ===== KOL 3: DOSTAWY =====
@@ -60,17 +58,20 @@ public class WorkerAdmin extends Application {
         dostawyScroll.setFitToWidth(true);
         dostawyScroll.setPrefHeight(300);
 
-        String[] dostawyArray = { "Dostawa 1", "Dostawa 2", "Dostawa 3" };
+        final String[] dostawyArray = { "Dostawa 1", "Dostawa 2", "Dostawa 3" };
         for (String name : dostawyArray) {
             dostawyList.getChildren().add(createDeliveryItem(name));
         }
+        final String[] employeesArray = { "Adam Kowalski", "Beata Nowak", "Celina Wiśniewska" };
 
         Button dodajDostaweBtn = new Button("Dodaj dostawę");
-        // przekazujemy listę dostępnych ID paczek
         dodajDostaweBtn.setOnAction(e ->
-            new DeliveryFormWindow().show(List.of(paczkiArray))
+            new DeliveryFormWindow().show(
+                List.of(paczkiArray),
+                List.of(pojazdyArray),
+                List.of(employeesArray)
+            )
         );
-
         VBox dostawyCol = buildColumn("Dostawy", dostawyScroll, dodajDostaweBtn, "#f4f4f4");
 
         // ===== KOL 4: RAPORTY =====
@@ -80,7 +81,7 @@ public class WorkerAdmin extends Application {
         raportLabel.setAlignment(Pos.CENTER);
 
         Button generujRaportBtn = new Button("Generuj raport");
-        generujRaportBtn.setOnAction(e -> System.out.println("Generowanie raportu..."));
+        generujRaportBtn.setOnAction(e -> new RaportFormWindow().show());
         HBox raportBox = new HBox(generujRaportBtn);
         raportBox.setAlignment(Pos.CENTER);
         raportBox.setPadding(new Insets(10));
@@ -128,9 +129,13 @@ public class WorkerAdmin extends Application {
                 new PackageDescription.Product("Kabel HDMI", "0.15 kg", "Akcesoria", "SN67890", "KabelPro"),
                 new PackageDescription.Product("Notebook A4", "0.5 kg", "Papier", "SN54321", "PapierPlus")
             );
-            new PackageDescription().show(1.2, produkty);
+            new PackageDescription().show(
+                "Jan",
+                "Kowalski",
+                1.2,
+                produkty
+            );
         });
-
         Button delBtn = new Button("X");
         delBtn.setOnAction(e -> paczkiList.getChildren().removeIf(node -> {
             if (node instanceof HBox hbox) {
@@ -139,7 +144,6 @@ public class WorkerAdmin extends Application {
             }
             return false;
         }));
-
         HBox box = new HBox(5, itemBtn, delBtn);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
@@ -150,9 +154,15 @@ public class WorkerAdmin extends Application {
         itemBtn.setPrefWidth(140);
         itemBtn.setOnAction(e -> {
             new VehicleDescription()
-                .show("Ciężarowy", "Volvo", "FH16", "16 L", "ABC-1234");
+                .show(
+                    name,
+                    "Ciężarowy",
+                    "Volvo",
+                    "FH16",
+                    "16 L",
+                    "ABC-1234"
+                );
         });
-
         Button delBtn = new Button("X");
         delBtn.setOnAction(e -> pojazdyList.getChildren().removeIf(node -> {
             if (node instanceof HBox hbox) {
@@ -161,7 +171,6 @@ public class WorkerAdmin extends Application {
             }
             return false;
         }));
-
         HBox box = new HBox(5, itemBtn, delBtn);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
@@ -171,9 +180,11 @@ public class WorkerAdmin extends Application {
         Button itemBtn = new Button(name);
         itemBtn.setPrefWidth(140);
         itemBtn.setOnAction(e -> {
-            // przykładowe dane wyświetlane w DeliveryDescription
             new DeliveryDescription().show(
                 name,
+                "Anna",
+                "Nowak",
+                "Samochód X",
                 "2025-04-17",
                 "2025-04-20",
                 "Magazyn A",
@@ -181,7 +192,6 @@ public class WorkerAdmin extends Application {
                 List.of("Paczka 1", "Paczka 2")
             );
         });
-
         Button delBtn = new Button("X");
         delBtn.setOnAction(e -> dostawyList.getChildren().removeIf(node -> {
             if (node instanceof HBox hbox) {
@@ -190,7 +200,6 @@ public class WorkerAdmin extends Application {
             }
             return false;
         }));
-
         HBox box = new HBox(5, itemBtn, delBtn);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;

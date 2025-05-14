@@ -13,7 +13,6 @@ import javafx.stage.Stage;
 public class AdminPanel extends Application {
 
     private VBox kontaList;
-    private VBox pracownicyList;
 
     @Override
     public void start(Stage stage) {
@@ -36,7 +35,6 @@ public class AdminPanel extends Application {
             kontaList.getChildren().add(createKontoItem(name));
             AccountFormWindow form = new AccountFormWindow();
             form.show();
-
         });
 
         HBox kontaLabel = new HBox(new javafx.scene.control.Label("Konta"));
@@ -52,45 +50,13 @@ public class AdminPanel extends Application {
         leftPanel.setPrefWidth(350);
         leftPanel.setStyle("-fx-background-color: #f4f4f4;");
 
-        // ================= PRAWY PANEL (PRACOWNICY) =================
-        pracownicyList = new VBox(5);
-        pracownicyList.setPadding(new Insets(5));
-
-        ScrollPane pracownicyScroll = new ScrollPane(pracownicyList);
-        pracownicyScroll.setFitToWidth(true);
-        pracownicyScroll.setPrefHeight(300);
-
-        String[] pracownicyArray = {"Pracownik Adama", "Pracownik Beaty", "Pracownik Celiny"};
-        for (String pracName : pracownicyArray) {
-            pracownicyList.getChildren().add(createPracownikItem(pracName));
-        }
-
-        Button dodajPracownikaButton = new Button("Dodaj pracownika");
-        dodajPracownikaButton.setOnAction(e -> {
-            String name = "Nowy Pracownik #" + (pracownicyList.getChildren().size() + 1);
-            pracownicyList.getChildren().add(createPracownikItem(name));
-        });
-
-        HBox pracLabel = new HBox(new javafx.scene.control.Label("Pracownicy"));
-        pracLabel.setAlignment(Pos.CENTER);
-        pracLabel.setPadding(new Insets(10));
-        pracLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-
-        HBox dodajPracBox = new HBox(dodajPracownikaButton);
-        dodajPracBox.setAlignment(Pos.CENTER);
-
-        VBox rightPanel = new VBox(10, pracLabel, pracownicyScroll, dodajPracBox);
-        rightPanel.setPadding(new Insets(10));
-        rightPanel.setPrefWidth(350);
-        rightPanel.setStyle("-fx-background-color: #eaeaea;");
-
         // ================= GŁÓWNY UKŁAD =================
-        HBox root = new HBox(10, leftPanel, rightPanel);
+        HBox root = new HBox(leftPanel);
         root.setPadding(new Insets(10));
 
-        Scene scene = new Scene(root, 600, 450);
+        Scene scene = new Scene(root, 300, 450);
         stage.setScene(scene);
-        stage.setTitle("Admin Panel - Konta i Pracownicy");
+        stage.setTitle("Admin Panel - Konta");
         stage.show();
     }
 
@@ -99,13 +65,9 @@ public class AdminPanel extends Application {
         kontoButton.setPrefWidth(200);
         kontoButton.setOnAction(e -> {
             System.out.println("Naciśnięto " + kontoName);
-            
 
             AccountDescription info = new AccountDescription();
             info.show("Adam", "Kowalski", "90010112345", "Administrator", "B2");
-
-
-            
         });
 
         Button deleteButton = new Button("X");
@@ -118,27 +80,6 @@ public class AdminPanel extends Application {
         }));
 
         HBox hbox = new HBox(10, kontoButton, deleteButton);
-        hbox.setAlignment(Pos.CENTER_LEFT);
-        return hbox;
-    }
-
-    private HBox createPracownikItem(String pracName) {
-        Button pracButton = new Button(pracName);
-        pracButton.setPrefWidth(200);
-        pracButton.setOnAction(e -> {
-            System.out.println("Naciśnięto " + pracName);
-        });
-
-        Button deleteButton = new Button("X");
-        deleteButton.setOnAction(e -> pracownicyList.getChildren().removeIf(node -> {
-            if (node instanceof HBox hbox) {
-                Button btn = (Button) hbox.getChildren().get(0);
-                return btn.getText().equals(pracName);
-            }
-            return false;
-        }));
-
-        HBox hbox = new HBox(10, pracButton, deleteButton);
         hbox.setAlignment(Pos.CENTER_LEFT);
         return hbox;
     }

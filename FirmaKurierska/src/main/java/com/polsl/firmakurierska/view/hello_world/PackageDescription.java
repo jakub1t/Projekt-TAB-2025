@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.polsl.firmakurierska.view.hello_world;
 
 import javafx.geometry.Insets;
@@ -36,10 +32,17 @@ public class PackageDescription {
 
     /**
      * Pokazuje okno ze szczegółami paczki:
+     * – imię i nazwisko klienta
      * – waga paczki
      * – przewijana lista produktów
      */
-    public void show(double wagaPaczki, List<Product> produkty) {
+    public void show(String imieKlienta, String nazwiskoKlienta, double wagaPaczki, List<Product> produkty) {
+        // Karta z imieniem klienta
+        VBox imieBox = createCard("Imię klienta:", imieKlienta);
+
+        // Karta z nazwiskiem klienta
+        VBox nazwiskoBox = createCard("Nazwisko klienta:", nazwiskoKlienta);
+
         // Karta z wagą paczki
         VBox wagaBox = createCard("Waga paczki:", wagaPaczki + " kg");
 
@@ -54,8 +57,13 @@ public class PackageDescription {
         produktyScroll.setFitToWidth(true);
         produktyScroll.setPrefHeight(300);
 
-        // Wszystkie elementy w pionie
-        VBox allFields = new VBox(15, wagaBox, produktyScroll);
+        // Układ wszystkich elementów
+        VBox allFields = new VBox(15,
+            imieBox,
+            nazwiskoBox,
+            wagaBox,
+            produktyScroll
+        );
         allFields.setPadding(new Insets(20));
         allFields.setAlignment(Pos.CENTER);
 
@@ -64,7 +72,7 @@ public class PackageDescription {
         root.setStyle("-fx-background-color: #f8f8f8;");
         BorderPane.setAlignment(allFields, Pos.CENTER);
 
-        Scene scene = new Scene(root, 450, 500);
+        Scene scene = new Scene(root, 450, 600);
         Stage stage = new Stage();
         stage.setTitle("Szczegóły paczki");
         stage.setScene(scene);

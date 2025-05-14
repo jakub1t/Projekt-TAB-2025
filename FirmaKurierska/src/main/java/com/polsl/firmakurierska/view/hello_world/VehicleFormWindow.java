@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.polsl.firmakurierska.view.hello_world;
 
 import javafx.geometry.Insets;
@@ -18,36 +14,46 @@ public class VehicleFormWindow {
      * Po kliknięciu "Zapisz", wypisuje dane w konsoli i zamyka okno.
      */
     public void show() {
-        TextField typField = new TextField();
-        TextField markaField = new TextField();
-        TextField modelField = new TextField();
-        TextField pojemnoscField = new TextField();
-        TextField numerRejField = new TextField();
+        // Pole na nazwę pojazdu
+        TextField nazwaField = new TextField();
+        nazwaField.setPromptText("np. Ciężarówka X");
 
+        // Pozostałe pola
+        TextField typField       = new TextField();
+        TextField markaField     = new TextField();
+        TextField modelField     = new TextField();
+        TextField pojemnoscField = new TextField();
+        TextField numerRejField  = new TextField();
+
+        // Karty wejściowe
+        VBox nazwaBox    = createInputCard("Nazwa pojazdu:", nazwaField);
         VBox typBox       = createInputCard("Typ pojazdu:", typField);
         VBox markaBox     = createInputCard("Marka:", markaField);
         VBox modelBox     = createInputCard("Model:", modelField);
         VBox pojemnoscBox = createInputCard("Pojemność:", pojemnoscField);
         VBox numerBox     = createInputCard("Numer rejestracyjny:", numerRejField);
 
+        // Przycisk zapisu
         Button saveBtn = new Button("Zapisz pojazd");
         saveBtn.setOnAction(e -> {
             System.out.println("Dodano/edytowano pojazd:");
+            System.out.println("Nazwa: " + nazwaField.getText());
             System.out.println("Typ: " + typField.getText());
             System.out.println("Marka: " + markaField.getText());
             System.out.println("Model: " + modelField.getText());
             System.out.println("Pojemność: " + pojemnoscField.getText());
             System.out.println("Nr rej.: " + numerRejField.getText());
-            // zamknięcie okna
             Stage window = (Stage) saveBtn.getScene().getWindow();
             window.close();
         });
-
         HBox btnBox = new HBox(saveBtn);
         btnBox.setAlignment(Pos.CENTER);
 
+        // Kontener wszystkich elementów
         VBox container = new VBox(15,
-            typBox, markaBox, modelBox, pojemnoscBox, numerBox, btnBox
+            nazwaBox,
+            typBox, markaBox, modelBox, pojemnoscBox, numerBox,
+            btnBox
         );
         container.setPadding(new Insets(20));
         container.setAlignment(Pos.CENTER);
@@ -57,10 +63,14 @@ public class VehicleFormWindow {
 
         Stage stage = new Stage();
         stage.setTitle("Formularz pojazdu");
-        stage.setScene(new Scene(root, 400, 500));
+        // Zwiększona wysokość, by pomieścić dodatkowe pole
+        stage.setScene(new Scene(root, 400, 560));
         stage.show();
     }
 
+    /**
+     * Tworzy kartę wejściową z etykietą i polem
+     */
     private VBox createInputCard(String labelText, Control inputField) {
         Label label = new Label(labelText);
         label.setStyle("-fx-font-weight: bold;");

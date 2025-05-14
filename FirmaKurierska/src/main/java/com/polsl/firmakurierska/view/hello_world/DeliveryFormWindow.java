@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.polsl.firmakurierska.view.hello_world;
 
 import javafx.geometry.Insets;
@@ -10,81 +6,124 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
 import java.util.List;
-import javafx.scene.layout.HBox;
-
 
 public class DeliveryFormWindow {
 
     /**
      * Otwiera formularz dodawania nowej dostawy.
-     * @param availablePackageIds lista dostępnych ID paczek, które można dołączyć
+     * @param availablePackageIds lista dostępnych ID paczek
+     * @param availableVehicleNames lista dostępnych nazw pojazdów
+     * @param availableEmployees lista dostępnych imion i nazwisk pracowników
      */
-    public void show(List<String> availablePackageIds) {
-        // Pola podstawowe
-        TextField idField = new TextField();
+    public void show(
+            List<String> availablePackageIds,
+            List<String> availableVehicleNames,
+            List<String> availableEmployees
+    ) {
+        // Pole na nazwę dostawy
+        TextField nameField = new TextField();
+        nameField.setPromptText("np. Dostawa 123");
+        VBox nameBox = createInputCard("Nazwa dostawy:", nameField);
+
+        // Daty
         DatePicker departurePicker = new DatePicker();
         DatePicker duePicker = new DatePicker();
+        VBox departureBox = createInputCard("Data wyruszenia:", departurePicker);
+        VBox dueBox = createInputCard("Termin:", duePicker);
+
+        // Punkty A i B
         TextField pointAField = new TextField();
         TextField pointBField = new TextField();
+        VBox pointABox = createInputCard("Punkt A:", pointAField);
+        VBox pointBBox = createInputCard("Punkt B:", pointBField);
 
-        VBox idBox        = createInputCard("ID dostawy:", idField);
-        VBox departureBox = createInputCard("Data wyruszenia:", departurePicker);
-        VBox dueBox       = createInputCard("Termin:", duePicker);
-        VBox pointABox    = createInputCard("Punkt A:", pointAField);
-        VBox pointBBox    = createInputCard("Punkt B:", pointBField);
-
-        // Lista dostępnych paczek (checkboxy)
-        Label chooseLabel = new Label("Wybierz paczki do dostawy:");
-        chooseLabel.setStyle("-fx-font-weight: bold;");
-        VBox checkBoxContainer = new VBox(5);
-        checkBoxContainer.setPadding(new Insets(5));
+        // Checkboxy paczek (wielokrotny wybór)
+        Label pkgLabel = new Label("Wybierz paczki do dostawy:");
+        pkgLabel.setStyle("-fx-font-weight: bold;");
+        VBox pkgContainer = new VBox(5);
         for (String pid : availablePackageIds) {
-            checkBoxContainer.getChildren().add(new CheckBox(pid));
+            CheckBox cb = new CheckBox(pid);
+            cb.setPrefHeight(25);
+            pkgContainer.getChildren().add(cb);
         }
-        ScrollPane packagesScroll = new ScrollPane(checkBoxContainer);
-        packagesScroll.setFitToWidth(true);
-        packagesScroll.setPrefHeight(150);
+        ScrollPane pkgScroll = new ScrollPane(pkgContainer);
+        pkgScroll.setFitToWidth(true);
+        pkgScroll.setPrefHeight(120);
+
+        // RadioButtons pojazdów (pojedynczy wybór)
+        Label vehLabel = new Label("Wybierz pojazd:");
+        vehLabel.setStyle("-fx-font-weight: bold;");
+        ToggleGroup vehGroup = new ToggleGroup();
+        VBox vehContainer = new VBox(5);
+        for (String v : availableVehicleNames) {
+            RadioButton rb = new RadioButton(v);
+            rb.setToggleGroup(vehGroup);
+            rb.setPrefHeight(25);
+            vehContainer.getChildren().add(rb);
+        }
+        ScrollPane vehScroll = new ScrollPane(vehContainer);
+        vehScroll.setFitToWidth(true);
+        vehScroll.setPrefHeight(120);
+
+        // RadioButtons pracowników (pojedynczy wybór)
+        Label empLabel = new Label("Wybierz pracownika:");
+        empLabel.setStyle("-fx-font-weight: bold;");
+        ToggleGroup empGroup = new ToggleGroup();
+        VBox empContainer = new VBox(5);
+        for (String emp : availableEmployees) {
+            RadioButton rb = new RadioButton(emp);
+            rb.setToggleGroup(empGroup);
+            rb.setPrefHeight(25);
+            empContainer.getChildren().add(rb);
+        }
+        ScrollPane empScroll = new ScrollPane(empContainer);
+        empScroll.setFitToWidth(true);
+        empScroll.setPrefHeight(120);
 
         // Przycisk zapisu
         Button saveBtn = new Button("Zapisz dostawę");
         saveBtn.setOnAction(e -> {
             // Zbieramy zaznaczone paczki
-            List<String> selected = new ArrayList<>();
-            for (var node : checkBoxContainer.getChildren()) {
-                if (node instanceof CheckBox cb && cb.isSelected()) {
-                    selected.add(cb.getText());
-                }
-            }
+            List<String> selectedPkgs = new ArrayList<>();
+            pkgContainer.getChildren().forEach(node -> {
+                if (node instanceof CheckBox cb && cb.isSelected()) selectedPkgs.add(cb.getText());
+            });
+            // Zbieramy wybrany pojazd
+            RadioButton selectedVeh = (RadioButton) vehGroup.getSelectedToggle();
+            String veh = selectedVeh != null ? selectedVeh.getText() : "";
+            // Zbieramy wybranego pracownika
+            RadioButton selectedEmp = (RadioButton) empGroup.getSelectedToggle();
+            String emp = selectedEmp != null ? selectedEmp.getText() : "";
 
-            // Wyświetlamy lub zapisujemy
             System.out.println("Nowa dostawa:");
-            System.out.println("ID: " + idField.getText());
+            System.out.println("Nazwa: " + nameField.getText());
             System.out.println("Data wyruszenia: " + departurePicker.getValue());
             System.out.println("Termin: " + duePicker.getValue());
             System.out.println("Punkt A: " + pointAField.getText());
             System.out.println("Punkt B: " + pointBField.getText());
-            System.out.println("Dołączone paczki: " + selected);
+            System.out.println("Paczki: " + selectedPkgs);
+            System.out.println("Pojazd: " + veh);
+            System.out.println("Pracownik: " + emp);
 
-            // Zamknięcie okna
             ((Stage) saveBtn.getScene().getWindow()).close();
         });
         HBox btnBox = new HBox(saveBtn);
         btnBox.setAlignment(Pos.CENTER);
         btnBox.setPadding(new Insets(10, 0, 0, 0));
 
-        // Cały układ
+        // Główny kontener
         VBox container = new VBox(12,
-            idBox,
-            departureBox,
-            dueBox,
-            pointABox,
-            pointBBox,
-            chooseLabel,
-            packagesScroll,
+            nameBox,
+            departureBox, dueBox,
+            pointABox, pointBBox,
+            pkgLabel, pkgScroll,
+            vehLabel, vehScroll,
+            empLabel, empScroll,
             btnBox
         );
         container.setPadding(new Insets(20));
@@ -95,7 +134,7 @@ public class DeliveryFormWindow {
 
         Stage stage = new Stage();
         stage.setTitle("Formularz dostawy");
-        stage.setScene(new Scene(root, 400, 550));
+        stage.setScene(new Scene(root, 400, 900));
         stage.show();
     }
 

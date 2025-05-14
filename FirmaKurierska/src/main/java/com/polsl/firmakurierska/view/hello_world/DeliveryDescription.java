@@ -1,55 +1,80 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.polsl.firmakurierska.view.hello_world;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+
+import java.util.List;
 
 public class DeliveryDescription {
 
     /**
      * Pokazuje okno ze szczegółami dostawy:
-     * – id_dostawy
+     * – nazwa dostawy
+     * – imię pracownika
+     * – nazwisko pracownika
+     * – nazwa auta
      * – data wyruszenia
      * – termin
      * – punkt A
      * – punkt B
-     * – lista dołączonych paczek
+     * – lista dołączonych paczek (przewijana)
      */
-    public void show(String idDostawy,
+    public void show(String nazwaDostawy,
+                     String imiePracownika,
+                     String nazwiskoPracownika,
+                     String nazwaAuta,
                      String dataWyruszenia,
                      String termin,
                      String punktA,
                      String punktB,
-                     java.util.List<String> attachedPackageIds) {
+                     List<String> attachedPackageIds) {
 
-        VBox idBox        = createCard("ID dostawy:", idDostawy);
+        // Karta z nazwą dostawy
+        VBox nazwaBox = createCard("Nazwa dostawy:", nazwaDostawy);
+        // Karta z imieniem pracownika
+        VBox imieBox = createCard("Imię pracownika:", imiePracownika);
+        // Karta z nazwiskiem pracownika
+        VBox nazwiskoBox = createCard("Nazwisko pracownika:", nazwiskoPracownika);
+        // Karta z nazwą auta
+        VBox autoBox = createCard("Nazwa auta:", nazwaAuta);
+        // Karta z datą wyruszenia
         VBox departureBox = createCard("Data wyruszenia:", dataWyruszenia);
-        VBox dueBox       = createCard("Termin:", termin);
-        VBox pointABox    = createCard("Punkt A:", punktA);
-        VBox pointBBox    = createCard("Punkt B:", punktB);
+        // Karta z terminem dostawy
+        VBox dueBox = createCard("Termin:", termin);
+        // Karta z punktem A
+        VBox pointABox = createCard("Punkt A:", punktA);
+        // Karta z punktem B
+        VBox pointBBox = createCard("Punkt B:", punktB);
 
-        VBox packagesBox = createCard(
-            "Paczki w dostawie:",
-            attachedPackageIds.isEmpty()
-                ? "brak"
-                : String.join(", ", attachedPackageIds)
-        );
+        // Lista paczek w scrollu
+        Label packagesLabel = new Label("Paczki w dostawie:");
+        packagesLabel.setStyle("-fx-font-weight: bold;");
+        VBox packagesList = new VBox(5);
+        for (String pid : attachedPackageIds) {
+            packagesList.getChildren().add(new Label(pid));
+        }
+        ScrollPane packagesScroll = new ScrollPane(packagesList);
+        packagesScroll.setFitToWidth(true);
+        packagesScroll.setPrefHeight(120);
 
+        // Zbiór wszystkich pól
         VBox allFields = new VBox(15,
-            idBox,
+            nazwaBox,
+            imieBox,
+            nazwiskoBox,
+            autoBox,
             departureBox,
             dueBox,
             pointABox,
             pointBBox,
-            packagesBox
+            packagesLabel,
+            packagesScroll
         );
         allFields.setPadding(new Insets(20));
         allFields.setAlignment(Pos.CENTER);
@@ -58,13 +83,17 @@ public class DeliveryDescription {
         root.setStyle("-fx-background-color: #f8f8f8;");
         BorderPane.setAlignment(allFields, Pos.CENTER);
 
-        Scene scene = new Scene(root, 400, 450);
+        // Zwiększona wysokość sceny by uwzględnić dodatkowe pola
+        Scene scene = new Scene(root, 400, 800);
         Stage stage = new Stage();
         stage.setTitle("Szczegóły dostawy");
         stage.setScene(scene);
         stage.show();
     }
 
+    /**
+     * Tworzy prostą kartę z etykietą i wartością
+     */
     private VBox createCard(String labelText, String valueText) {
         Label label = new Label(labelText);
         label.setStyle("-fx-font-weight: bold;");
@@ -82,4 +111,3 @@ public class DeliveryDescription {
         return box;
     }
 }
-
