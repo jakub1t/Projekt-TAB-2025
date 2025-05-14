@@ -10,20 +10,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.http.ResponseEntity;
 
-import com.polsl.firmakurierska.controller.DostawaController;
-import com.polsl.firmakurierska.controller.KlientController;
-import com.polsl.firmakurierska.controller.KontoController;
-import com.polsl.firmakurierska.controller.PaczkaController;
-import com.polsl.firmakurierska.controller.PojazdController;
-import com.polsl.firmakurierska.controller.PracownikController;
-import com.polsl.firmakurierska.controller.PrawoJazdyController;
-import com.polsl.firmakurierska.controller.ProducentController;
-import com.polsl.firmakurierska.controller.ProduktController;
-import com.polsl.firmakurierska.controller.StanowiskoController;
-import com.polsl.firmakurierska.dto.PracownikDTO;
-import com.polsl.firmakurierska.dto.PrawoJazdyDTO;
+import com.polsl.firmakurierska.controller.*;
+import com.polsl.firmakurierska.dto.*;
+
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.model.Konto;
+import com.polsl.firmakurierska.model.Pojazd;
 import com.polsl.firmakurierska.model.Stanowisko;
 
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -48,15 +40,16 @@ public class FirmaKurierskaApplication implements CommandLineRunner {
     @Autowired
     private PojazdController pojazdController;
     @Autowired
-    private KlientController klientController;
-    @Autowired
     private DostawaController dostawaController;
     @Autowired
     private PaczkaController paczkaController;
+
+    /*@Autowired
+    private KlientController klientController;
     @Autowired
     private ProducentController producentController;
     @Autowired
-    private ProduktController produktController;
+    private ProduktController produktController;*/
 
 	public static void main(String[] args) {
 		// SpringApplication.run(FirmaKurierskaApplication.class, args);
@@ -71,7 +64,9 @@ public class FirmaKurierskaApplication implements CommandLineRunner {
 		// List<Konto> accounts = kontoController.getAllKonta();
 		List<Konto> accounts = getAllAccounts();
 		// Print ids to console
+		System.out.println("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
 		accounts.forEach(account -> System.out.println(account.getIdKonta()));
+		System.out.println("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
 
 		// ---------------------------------------------------------------------- //
 		// Here some tests for database methods:
@@ -79,18 +74,22 @@ public class FirmaKurierskaApplication implements CommandLineRunner {
 		Konto konto = getAccountByLogin("user1");
 		System.out.println(konto.getIdKonta());
 
-		List<String> data = getDataForAccount(konto.getIdKonta().toString());
+		List<String> data = getAccountDataForAdminPanel(konto.getIdKonta().toString());
 
+		System.out.println("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
 		System.out.println("Imię: " + data.get(0));
 		System.out.println("Nazwisko: " + data.get(1));
 		System.out.println("PESEL: " + data.get(2));
 		System.out.println("Stanowisko: " + data.get(3));
 		System.out.println("Kategoria prawa jazdy: " + data.get(4));
+		System.out.println("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
 
 		// deleteAccountByLogin("user2"); // Nie działa
 
 		accounts = getAllAccounts();
+		System.out.println("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
 		accounts.forEach(account -> System.out.println(account.getIdKonta()));
+		System.out.println("OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
 
 		// ---------------------------------------------------------------------- //
     }
@@ -112,7 +111,7 @@ public class FirmaKurierskaApplication implements CommandLineRunner {
 	 * @param accountId - id of the account that the data is collected.
 	 * @return - account data in a list.
 	 */
-	public List<String> getDataForAccount(String accountId) {
+	public List<String> getAccountDataForAdminPanel(String accountId) {
 		List<String> accountData = new ArrayList<>();
 		int accountIdAsInt = 0;
 		try {
@@ -140,6 +139,36 @@ public class FirmaKurierskaApplication implements CommandLineRunner {
 		accountData.add(prawoJazdy.getKategoria());
 
 		return accountData;
+	}
+
+	public List<PaczkaDTO> getPaczkiForAccount(String accountId) {
+		List<PaczkaDTO> paczki = new ArrayList<>();
+
+		paczki = paczkaController.getAllPaczki();
+		paczki.forEach(paczka -> 
+			{
+				System.out.println(paczka.getWagaPaczki());
+				System.out.println(paczka.getIdPaczki());
+			}
+		);
+
+		return paczki;
+	}
+
+	public List<DostawaDTO> getDostawyForAccount(String accountId) {
+		List<DostawaDTO> dostawy = new ArrayList<>();
+
+		dostawaController.getAllDostawy().forEach(dostawy::add);
+
+		return dostawy;
+	}
+
+	public List<Pojazd> getPojazdyForAccount(String accountId) {
+		List<Pojazd> pojazdy = new ArrayList<>();
+
+		pojazdController.getAll().forEach(pojazdy::add);
+
+		return pojazdy;
 	}
 
 }

@@ -24,7 +24,7 @@ public class KontoController {
     @GetMapping("/all")
     public List<Konto> getAllKonta() {
         List<Konto> accounts = new ArrayList<>();
-        kontoRepository.findAll().forEach(accounts::add);;
+        kontoRepository.findAll().forEach(accounts::add);
 
         return accounts;
     }
