@@ -97,7 +97,7 @@ public class Hello_world extends Application {
 
             HttpURLConnection konnect = (HttpURLConnection)obj.openConnection();
 
-            int responseCode = 0;
+            //int responseCode = 0;
 
             konnect.setRequestMethod("POST");
             konnect.setDoOutput(true);
@@ -108,7 +108,7 @@ public class Hello_world extends Application {
                 os.flush();
             }
 
-            responseCode = konnect.getResponseCode();
+            //responseCode = konnect.getResponseCode();
 
             StringBuilder response = new StringBuilder();
 
@@ -123,7 +123,7 @@ public class Hello_world extends Application {
                 }
                 System.out.println("Response: " + response.toString());
 
-            if (responseCode == 200) {
+            if (response.toString().equals("Zalogowano pomyślnie")) {
                 success = true;
             }
 
@@ -138,7 +138,8 @@ public class Hello_world extends Application {
 
     }
 
-    //private int httpFindAccType(String nick) {
+    private int httpFindAccType(String nick) {
 
-    //}
+        return 0;
+    }
 }
