@@ -42,7 +42,7 @@ public class KontoController {
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody Konto konto) {
+    public String loginp(@RequestBody Konto konto) {
         boolean correct = kontoRepository.findByLoginAndHaslo(konto.getLogin(), konto.getHaslo()).isPresent();
         return correct ? "Zalogowano pomyślnie" : "Błędny login lub hasło";
     }
