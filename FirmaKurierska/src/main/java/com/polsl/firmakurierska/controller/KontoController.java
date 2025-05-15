@@ -41,6 +41,12 @@ public class KontoController {
                 .orElseThrow(() -> new ResourceNotFoundException("Konto o loginie '" + login + "' nie istnieje"));
     }
 
+    @PostMapping("/login")
+    public String loginp(@RequestBody Konto konto) {
+        boolean correct = kontoRepository.findByLoginAndHaslo(konto.getLogin(), konto.getHaslo()).isPresent();
+        return correct ? "Zalogowano pomyślnie" : "Błędny login lub hasło";
+    }
+
     @PostMapping
     public Konto login(@RequestBody Konto konto) {
         if (konto.getLogin() == null || konto.getHaslo() == null) {
