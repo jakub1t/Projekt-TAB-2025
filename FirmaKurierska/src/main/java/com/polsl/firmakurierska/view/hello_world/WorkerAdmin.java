@@ -9,6 +9,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class WorkerAdmin extends Application {
@@ -26,7 +27,7 @@ public class WorkerAdmin extends Application {
         paczkiScroll.setFitToWidth(true);
         paczkiScroll.setPrefHeight(300);
 
-        final String[] paczkiArray = { "Paczka 1", "Paczka 2", "Paczka 3" };
+        final String[] paczkiArray = {"Paczka 1", "Paczka 2", "Paczka 3"};
         for (String name : paczkiArray) {
             paczkiList.getChildren().add(createPackageItem(name));
         }
@@ -42,7 +43,7 @@ public class WorkerAdmin extends Application {
         pojazdyScroll.setFitToWidth(true);
         pojazdyScroll.setPrefHeight(300);
 
-        final String[] pojazdyArray = { "Pojazd A", "Pojazd B", "Pojazd C" };
+        final String[] pojazdyArray = {"Pojazd A", "Pojazd B", "Pojazd C"};
         for (String name : pojazdyArray) {
             pojazdyList.getChildren().add(createVehicleItem(name));
         }
@@ -58,18 +59,18 @@ public class WorkerAdmin extends Application {
         dostawyScroll.setFitToWidth(true);
         dostawyScroll.setPrefHeight(300);
 
-        final String[] dostawyArray = { "Dostawa 1", "Dostawa 2", "Dostawa 3" };
+        final String[] dostawyArray = {"Dostawa 1", "Dostawa 2", "Dostawa 3"};
         for (String name : dostawyArray) {
             dostawyList.getChildren().add(createDeliveryItem(name));
         }
-        final String[] employeesArray = { "Adam Kowalski", "Beata Nowak", "Celina Wiśniewska" };
+        final String[] employeesArray = {"Adam Kowalski", "Beata Nowak", "Celina Wiśniewska"};
 
         Button dodajDostaweBtn = new Button("Dodaj dostawę");
         dodajDostaweBtn.setOnAction(e ->
             new DeliveryFormWindow().show(
-                List.of(paczkiArray),
-                List.of(pojazdyArray),
-                List.of(employeesArray)
+                Arrays.asList(paczkiArray),
+                Arrays.asList(pojazdyArray),
+                Arrays.asList(employeesArray)
             )
         );
         VBox dostawyCol = buildColumn("Dostawy", dostawyScroll, dodajDostaweBtn, "#f4f4f4");
@@ -186,7 +187,7 @@ public class WorkerAdmin extends Application {
                 "Nowak",
                 "Samochód X",
                 "2025-04-17",
-                "2025-04-20",
+                "12:00",
                 "Magazyn A",
                 "Magazyn B",
                 List.of("Paczka 1", "Paczka 2")

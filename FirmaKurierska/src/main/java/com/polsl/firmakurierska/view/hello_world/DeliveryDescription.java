@@ -19,8 +19,8 @@ public class DeliveryDescription {
      * – imię pracownika
      * – nazwisko pracownika
      * – nazwa auta
-     * – data wyruszenia
-     * – termin
+     * – data
+     * – godzina
      * – punkt A
      * – punkt B
      * – lista dołączonych paczek (przewijana)
@@ -29,8 +29,8 @@ public class DeliveryDescription {
                      String imiePracownika,
                      String nazwiskoPracownika,
                      String nazwaAuta,
-                     String dataWyruszenia,
-                     String termin,
+                     String data,
+                     String godzina,
                      String punktA,
                      String punktB,
                      List<String> attachedPackageIds) {
@@ -43,10 +43,10 @@ public class DeliveryDescription {
         VBox nazwiskoBox = createCard("Nazwisko pracownika:", nazwiskoPracownika);
         // Karta z nazwą auta
         VBox autoBox = createCard("Nazwa auta:", nazwaAuta);
-        // Karta z datą wyruszenia
-        VBox departureBox = createCard("Data wyruszenia:", dataWyruszenia);
-        // Karta z terminem dostawy
-        VBox dueBox = createCard("Termin:", termin);
+        // Karta z datą
+        VBox dateBox = createCard("Data:", data);
+        // Karta z godziną
+        VBox timeBox = createCard("Godzina:", godzina);
         // Karta z punktem A
         VBox pointABox = createCard("Punkt A:", punktA);
         // Karta z punktem B
@@ -69,8 +69,8 @@ public class DeliveryDescription {
             imieBox,
             nazwiskoBox,
             autoBox,
-            departureBox,
-            dueBox,
+            dateBox,
+            timeBox,
             pointABox,
             pointBBox,
             packagesLabel,
@@ -83,7 +83,7 @@ public class DeliveryDescription {
         root.setStyle("-fx-background-color: #f8f8f8;");
         BorderPane.setAlignment(allFields, Pos.CENTER);
 
-        // Zwiększona wysokość sceny by uwzględnić dodatkowe pola
+        // Dostosowana wysokość sceny do nowej zawartości
         Scene scene = new Scene(root, 400, 800);
         Stage stage = new Stage();
         stage.setTitle("Szczegóły dostawy");
@@ -101,13 +101,13 @@ public class DeliveryDescription {
 
         VBox box = new VBox(5, label, value);
         box.setPadding(new Insets(10));
-        box.setStyle("""
-            -fx-background-color: white;
-            -fx-border-color: #dddddd;
-            -fx-border-radius: 8;
-            -fx-background-radius: 8;
-            -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);
-        """);
+        box.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-border-color: #dddddd;" +
+            "-fx-border-radius: 8;" +
+            "-fx-background-radius: 8;" +
+            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
+        );
         return box;
     }
 }
