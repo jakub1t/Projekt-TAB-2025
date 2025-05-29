@@ -18,7 +18,7 @@ public class Hello_world extends Application {
     @Override
     public void start(Stage stage) {
 
-        Image firmaLogo = new Image("/Placeholder_logo_v1.png", 300, 150, true, false);
+        Image firmaLogo = new Image(getClass().getResource("Placeholder_logo_v1.png").toExternalForm(), 300, 150, true, false);
         ImageView logo = new ImageView(firmaLogo);
 
         MFXTextField nick = new MFXTextField();
