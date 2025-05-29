@@ -30,11 +30,14 @@ public class DeliveryFormWindow {
         nameField.setPromptText("np. Dostawa 123");
         VBox nameBox = createInputCard("Nazwa dostawy:", nameField);
 
-        // Daty
-        DatePicker departurePicker = new DatePicker();
-        DatePicker duePicker = new DatePicker();
-        VBox departureBox = createInputCard("Data wyruszenia:", departurePicker);
-        VBox dueBox = createInputCard("Termin:", duePicker);
+        // Data
+        DatePicker datePicker = new DatePicker();
+        VBox dateBox = createInputCard("Data:", datePicker);
+
+        // Godzina
+        TextField timeField = new TextField();
+        timeField.setPromptText("np. 14:30");
+        VBox timeBox = createInputCard("Godzina:", timeField);
 
         // Punkty A i B
         TextField pointAField = new TextField();
@@ -88,22 +91,24 @@ public class DeliveryFormWindow {
         // Przycisk zapisu
         Button saveBtn = new Button("Zapisz dostawę");
         saveBtn.setOnAction(e -> {
-            // Zbieramy zaznaczone paczki
+            // Zbieramy dane
+            String name = nameField.getText();
+            String date = datePicker.getValue() != null ? datePicker.getValue().toString() : "";
+            String time = timeField.getText();
+
             List<String> selectedPkgs = new ArrayList<>();
             pkgContainer.getChildren().forEach(node -> {
                 if (node instanceof CheckBox cb && cb.isSelected()) selectedPkgs.add(cb.getText());
             });
-            // Zbieramy wybrany pojazd
             RadioButton selectedVeh = (RadioButton) vehGroup.getSelectedToggle();
             String veh = selectedVeh != null ? selectedVeh.getText() : "";
-            // Zbieramy wybranego pracownika
             RadioButton selectedEmp = (RadioButton) empGroup.getSelectedToggle();
             String emp = selectedEmp != null ? selectedEmp.getText() : "";
 
             System.out.println("Nowa dostawa:");
-            System.out.println("Nazwa: " + nameField.getText());
-            System.out.println("Data wyruszenia: " + departurePicker.getValue());
-            System.out.println("Termin: " + duePicker.getValue());
+            System.out.println("Nazwa: " + name);
+            System.out.println("Data: " + date);
+            System.out.println("Godzina: " + time);
             System.out.println("Punkt A: " + pointAField.getText());
             System.out.println("Punkt B: " + pointBField.getText());
             System.out.println("Paczki: " + selectedPkgs);
@@ -119,7 +124,8 @@ public class DeliveryFormWindow {
         // Główny kontener
         VBox container = new VBox(12,
             nameBox,
-            departureBox, dueBox,
+            dateBox,
+            timeBox,
             pointABox, pointBBox,
             pkgLabel, pkgScroll,
             vehLabel, vehScroll,
@@ -134,7 +140,7 @@ public class DeliveryFormWindow {
 
         Stage stage = new Stage();
         stage.setTitle("Formularz dostawy");
-        stage.setScene(new Scene(root, 400, 900));
+        stage.setScene(new Scene(root, 400, 950));
         stage.show();
     }
 
@@ -143,13 +149,13 @@ public class DeliveryFormWindow {
         label.setStyle("-fx-font-weight: bold;");
         VBox box = new VBox(5, label, inputField);
         box.setPadding(new Insets(10));
-        box.setStyle("""
-            -fx-background-color: white;
-            -fx-border-color: #dddddd;
-            -fx-border-radius: 8;
-            -fx-background-radius: 8;
-            -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);
-        """);
+        box.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-border-color: #dddddd;" +
+            "-fx-border-radius: 8;" +
+            "-fx-background-radius: 8;" +
+            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
+        );
         return box;
     }
 }
