@@ -13,6 +13,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
+
 import io.github.palexdev.materialfx.controls.MFXButton;
 import io.github.palexdev.materialfx.controls.MFXPasswordField;
 import io.github.palexdev.materialfx.controls.MFXTextField;
@@ -61,9 +64,9 @@ public class Hello_world extends Application {
                     System.out.println(ex.toString());
                     ex.printStackTrace();
                 }
-                if (accType == 0) new AdminPanel().start(new Stage());
-                else if (accType == 1) new WorkerAdmin().start(new Stage());
-                else if (accType == 2) new WorkerWindow().start(new Stage());
+                if (accType == 1) new AdminPanel().start(new Stage());
+                else if (accType == 2) new WorkerAdmin().start(new Stage());
+                else if (accType == 3) new WorkerWindow().start(new Stage());
                 else System.out.println("Failed to login...");
             }
 
@@ -78,9 +81,6 @@ public class Hello_world extends Application {
             if(nick.getText().equals("k")) {
                 new WorkerWindow().start(new Stage());
             }
-
-            
-            
         });
         loguj.setPrefWidth(200);    // szerokość przycisku (opcjonalnie)
 
@@ -148,11 +148,11 @@ public class Hello_world extends Application {
     }
 
     private int httpFindAccType(String nick) throws URISyntaxException {
-        // find konto_id by login
-        // find pracownik by konto_id
-        // find stanowisko_nazwa
+        // find konto_id by login z tabeli Konto
+        // find stanowisko_id by konto_id z tabeli Pracownik
 
-        int accType = 0;
+        String accType = "";
+        String accID = "";
 
         String bazaUrl = "http://localhost:8080/konto/getid?login=" + nick;
 
@@ -172,7 +172,8 @@ public class Hello_world extends Application {
                     response.append(line); // Adds every line to response till the end of file.
                 }
             }
-            System.out.println("Account ID: " + response.toString());
+            accID = response.toString();
+            System.out.println("Account ID: " + accID);
             konn.disconnect();
         }
         catch (IOException e) {
@@ -181,6 +182,73 @@ public class Hello_world extends Application {
             e.printStackTrace();
         }
 
-        return accType;
+        bazaUrl = "http://localhost:8080/pracownik/" + accID;
+
+        try {
+            URL obj = new URI(bazaUrl).toURL();
+
+            HttpURLConnection konn = (HttpURLConnection)obj.openConnection();
+
+            konn.setRequestMethod("POST");
+            konn.setDoOutput(true);
+
+            StringBuilder response = new StringBuilder();
+            try (
+                BufferedReader reader = new BufferedReader( new InputStreamReader( konn.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line); // Adds every line to response till the end of file.
+                }
+            }
+            String tempJSON = response.toString();
+            System.out.println("***********************************");
+            System.out.println("Pracownik JSON: " + tempJSON);
+            System.out.println("***********************************");
+
+            try {
+                JSONObject pracownikData = new JSONObject(tempJSON);
+                String links = pracownikData.getString("_links");
+                JSONObject linksData = new JSONObject(links);
+                String stanowisko = linksData.getString("stanowisko");
+                JSONObject stanowiskoData = new JSONObject(stanowisko);
+                String href = stanowiskoData.getString("href");
+
+                System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                System.out.println(href);
+                System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+
+                String[] hrefTokens = href.split("/");
+                boolean stupidFlag = false;
+                for (String t : hrefTokens) {
+                    // System.out.println(t);
+                    if (stupidFlag == true) {
+                        accType = new String(t);
+                        break;
+                    }
+                    if (t.equals("stanowisko")) stupidFlag = true;
+                }
+
+                System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                System.out.println(accType);
+                System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+
+            }
+            catch (JSONException jex) {
+                System.out.println(jex.toString());
+                jex.printStackTrace();
+            }
+
+            konn.disconnect();
+        }
+        catch (IOException e) {
+
+            System.out.println(e.toString());
+            e.printStackTrace();
+        }
+
+        if (accType.equals("1") || accType.equals("2") || accType.equals("3")) 
+            return Integer.parseInt(accType);
+        else
+            return -1;
     }
 }

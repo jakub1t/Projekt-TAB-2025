@@ -41,7 +41,7 @@ public class PracownikController {
                 .collect(Collectors.toList());
     }
  
-    @GetMapping("/{id}")
+    @PostMapping("/{id}")
     public ResponseEntity<PracownikDTO> getPracownikById(@PathVariable String id) {
         int pid;
         try {

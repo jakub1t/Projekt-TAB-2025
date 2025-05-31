@@ -11,11 +11,9 @@ INSERT INTO producent (nazwa_producenta) VALUES ('Lenovo');
 INSERT INTO producent (nazwa_producenta) VALUES ('Asus');
 
 -- Stanowisko
-INSERT INTO stanowisko (nazwa_stanowiska) VALUES ('Kierowca');
-INSERT INTO stanowisko (nazwa_stanowiska) VALUES ('Magazynier');
-INSERT INTO stanowisko (nazwa_stanowiska) VALUES ('Kurier');
-INSERT INTO stanowisko (nazwa_stanowiska) VALUES ('Pracownik biurowy');
+INSERT INTO stanowisko (nazwa_stanowiska) VALUES ('Admin');
 INSERT INTO stanowisko (nazwa_stanowiska) VALUES ('Manager');
+INSERT INTO stanowisko (nazwa_stanowiska) VALUES ('Kierowca');
 
 -- Prawojazdy
 INSERT INTO prawojazdy (kategoria) VALUES ('B');
@@ -45,15 +43,15 @@ INSERT INTO konto (haslo, login) VALUES ('adminpass', 'admin2');
 
 -- Pracownik
 INSERT INTO pracownik (konto_id, stanowisko_id, imie, nazwisko, pesel) 
-VALUES (1, 1, 'Jan', 'Kowalski', '12345678901');  -- Kierowca
+VALUES (1, 3, 'Jan', 'Kowalski', '12345678901');  -- Kierowca
 INSERT INTO pracownik (konto_id, stanowisko_id, imie, nazwisko, pesel) 
-VALUES (2, 2, 'Anna', 'Nowak', '98765432109');  -- Magazynier
+VALUES (2, 3, 'Anna', 'Nowak', '98765432109');  -- Kierowca
 INSERT INTO pracownik (konto_id, stanowisko_id, imie, nazwisko, pesel) 
-VALUES (3, 3, 'Marek', 'Wiśniewski', '45612378901');  -- Kurjer
+VALUES (3, 3, 'Marek', 'Wiśniewski', '45612378901');  -- Kierowca
 INSERT INTO pracownik (konto_id, stanowisko_id, imie, nazwisko, pesel) 
-VALUES (4, 4, 'Katarzyna', 'Zielińska', '32165498701');  -- Pracownik biurowy
+VALUES (4, 1, 'Katarzyna', 'Zielińska', '32165498701');  -- Administrator
 INSERT INTO pracownik (konto_id, stanowisko_id, imie, nazwisko, pesel) 
-VALUES (5, 5, 'Piotr', 'Wójcik', '65498732109');  -- Manager
+VALUES (5, 2, 'Piotr', 'Wójcik', '65498732109');  -- Manager
 
 -- Dostawa
 INSERT INTO dostawa (data_wyruszenia, pojazd_id, pracownik_id, termin, punkta, punktb, status)
