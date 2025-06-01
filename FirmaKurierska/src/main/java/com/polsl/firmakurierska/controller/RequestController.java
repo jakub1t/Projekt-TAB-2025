@@ -46,18 +46,17 @@ public class RequestController {
     };
 
     /**
-     * Method for sending HTTP requests
+     * Method for sending HTTP requests with JSON data
      * <p>If there is no response, it returns "NRP" by default</p>
      * @param data
      * @return Response string
      * @throws BadRequestException
      */
-    public String sendReq(String data) throws BadRequestException {
+    public String sendJsonReq(String data) throws BadRequestException {
         String responseString = "NRP";
         if (data == null) {
             throw new BadRequestException("No data to send!");
         }
-
 
         try {
             URL obj = new URI(this.destURL).toURL();
@@ -72,6 +71,53 @@ public class RequestController {
                 os.writeBytes(data);
                 os.flush();
             }
+
+            int httpCode = konnect.getResponseCode();
+
+            if (httpCode == 200) {
+                StringBuilder response = new StringBuilder();
+
+                    try (
+                        BufferedReader reader = new BufferedReader( new InputStreamReader( konnect.getInputStream()))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            response.append(line);
+                        }
+                    }
+                //System.out.println("Response: " + response.toString());
+                responseString = response.toString();
+            }
+            konnect.disconnect();
+        }
+        catch (IOException e) {
+            System.out.println(e.toString());
+            e.printStackTrace();
+            responseString = "NRP";
+        }
+        catch (URISyntaxException ex) {
+            System.out.println(ex.toString());
+            ex.printStackTrace();
+            responseString = "NRP";
+        }
+        return responseString;
+    }
+
+    /**
+     * Method for sending HTTP requests with data in URL path
+     * <p>If there is no response, it returns "NRP" by default</p>
+     * @return Response string
+     * @throws BadRequestException
+     */
+    public String sendPathReq() throws BadRequestException {
+        String responseString = "NRP";
+
+        try {
+            URL obj = new URI(this.destURL).toURL();
+
+            HttpURLConnection konnect = (HttpURLConnection)obj.openConnection();
+
+            konnect.setRequestMethod(this.reqMode);
+            konnect.setDoOutput(true);
 
             int httpCode = konnect.getResponseCode();
 
