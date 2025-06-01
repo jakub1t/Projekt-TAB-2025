@@ -1,5 +1,18 @@
 package com.polsl.firmakurierska.view.hello_world;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.polsl.firmakurierska.controller.RequestController;
+import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.model.Konto;
+
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -22,11 +35,27 @@ public class AdminPanel extends Application {
         kontaList = new VBox(5);
         kontaList.setPadding(new Insets(5));
 
-        String[] kontaArray = {"Konto Adama", "Konto Beaty", "Konto Celiny"};
-        // Inicjalne wypełnienie listy
-        for (String kontoName : kontaArray) {
-            kontaList.getChildren().add(createKontoItem(kontoName));
+        List<Konto> accounts = new ArrayList<>();
+
+        accounts = getAllAccounts();
+
+        List<List<String>> workerData = new ArrayList<>();
+        
+        accounts.forEach(account -> {
+            List<String> listData = getWorkerData(account.getIdKonta());
+            workerData.add(listData);
+        });
+
+        System.out.println("[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]");
+        for (List<String> ii : workerData) {
+            System.out.println("******************************************");
+            for (String i : ii) {
+                System.out.println(i);
+            }
         }
+        System.out.println("[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]");
+
+        workerData.forEach(data -> {kontaList.getChildren().add(createKontoItem(data.getFirst()));});
 
         // Pasek wyszukiwania
         TextField searchField = new TextField();
@@ -35,11 +64,12 @@ public class AdminPanel extends Application {
         searchButton.setOnAction(e -> {
             String query = searchField.getText().toLowerCase();
             kontaList.getChildren().clear();
-            for (String kontoName : kontaArray) {
-                if (kontoName.toLowerCase().contains(query)) {
-                    kontaList.getChildren().add(createKontoItem(kontoName));
+
+            workerData.forEach(data -> {
+                if (data.getFirst().toLowerCase().contains(query)) {
+                    kontaList.getChildren().add(createKontoItem(data.getFirst()));
                 }
-            }
+            });
         });
         HBox searchBox = new HBox(5, searchField, searchButton);
         searchBox.setAlignment(Pos.CENTER_LEFT);
@@ -110,5 +140,60 @@ public class AdminPanel extends Application {
 
     public static void main(String[] args) {
         launch(args);
+    }
+
+    private List<Konto> getAllAccounts(){
+        List<Konto> accounts = new ArrayList<>();
+        String response = "";
+
+        // Prepare request to get all accounts from db
+        RequestController rq = new RequestController("/konto/all", 0);
+
+        // Get accounts
+        try {
+            response = rq.sendPathReq();
+        }
+        catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+        }
+
+        // Map JSON string into List<Konto>
+        ObjectMapper mapper = new ObjectMapper();
+
+        try {
+            accounts = mapper.readValue(response, new TypeReference<List<Konto>>(){});
+        }
+        catch (IOException e) {
+            System.out.println(e.toString());
+            e.printStackTrace();
+        }
+
+        return accounts;
+    }
+
+    private List<String> getWorkerData(Integer accountID) {
+        List<String> workerData = new ArrayList<>();
+        String response = "";
+
+        // Prepare request to get all accounts from db
+        RequestController rq = new RequestController("/pracownik/" + accountID, 1);
+
+        response = rq.sendPathReq();
+
+        try {
+            JSONObject jsonData = new JSONObject(response);
+
+            workerData.add(jsonData.getString("imie"));
+            workerData.add(jsonData.getString("nazwisko"));
+            workerData.add(jsonData.getString("pesel"));
+            workerData.add("Stanowisko");
+            workerData.add("Prawo jazdy");
+        }
+        catch (JSONException jex) {
+            System.out.println(jex.toString());
+            jex.printStackTrace();
+        }
+
+        return workerData;
     }
 }
