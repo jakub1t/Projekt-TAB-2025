@@ -4,9 +4,6 @@
 
 package com.polsl.firmakurierska.view.hello_world;
 
-import org.springframework.boot.configurationprocessor.json.JSONException;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
-
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
 
@@ -119,28 +116,7 @@ public class Hello_world extends Application {
             return -1;
         }
 
-        try {
-            JSONObject pracownikDataJSON = new JSONObject(pracownikData);
-            String links = pracownikDataJSON.getString("_links");
-            JSONObject linksData = new JSONObject(links);
-            String stanowisko = linksData.getString("stanowisko");
-            JSONObject stanowiskoData = new JSONObject(stanowisko);
-            String href = stanowiskoData.getString("href");
-
-            String[] hrefTokens = href.split("/");
-            boolean stupidFlag = false;
-            for (String t : hrefTokens) {
-                if (stupidFlag == true) {
-                    accType = new String(t);
-                    break;
-                }
-                if (t.equals("stanowisko")) stupidFlag = true;
-            }
-        }
-        catch (JSONException jex) {
-            System.out.println(jex.toString());
-            jex.printStackTrace();
-        }
+        accType = rq.getStanowisko(pracownikData);
 
 
         if (accType.equals("1") || accType.equals("2") || accType.equals("3")) 

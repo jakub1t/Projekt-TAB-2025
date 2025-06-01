@@ -9,6 +9,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
+
 import com.polsl.firmakurierska.exception.BadRequestException;
 
 /**
@@ -44,6 +47,41 @@ public class RequestController {
 
         destURL = baseURL + destination;
     };
+
+    /**
+     * Method that parses stanowisko ID from JSON
+     * @param jsonData
+     * @return stanowisko_id
+     */
+    public String getStanowisko(String jsonData) {
+
+        String stanowiskoID = "";
+
+        try {
+            JSONObject pracownikDataJSON = new JSONObject(jsonData);
+            String links = pracownikDataJSON.getString("_links");
+            JSONObject linksData = new JSONObject(links);
+            String stanowisko = linksData.getString("stanowisko");
+            JSONObject stanowiskoData = new JSONObject(stanowisko);
+            String href = stanowiskoData.getString("href");
+
+            String[] hrefTokens = href.split("/");
+            boolean stupidFlag = false;
+            for (String t : hrefTokens) {
+                if (stupidFlag == true) {
+                    stanowiskoID = new String(t);
+                    break;
+                }
+                if (t.equals("stanowisko")) stupidFlag = true;
+            }
+        }
+        catch (JSONException jex) {
+            System.out.println(jex.toString());
+            jex.printStackTrace();
+        }
+
+        return stanowiskoID;
+    }
 
     /**
      * Method for sending HTTP requests with JSON data
