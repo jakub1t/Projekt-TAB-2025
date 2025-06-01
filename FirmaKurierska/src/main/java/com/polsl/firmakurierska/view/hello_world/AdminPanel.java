@@ -2,6 +2,7 @@ package com.polsl.firmakurierska.view.hello_world;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.boot.configurationprocessor.json.JSONException;
@@ -55,7 +56,7 @@ public class AdminPanel extends Application {
         }
         System.out.println("[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]");
 
-        workerData.forEach(data -> {kontaList.getChildren().add(createKontoItem(data.getFirst()));});
+        workerData.forEach(data -> {kontaList.getChildren().add(createKontoItem(data));});
 
         // Pasek wyszukiwania
         TextField searchField = new TextField();
@@ -67,7 +68,7 @@ public class AdminPanel extends Application {
 
             workerData.forEach(data -> {
                 if (data.getFirst().toLowerCase().contains(query)) {
-                    kontaList.getChildren().add(createKontoItem(data.getFirst()));
+                    kontaList.getChildren().add(createKontoItem(data));
                 }
             });
         });
@@ -82,7 +83,9 @@ public class AdminPanel extends Application {
         Button dodajKontoButton = new Button("Dodaj konto");
         dodajKontoButton.setOnAction(e -> {
             String name = "Nowe Konto #" + (kontaList.getChildren().size() + 1);
-            kontaList.getChildren().add(createKontoItem(name));
+            kontaList.getChildren().add(createKontoItem(Arrays.asList(
+                "Imię", "Nazwisko", "PESEL", "Stanowisko", "Kategoria prawa jazdy"
+                )));
             new AccountFormWindow().show();
         });
 
@@ -114,13 +117,15 @@ public class AdminPanel extends Application {
         stage.show();
     }
 
-    private HBox createKontoItem(String kontoName) {
+    private HBox createKontoItem(List<String> data) {
+        String kontoName = data.getFirst();
+
         Button kontoButton = new Button(kontoName);
         kontoButton.setPrefWidth(200);
         kontoButton.setOnAction(e -> {
             System.out.println("Naciśnięto " + kontoName);
             new AccountDescription().show(
-                "Adam", "Kowalski", "90010112345", "Administrator", "B2"
+                data.get(0), data.get(1), data.get(2), data.get(3), data.get(4)
             );
         });
 
@@ -180,14 +185,28 @@ public class AdminPanel extends Application {
 
         response = rq.sendPathReq();
 
+        String stanowiskoID = rq.getStanowisko(response);
+
         try {
             JSONObject jsonData = new JSONObject(response);
 
             workerData.add(jsonData.getString("imie"));
             workerData.add(jsonData.getString("nazwisko"));
             workerData.add(jsonData.getString("pesel"));
-            workerData.add("Stanowisko");
-            workerData.add("Prawo jazdy");
+        
+            rq = new RequestController("/stanowisko/" + stanowiskoID, 0);
+
+            response = new String(rq.sendPathReq());
+
+            JSONObject stanowiskoJson = new JSONObject(response);
+            workerData.add(stanowiskoJson.getString("nazwaStanowiska"));
+
+            rq = new RequestController("/prawojazdy/" + accountID, 0);
+
+            response = new String(rq.sendPathReq());
+            
+            JSONObject prawoJazdyJson = new JSONObject(response);
+            workerData.add(prawoJazdyJson.getString("kategoria"));
         }
         catch (JSONException jex) {
             System.out.println(jex.toString());
