@@ -45,6 +45,20 @@ public class DostawaController {
     }
 
 
+    @GetMapping("/pracownik/{id}")
+    public @ResponseBody Iterable<DostawaDTO> getDostawaByPracownikId(@PathVariable String id) {
+        try {
+            Integer did = Integer.parseInt(id);
+            return StreamSupport.stream(dostawaRepository.findByPracownikIdOsoby(did).spliterator(), false)
+                .map(DostawaDTO::new)
+                .collect(Collectors.toList());
+        }
+        catch (NumberFormatException e) {
+            throw new BadRequestException("Nieprawidłowy format ID: '" + id + "'. ID musi być liczbą całkowitą.");
+        }
+    }
+
+
     @PostMapping("/add")
     public ResponseEntity<Object> addDostawa(@RequestBody DostawaDTO dto) {
         try {

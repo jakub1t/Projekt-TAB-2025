@@ -35,10 +35,15 @@ public class KontoController {
                 .orElseThrow(() -> new ResourceNotFoundException("Konto o ID " + id + " nie istnieje"));
     }
 
-    @GetMapping("/login")
-    public Konto getKontoByLogin(@RequestParam String login) {
-        return kontoRepository.findByLogin(login)
-                .orElseThrow(() -> new ResourceNotFoundException("Konto o loginie '" + login + "' nie istnieje"));
+    @PostMapping("/getid")
+    public String getKontoByLogin(@RequestParam String login) {
+        // return kontoRepository.findByLogin(login)
+        //         .orElseThrow(() -> new ResourceNotFoundException("Konto o loginie '" + login + "' nie istnieje"));
+        Konto acc = kontoRepository.findByLogin(login).orElseThrow(
+            () -> new ResourceNotFoundException("Konto o loginie '" + login + "' nie istnieje")
+        );
+
+        return acc.getIdKonta().toString();
     }
 
     @PostMapping("/login")

@@ -1,6 +1,7 @@
 package com.polsl.firmakurierska.repository;
 
 import com.polsl.firmakurierska.model.Dostawa;
+
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,6 +10,8 @@ import java.util.List;
 
 @Repository
 public interface DostawaRepository extends CrudRepository<Dostawa, Integer> {
+
+    List<Dostawa> findByPracownikIdOsoby(Integer pracownikId);
 
     List<Dostawa> findByPunktA(String punktA);
 
