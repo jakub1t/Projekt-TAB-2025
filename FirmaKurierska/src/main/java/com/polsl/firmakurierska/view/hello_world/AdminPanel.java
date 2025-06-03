@@ -47,19 +47,6 @@ public class AdminPanel extends Application {
             workerData.add(listData);
         });
 
-        //////////////////////////////////////////////////////////////////////////////////////
-        //VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//
-        //////////////////////////////////////////////////////////////////////////////////////
-        
-        RequestController rq = new RequestController("/dostawa/pracownik/" + 2, 0);
-
-        String response = rq.sendPathReq();
-        System.err.println(response);
-
-        //////////////////////////////////////////////////////////////////////////////////////
-        // Delete after testing
-        //////////////////////////////////////////////////////////////////////////////////////
-
         workerData.forEach(data -> {kontaList.getChildren().add(createKontoItem(data));});
 
         // Pasek wyszukiwania
@@ -86,7 +73,7 @@ public class AdminPanel extends Application {
 
         Button dodajKontoButton = new Button("Dodaj konto");
         dodajKontoButton.setOnAction(e -> {
-            String name = "Nowe Konto #" + (kontaList.getChildren().size() + 1);
+            // String name = "Nowe Konto #" + (kontaList.getChildren().size() + 1);
             kontaList.getChildren().add(createKontoItem(Arrays.asList(
                 "Imię", "Nazwisko", "PESEL", "Stanowisko", "Kategoria prawa jazdy"
                 )));
@@ -129,7 +116,7 @@ public class AdminPanel extends Application {
         kontoButton.setOnAction(e -> {
             System.out.println("Naciśnięto " + kontoName);
             new AccountDescription().show(
-                data.get(0), data.get(1), data.get(2), data.get(3), data.get(4)
+                data
             );
         });
 
@@ -188,9 +175,10 @@ public class AdminPanel extends Application {
         RequestController rq = new RequestController("/pracownik/" + accountID, 1);
 
         response = rq.sendPathReq();
-        System.err.println(response);
 
         String stanowiskoID = rq.getStanowisko(response);
+
+        List<String> kategoriePrawaJazdy = rq.getKategorie(response);
 
         try {
             JSONObject jsonData = new JSONObject(response);
@@ -198,7 +186,7 @@ public class AdminPanel extends Application {
             workerData.add(jsonData.getString("imie"));
             workerData.add(jsonData.getString("nazwisko"));
             workerData.add(jsonData.getString("pesel"));
-        
+
             rq = new RequestController("/stanowisko/" + stanowiskoID, 0);
 
             response = new String(rq.sendPathReq());
@@ -206,12 +194,20 @@ public class AdminPanel extends Application {
             JSONObject stanowiskoJson = new JSONObject(response);
             workerData.add(stanowiskoJson.getString("nazwaStanowiska"));
 
-            rq = new RequestController("/prawojazdy/" + accountID, 0);
+            kategoriePrawaJazdy.forEach(kategoria -> {
+                RequestController tempRq = new RequestController("/prawojazdy/" + kategoria, 0);
 
-            response = new String(rq.sendPathReq());
-            
-            JSONObject prawoJazdyJson = new JSONObject(response);
-            workerData.add(prawoJazdyJson.getString("kategoria"));
+                String tempResponse = new String(tempRq.sendPathReq());
+                
+                try {
+                    JSONObject prawoJazdyJson = new JSONObject(tempResponse);
+                    workerData.add(prawoJazdyJson.getString("kategoria"));
+                }
+                catch (JSONException jex) {
+                    System.out.println(jex.toString());
+                    jex.printStackTrace();
+                }
+            });
         }
         catch (JSONException jex) {
             System.out.println(jex.toString());
