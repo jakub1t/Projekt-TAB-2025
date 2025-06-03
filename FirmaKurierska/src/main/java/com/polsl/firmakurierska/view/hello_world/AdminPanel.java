@@ -47,14 +47,18 @@ public class AdminPanel extends Application {
             workerData.add(listData);
         });
 
-        System.out.println("[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]");
-        for (List<String> ii : workerData) {
-            System.out.println("******************************************");
-            for (String i : ii) {
-                System.out.println(i);
-            }
-        }
-        System.out.println("[[[[[[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]]]]]");
+        //////////////////////////////////////////////////////////////////////////////////////
+        //VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//
+        //////////////////////////////////////////////////////////////////////////////////////
+        
+        RequestController rq = new RequestController("/dostawa/pracownik/" + 2, 0);
+
+        String response = rq.sendPathReq();
+        System.err.println(response);
+
+        //////////////////////////////////////////////////////////////////////////////////////
+        // Delete after testing
+        //////////////////////////////////////////////////////////////////////////////////////
 
         workerData.forEach(data -> {kontaList.getChildren().add(createKontoItem(data));});
 
@@ -184,6 +188,7 @@ public class AdminPanel extends Application {
         RequestController rq = new RequestController("/pracownik/" + accountID, 1);
 
         response = rq.sendPathReq();
+        System.err.println(response);
 
         String stanowiskoID = rq.getStanowisko(response);
 
