@@ -9,18 +9,15 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.boot.configurationprocessor.json.JSONArray;
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
+
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
-import com.polsl.firmakurierska.model.Dostawa;
-import com.polsl.firmakurierska.model.Paczka;
 
 public class DeliveryDescription {
 
@@ -31,7 +28,8 @@ public class DeliveryDescription {
     private String deadline = "9999-99-99";
     private String punktA = "Punkt A";
     private String punktB = "Punkt B";
-    private List<Paczka> przypisanePaczki = new ArrayList<>();
+    private String vehicleModel = "Rolvo";
+    private List<Integer> przypisanePaczki = new ArrayList<>();
 
     /**
      * Pokazuje okno ze szczegółami dostawy:
@@ -54,7 +52,7 @@ public class DeliveryDescription {
         // Karta z nazwiskiem pracownika
         VBox nazwiskoBox = createCard("Nazwisko pracownika:", pracNazw);
         // Karta z nazwą auta
-        VBox autoBox = createCard("Nazwa auta:", "Rolvo");
+        VBox autoBox = createCard("Nazwa auta:", vehicleModel);
         // Karta z datą
         VBox dateBox = createCard("Data wyruszenia:", dataStart);
         // Karta z godziną
@@ -68,9 +66,9 @@ public class DeliveryDescription {
         Label packagesLabel = new Label("Paczki w dostawie:");
         packagesLabel.setStyle("-fx-font-weight: bold;");
         VBox packagesList = new VBox(5);
-        if (przypisanePaczki != null) {
-            for (Paczka box : przypisanePaczki) {
-                String pid = Integer.toString(box.getIdPaczki());
+        if (przypisanePaczki.isEmpty() == false) {
+            for (Integer box : przypisanePaczki) {
+                String pid = Integer.toString(box);
                 packagesList.getChildren().add(new Label(pid));
             }
         }
@@ -139,30 +137,61 @@ public class DeliveryDescription {
     private boolean fetchDelivData(Integer dID) {
         RequestController rq = new RequestController("/dostawa/" + Integer.toString(dID), 0);
         String response = "";
+        Integer vehId = null;
+        JSONObject jason = null;
+        JSONArray packArray = null;
+        
         try {
             response = rq.sendPathReq();    
         } catch (BadRequestException e) {
             System.out.println(e.getMessage());
             return false;
         } 
-        ObjectMapper mapper = new ObjectMapper().configure(
-            DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.registerModule(new JavaTimeModule());
+        
         try {
-            Dostawa delivery = mapper.readValue(response, new TypeReference<Dostawa>(){});
+            jason = new JSONObject(response);
             this.idDostawy = dID;
             
-            this.dataStart = delivery.getDataWyruszenia().toString();
-            this.deadline = delivery.getTermin().toString();
-            this.punktA = delivery.getPunktA();
-            this.punktB = delivery.getPunktB();
-
-            this.przypisanePaczki = delivery.getPaczki();
-
-        } catch (IOException ex) {
+            this.dataStart = jason.getString("dataWyruszenia");
+            this.deadline = jason.getString("termin");
+            this.punktA = jason.getString("punktA");
+            this.punktB = jason.getString("punktB");
+            packArray = jason.getJSONArray("paczki");
+            vehId = jason.getInt("idPojazdu");
+        } catch (JSONException ex) {
             System.out.println(ex.getMessage());
             return false;
         }
+
+        if (packArray != null) {
+            try {
+                int totalPacks = packArray.length();
+                for (int i = 0; i < totalPacks; ++i) {
+                    this.przypisanePaczki.add(packArray.getInt(i));
+                }
+            } catch (JSONException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+
+        if (vehId != null) {
+            try {
+                rq = new RequestController("/pojazd/" + Integer.toString(vehId), 0);
+                response = rq.sendPathReq();
+                jason = new JSONObject(response);
+
+                this.vehicleModel = jason.getString("marka") + " " + jason.getString("model");
+
+            } catch (BadRequestException e) {
+                System.out.println("DeliveryDescription - Getting Vehicle info Error: " + e.getMessage());
+                return false;
+            }
+            catch (JSONException ex) {
+                System.out.println("DeliveryDescription - Getting Vehicle info Error: " + ex.getMessage());
+                return false;
+            }
+        }
+
         return true;
     }
 }

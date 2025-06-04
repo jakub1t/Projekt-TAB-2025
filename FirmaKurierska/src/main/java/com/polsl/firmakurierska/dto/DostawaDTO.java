@@ -1,9 +1,10 @@
 package com.polsl.firmakurierska.dto;
 
 import com.polsl.firmakurierska.controller.DostawaController;
-import com.polsl.firmakurierska.controller.PojazdController;
 import com.polsl.firmakurierska.controller.PracownikController;
 import com.polsl.firmakurierska.model.Dostawa;
+import com.polsl.firmakurierska.model.Paczka;
+
 import org.springframework.hateoas.RepresentationModel;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
@@ -13,6 +14,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -25,6 +28,8 @@ public class DostawaDTO extends RepresentationModel<DostawaDTO> {
     private String punktA;
     private String punktB;
     private String status;
+    private Integer idPojazdu;
+    private List<Integer> paczki = new ArrayList<>();
 
     public DostawaDTO() {}
 
@@ -35,14 +40,19 @@ public class DostawaDTO extends RepresentationModel<DostawaDTO> {
         this.punktA = dostawa.getPunktA();
         this.punktB = dostawa.getPunktB();
         this.status = dostawa.getStatus();
+        this.idPojazdu = null;
 
         this.add(linkTo(methodOn(DostawaController.class).getDostawaById(dostawa.getIdDostawy().toString()))
                 .withSelfRel());
 
         if (dostawa.getPojazd() != null) {
-            this.add(linkTo(methodOn(PojazdController.class)
-                    .getById(dostawa.getPojazd().getIdPojazdu()))
-                    .withRel("pojazd"));
+            this.idPojazdu = dostawa.getPojazd().getIdPojazdu();
+        }
+
+        if (dostawa.getPaczki() != null) {
+            for (Paczka p : dostawa.getPaczki()) {
+                this.paczki.add(p.getIdPaczki());
+            }
         }
 
         if (dostawa.getPracownik() != null) {
