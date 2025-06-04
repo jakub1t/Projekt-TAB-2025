@@ -9,9 +9,27 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.boot.configurationprocessor.json.JSONArray;
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
+
+import com.polsl.firmakurierska.controller.RequestController;
+import com.polsl.firmakurierska.exception.BadRequestException;
+
 public class DeliveryDescription {
+
+    private int idDostawy = 0;
+    private String pracImie = "Imie";
+    private String pracNazw = "Nazwisko";
+    private String dataStart = "0000-00-00";
+    private String deadline = "9999-99-99";
+    private String punktA = "Punkt A";
+    private String punktB = "Punkt B";
+    private String vehicleModel = "Rolvo";
+    private List<Integer> przypisanePaczki = new ArrayList<>();
 
     /**
      * Pokazuje okno ze szczegółami dostawy:
@@ -25,28 +43,20 @@ public class DeliveryDescription {
      * – punkt B
      * – lista dołączonych paczek (przewijana)
      */
-    public void show(String nazwaDostawy,
-                     String imiePracownika,
-                     String nazwiskoPracownika,
-                     String nazwaAuta,
-                     String data,
-                     String godzina,
-                     String punktA,
-                     String punktB,
-                     List<String> attachedPackageIds) {
+    public void show() {
 
         // Karta z nazwą dostawy
-        VBox nazwaBox = createCard("Nazwa dostawy:", nazwaDostawy);
+        VBox nazwaBox = createCard("Numer dostawy:", Integer.toString(idDostawy));
         // Karta z imieniem pracownika
-        VBox imieBox = createCard("Imię pracownika:", imiePracownika);
+        VBox imieBox = createCard("Imię pracownika:", pracImie);
         // Karta z nazwiskiem pracownika
-        VBox nazwiskoBox = createCard("Nazwisko pracownika:", nazwiskoPracownika);
+        VBox nazwiskoBox = createCard("Nazwisko pracownika:", pracNazw);
         // Karta z nazwą auta
-        VBox autoBox = createCard("Nazwa auta:", nazwaAuta);
+        VBox autoBox = createCard("Nazwa auta:", vehicleModel);
         // Karta z datą
-        VBox dateBox = createCard("Data:", data);
+        VBox dateBox = createCard("Data wyruszenia:", dataStart);
         // Karta z godziną
-        VBox timeBox = createCard("Godzina:", godzina);
+        VBox timeBox = createCard("Termin:", deadline);
         // Karta z punktem A
         VBox pointABox = createCard("Punkt A:", punktA);
         // Karta z punktem B
@@ -56,8 +66,11 @@ public class DeliveryDescription {
         Label packagesLabel = new Label("Paczki w dostawie:");
         packagesLabel.setStyle("-fx-font-weight: bold;");
         VBox packagesList = new VBox(5);
-        for (String pid : attachedPackageIds) {
-            packagesList.getChildren().add(new Label(pid));
+        if (przypisanePaczki.isEmpty() == false) {
+            for (Integer box : przypisanePaczki) {
+                String pid = Integer.toString(box);
+                packagesList.getChildren().add(new Label(pid));
+            }
         }
         ScrollPane packagesScroll = new ScrollPane(packagesList);
         packagesScroll.setFitToWidth(true);
@@ -109,5 +122,76 @@ public class DeliveryDescription {
             "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
         );
         return box;
+    }
+
+    public void open(Integer delivID, String assignedUserName, String assignedUserSurname) {
+        this.pracImie = assignedUserName;
+        this.pracNazw = assignedUserSurname;
+        if (fetchDelivData(delivID)) {
+            this.show();
+        } else {
+            System.out.println("Failed to load delivery information!");
+        }
+    }
+
+    private boolean fetchDelivData(Integer dID) {
+        RequestController rq = new RequestController("/dostawa/" + Integer.toString(dID), 0);
+        String response = "";
+        Integer vehId = null;
+        JSONObject jason = null;
+        JSONArray packArray = null;
+        
+        try {
+            response = rq.sendPathReq();    
+        } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+            return false;
+        } 
+        
+        try {
+            jason = new JSONObject(response);
+            this.idDostawy = dID;
+            
+            this.dataStart = jason.getString("dataWyruszenia");
+            this.deadline = jason.getString("termin");
+            this.punktA = jason.getString("punktA");
+            this.punktB = jason.getString("punktB");
+            packArray = jason.getJSONArray("paczki");
+            vehId = jason.getInt("idPojazdu");
+        } catch (JSONException ex) {
+            System.out.println(ex.getMessage());
+            return false;
+        }
+
+        if (packArray != null) {
+            try {
+                int totalPacks = packArray.length();
+                for (int i = 0; i < totalPacks; ++i) {
+                    this.przypisanePaczki.add(packArray.getInt(i));
+                }
+            } catch (JSONException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+
+        if (vehId != null) {
+            try {
+                rq = new RequestController("/pojazd/" + Integer.toString(vehId), 0);
+                response = rq.sendPathReq();
+                jason = new JSONObject(response);
+
+                this.vehicleModel = jason.getString("marka") + " " + jason.getString("model");
+
+            } catch (BadRequestException e) {
+                System.out.println("DeliveryDescription - Getting Vehicle info Error: " + e.getMessage());
+                return false;
+            }
+            catch (JSONException ex) {
+                System.out.println("DeliveryDescription - Getting Vehicle info Error: " + ex.getMessage());
+                return false;
+            }
+        }
+
+        return true;
     }
 }
