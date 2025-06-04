@@ -17,72 +17,71 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.model.Dostawa;
+import com.polsl.firmakurierska.model.Pracownik;
 
 public class WorkerWindow extends Application {
 
     private int loggedUserId = 0;
+    private String loggedUserName = "Imię";
+    private String loggedUserSurname = "Nazwisko";
     /**
      * Pokazuje okno dla pracownika z listą tras (dostaw).
      */
     @Override
     public void start(Stage stage) {
         // ===== DOSTAWY =====
-        Label delLabel = new Label("Dostawy:");
+        Label welcomeLabel = new Label("Witaj " + loggedUserName + " " + loggedUserSurname + "!");
+        welcomeLabel.setStyle("-fx-font-size: 12px;");
+        VBox welBox = new VBox(5, welcomeLabel);
+        welBox.setAlignment(Pos.CENTER);
+
+        Label delLabel = new Label("Moje dostawy:");
         delLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 16px;");
         List<Dostawa> dostawy = getDeliveries();
 
         VBox delContainer = new VBox(5);
-        /*
-        String[] deliveries = {"Dostawa 1", "Dostawa 2", "Dostawa 3"};
-         
-        for (String d : deliveries) {
-            CheckBox cb = new CheckBox();
-            cb.setOnAction(e -> {
-                String status = cb.isSelected() ? "wykonana" : "nie wykonana";
-                System.out.println(d + " " + status);
-            });
-
-            Button delBtn = new Button(d);
-            delBtn.setPrefWidth(180);
-            delBtn.setOnAction(e -> new DeliveryDescription().show(
-                d,
-                "Anna", "Nowak", "Samochód X",
-                "2025-04-17",
-                "12:00",
-                "Magazyn A", "Magazyn B",
-                List.of("Paczka 1", "Paczka 2")
-            ));
-
-            HBox h = new HBox(10, delBtn, cb);
-            h.setAlignment(Pos.CENTER_LEFT);
-            delContainer.getChildren().add(h);
-        } */
 
         for (Dostawa dv : dostawy) {
             CheckBox cb = new CheckBox();
             cb.setOnAction(e -> {
                 String status = cb.isSelected() ? "Wykonana" : "Nie wykonana";
+                System.out.println(Integer.toString(dv.getIdDostawy()) + ": " + status);
             });
 
-            Button dvBtn = new Button(dv.getPunktA() + " do " + dv.getPunktB());
+            Button dvBtn = new Button(
+                Integer.toString(dv.getIdDostawy()) 
+                + ": " + dv.getPunktA() 
+                + " do " + dv.getPunktB());
             dvBtn.setPrefWidth(200);
+            /*
             dvBtn.setOnAction(e -> new DeliveryDescription().show(
                 Integer.toString(dv.getIdDostawy()),
-                "", "", "",
+                loggedUserName, loggedUserSurname, "Pojazd",
                 dv.getTermin().toString(),
-                dv.getDataWyruszenia()
+                dv.getDataWyruszenia().toString(),
+                dv.getPunktA(), dv.getPunktB(),
+                dv.getPaczki()
+            )); */
+            dvBtn.setOnAction(e -> new DeliveryDescription().open(
+                dv.getIdDostawy(), loggedUserName, loggedUserSurname
             ));
+
+            HBox h = new HBox(10, dvBtn, cb);
+            h.setAlignment(Pos.CENTER_LEFT);
+            delContainer.getChildren().add(h);
         }
 
         ScrollPane delScroll = new ScrollPane(delContainer);
         delScroll.setFitToWidth(true);
         delScroll.setPrefHeight(400);
 
-        VBox colDel = new VBox(10, delLabel, delScroll);
+        VBox colDel = new VBox(10, welBox, delLabel, delScroll);
         colDel.setPadding(new Insets(10));
         colDel.setStyle("-fx-background-color: #eaeaea;");
         colDel.setPrefWidth(400);
@@ -98,6 +97,7 @@ public class WorkerWindow extends Application {
 
     public void open(int userId) {
         this.loggedUserId = userId;
+        getMyName();
         this.start(new Stage());
     }
 
@@ -114,8 +114,9 @@ public class WorkerWindow extends Application {
             goFurther = false;
         }
         if (goFurther) {
-            ObjectMapper mapper = new ObjectMapper();
-
+            ObjectMapper mapper = new ObjectMapper().configure(
+                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            mapper.registerModule(new JavaTimeModule());
             try {
                 mojeDostawy = mapper.readValue(response, new TypeReference<List<Dostawa>>(){});
             } catch (IOException e) {
@@ -123,5 +124,28 @@ public class WorkerWindow extends Application {
             }
         }       
         return mojeDostawy;
+    }
+
+    private boolean getMyName() {
+        String response = "";
+        RequestController rq = new RequestController("/pracownik/" + Integer.toString(loggedUserId), 1);
+        
+        try {
+            response = rq.sendPathReq();    
+        } catch (BadRequestException e) {
+            System.out.println("getMyName: " + e.getMessage());
+            return false;
+        }
+        ObjectMapper mapper = new ObjectMapper().configure(
+            DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        try {
+            Pracownik tmp = mapper.readValue(response, new TypeReference<Pracownik>(){});
+            this.loggedUserName = tmp.getImie();
+            this.loggedUserSurname = tmp.getNazwisko();
+        } catch (IOException ex) {
+            System.out.println("getMyName: " + ex.getMessage());
+        }
+        
+        return true;
     }
 }
