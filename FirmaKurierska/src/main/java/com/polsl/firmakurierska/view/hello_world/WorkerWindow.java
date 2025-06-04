@@ -12,10 +12,19 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.polsl.firmakurierska.controller.RequestController;
+import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.model.Dostawa;
 
 public class WorkerWindow extends Application {
 
+    private int loggedUserId = 0;
     /**
      * Pokazuje okno dla pracownika z listą tras (dostaw).
      */
@@ -24,9 +33,12 @@ public class WorkerWindow extends Application {
         // ===== DOSTAWY =====
         Label delLabel = new Label("Dostawy:");
         delLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 16px;");
+        List<Dostawa> dostawy = getDeliveries();
 
-        String[] deliveries = {"Dostawa 1", "Dostawa 2", "Dostawa 3"};
         VBox delContainer = new VBox(5);
+        /*
+        String[] deliveries = {"Dostawa 1", "Dostawa 2", "Dostawa 3"};
+         
         for (String d : deliveries) {
             CheckBox cb = new CheckBox();
             cb.setOnAction(e -> {
@@ -48,6 +60,22 @@ public class WorkerWindow extends Application {
             HBox h = new HBox(10, delBtn, cb);
             h.setAlignment(Pos.CENTER_LEFT);
             delContainer.getChildren().add(h);
+        } */
+
+        for (Dostawa dv : dostawy) {
+            CheckBox cb = new CheckBox();
+            cb.setOnAction(e -> {
+                String status = cb.isSelected() ? "Wykonana" : "Nie wykonana";
+            });
+
+            Button dvBtn = new Button(dv.getPunktA() + " do " + dv.getPunktB());
+            dvBtn.setPrefWidth(200);
+            dvBtn.setOnAction(e -> new DeliveryDescription().show(
+                Integer.toString(dv.getIdDostawy()),
+                "", "", "",
+                dv.getTermin().toString(),
+                dv.getDataWyruszenia()
+            ));
         }
 
         ScrollPane delScroll = new ScrollPane(delContainer);
@@ -68,7 +96,32 @@ public class WorkerWindow extends Application {
         stage.show();
     }
 
-    public static void main(String[] args) {
-        launch(args);
+    public void open(int userId) {
+        this.loggedUserId = userId;
+        this.start(new Stage());
+    }
+
+    private List<Dostawa> getDeliveries() {
+        List<Dostawa> mojeDostawy = new ArrayList<>();
+        RequestController rq = new RequestController("/dostawa/pracownik/" + Integer.toString(loggedUserId), 0);
+        String response = "";
+        boolean goFurther = true;
+
+        try {
+            response = rq.sendPathReq();
+        } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+            goFurther = false;
+        }
+        if (goFurther) {
+            ObjectMapper mapper = new ObjectMapper();
+
+            try {
+                mojeDostawy = mapper.readValue(response, new TypeReference<List<Dostawa>>(){});
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
+        }       
+        return mojeDostawy;
     }
 }

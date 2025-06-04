@@ -40,12 +40,13 @@ public class Hello_world extends Application {
             System.out.println("Hasło: " + haslo.getText());
             if (attemptLogin(nick.getText(), haslo.getText())) {
                 int accType = -1;
-
-                accType = findAccType(nick.getText());
+                int accId = -1;
+                accId = findAccId(nick.getText());
+                accType = findAccType(accId);
 
                 if (accType == 1) new AdminPanel().start(new Stage());
                 else if (accType == 2) new WorkerAdmin().start(new Stage());
-                else if (accType == 3) new WorkerWindow().start(new Stage());
+                else if (accType == 3) new WorkerWindow().open(accId); // Pass user ID ??
                 else System.out.println("Bad account type...");
             };
         });
@@ -84,29 +85,36 @@ public class Hello_world extends Application {
         return isSuccess;
     }
 
-    private int findAccType(String login) {
+    private int findAccId(String login) {
         // find konto_id by login z tabeli Konto
-        // find stanowisko_id by konto_id z tabeli Pracownik
-
         String accID = "";
-        String pracownikData = "";
-        String accType = "";
-
+        int actualId = 0;
         // Prepare request for account ID
         RequestController rq = new RequestController("/konto/getid?login=" + login, 1);
 
         // Get account ID
         try {
             accID = rq.sendPathReq();
+            actualId = Integer.parseInt(accID);
         }
         catch (BadRequestException e) {
             System.out.println(e.getMessage());
             return -1;
         }
+        catch (NumberFormatException ex) {
+            System.out.println(ex.getMessage());
+            return -1;
+        }
+        return actualId;
+    }
+
+    private int findAccType(int accID) {        
+        // find stanowisko_id by konto_id z tabeli Pracownik
+        String pracownikData = "";
+        String accType = "";
 
         // Prepare request for worker data
-        rq = new RequestController("/pracownik/" + accID, 1);
-
+        RequestController rq = new RequestController("/pracownik/" + Integer.toString(accID), 1);
         // Get worker data
         try {
             pracownikData = rq.sendPathReq();
@@ -117,7 +125,6 @@ public class Hello_world extends Application {
         }
 
         accType = rq.getStanowisko(pracownikData);
-
 
         if (accType.equals("1") || accType.equals("2") || accType.equals("3")) 
             return Integer.parseInt(accType);

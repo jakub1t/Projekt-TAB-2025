@@ -5,6 +5,8 @@
 
 package com.polsl.firmakurierska.view.hello_world;
 
+import java.util.List;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -14,13 +16,19 @@ import javafx.stage.Stage;
 
 public class AccountDescription {
 
-    public void show(String imie, String nazwisko, String pesel, String stanowisko, String prawo_jazdy) {
+    public void show(List<String> data) {
         // Tworzymy osobne boksy dla każdego pola
-        VBox imieBox = createCard("Imię:", imie);
-        VBox nazwiskoBox = createCard("Nazwisko:", nazwisko);
-        VBox peselBox = createCard("PESEL:", pesel);
-        VBox stanowiskoBox = createCard("Stanowisko:", stanowisko);
-        VBox prawoJazdyBox = createCard("Prawo jazdy:", prawo_jazdy);
+        VBox imieBox = createCard("Imię:", data.get(0));
+        VBox nazwiskoBox = createCard("Nazwisko:", data.get(1));
+        VBox peselBox = createCard("PESEL:", data.get(2));
+        VBox stanowiskoBox = createCard("Stanowisko:", data.get(3));
+        String kategoriePrawaJazdy = "";
+
+        for (int i = 4; i < data.size(); i++) {
+            kategoriePrawaJazdy += data.get(i) + " ";
+        }
+
+        VBox prawoJazdyBox = createCard("Prawo jazdy:", kategoriePrawaJazdy);
 
         VBox allFields = new VBox(15, imieBox, nazwiskoBox, peselBox, stanowiskoBox, prawoJazdyBox);
         allFields.setPadding(new Insets(20));

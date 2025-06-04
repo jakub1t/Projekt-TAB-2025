@@ -8,7 +8,10 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.springframework.boot.configurationprocessor.json.JSONArray;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
 
@@ -47,41 +50,6 @@ public class RequestController {
 
         destURL = baseURL + destination;
     };
-
-    /**
-     * Method that parses stanowisko ID from JSON
-     * @param jsonData
-     * @return stanowisko_id
-     */
-    public String getStanowisko(String jsonData) {
-
-        String stanowiskoID = "";
-
-        try {
-            JSONObject pracownikDataJSON = new JSONObject(jsonData);
-            String links = pracownikDataJSON.getString("_links");
-            JSONObject linksData = new JSONObject(links);
-            String stanowisko = linksData.getString("stanowisko");
-            JSONObject stanowiskoData = new JSONObject(stanowisko);
-            String href = stanowiskoData.getString("href");
-
-            String[] hrefTokens = href.split("/");
-            boolean stupidFlag = false;
-            for (String t : hrefTokens) {
-                if (stupidFlag == true) {
-                    stanowiskoID = new String(t);
-                    break;
-                }
-                if (t.equals("stanowisko")) stupidFlag = true;
-            }
-        }
-        catch (JSONException jex) {
-            System.out.println(jex.toString());
-            jex.printStackTrace();
-        }
-
-        return stanowiskoID;
-    }
 
     /**
      * Method for sending HTTP requests with JSON data
@@ -185,5 +153,104 @@ public class RequestController {
             responseString = "NRP";
         }
         return responseString;
+    }
+
+    /**
+     * Method that parses stanowisko ID from JSON
+     * @param jsonData
+     * @return stanowisko_id
+     */
+    public String getStanowisko(String jsonData) {
+
+        String stanowiskoID = "";
+
+        try {
+            JSONObject pracownikDataJSON = new JSONObject(jsonData);
+            String links = pracownikDataJSON.getString("_links");
+            JSONObject linksData = new JSONObject(links);
+            String stanowisko = linksData.getString("stanowisko");
+            JSONObject stanowiskoData = new JSONObject(stanowisko);
+            String href = stanowiskoData.getString("href");
+
+            String[] hrefTokens = href.split("/");
+            boolean stupidFlag = false;
+            for (String t : hrefTokens) {
+                if (stupidFlag == true) {
+                    stanowiskoID = new String(t);
+                    break;
+                }
+                if (t.equals("stanowisko")) stupidFlag = true;
+            }
+        }
+        catch (JSONException jex) {
+            System.out.println(jex.toString());
+            jex.printStackTrace();
+        }
+
+        return stanowiskoID;
+    }
+
+    /**
+     * Method that parses driving license categories from JSON
+     * @param jsonData
+     * @return all driving license categories from jsonData
+     */
+    public List<String> getKategorie(String jsonData) {
+
+        List<String> categoriesID = new ArrayList<>();
+
+        try {
+            JSONObject pracownikDataJSON = new JSONObject(jsonData);
+            String links = pracownikDataJSON.getString("_links");
+            JSONObject linksData = new JSONObject(links);
+            String prawoJazdy = linksData.getString("prawo_jazdy");
+
+            List<String> hrefsList = new ArrayList<>();
+            String href = "";
+
+            try {
+                JSONArray hrefData = new JSONArray(prawoJazdy);
+
+                for (int i = 0; i < hrefData.length(); i++) {
+                    JSONObject hrefJson = hrefData.optJSONObject(i);
+                    hrefsList.add(hrefJson.getString("href"));
+                }
+            }
+            catch (JSONException e) {
+                JSONObject hrefData = new JSONObject(prawoJazdy);
+                href = hrefData.getString("href");
+            }
+
+            if (!hrefsList.isEmpty()) {
+                hrefsList.forEach(hrefElement -> {
+                    String[] hrefTokens = hrefElement.split("/");
+                    boolean stupidFlag = false;
+                    for (String t : hrefTokens) {
+                        if (stupidFlag == true) {
+                            categoriesID.add(t);
+                            break;
+                        }
+                        if (t.equals("prawojazdy")) stupidFlag = true;
+                    }
+                });
+            }
+            else {
+                String[] hrefTokens = href.split("/");
+                boolean stupidFlag = false;
+                for (String t : hrefTokens) {
+                    if (stupidFlag == true) {
+                        categoriesID.add(t);
+                        break;
+                    }
+                    if (t.equals("prawojazdy")) stupidFlag = true;
+                }
+            }
+        }
+        catch (JSONException jex) {
+            System.out.println(jex.toString());
+            jex.printStackTrace();
+        }
+
+        return categoriesID;
     }
 }
