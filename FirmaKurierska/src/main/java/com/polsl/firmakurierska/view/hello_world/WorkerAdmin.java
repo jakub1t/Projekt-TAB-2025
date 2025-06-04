@@ -180,6 +180,7 @@ public class WorkerAdmin extends Application {
     private HBox createDeliveryItem(String name) {
         Button itemBtn = new Button(name);
         itemBtn.setPrefWidth(140);
+        /*
         itemBtn.setOnAction(e -> {
             new DeliveryDescription().show(
                 name,
@@ -192,7 +193,7 @@ public class WorkerAdmin extends Application {
                 "Magazyn B",
                 List.of("Paczka 1", "Paczka 2")
             );
-        });
+        }); */
         Button delBtn = new Button("X");
         delBtn.setOnAction(e -> dostawyList.getChildren().removeIf(node -> {
             if (node instanceof HBox hbox) {
