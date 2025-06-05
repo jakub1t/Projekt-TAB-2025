@@ -9,8 +9,20 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.polsl.firmakurierska.controller.RequestController;
+import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.model.Dostawa;
+import com.polsl.firmakurierska.model.Paczka;
+import com.polsl.firmakurierska.model.Pojazd;
 
 public class WorkerAdmin extends Application {
 
@@ -20,6 +32,7 @@ public class WorkerAdmin extends Application {
 
     @Override
     public void start(Stage stage) {
+        
         // ===== KOL 1: PACZKI =====
         paczkiList = new VBox(5);
         paczkiList.setPadding(new Insets(5));
@@ -28,9 +41,12 @@ public class WorkerAdmin extends Application {
         paczkiScroll.setPrefHeight(300);
 
         final String[] paczkiArray = {"Paczka 1", "Paczka 2", "Paczka 3"};
-        for (String name : paczkiArray) {
-            paczkiList.getChildren().add(createPackageItem(name));
-        }
+        
+        List<Paczka> paczki = getPaczki();
+
+        paczki.forEach(paczka -> {
+            paczkiList.getChildren().add(createPackageItem("ID paczki: " + paczka.getIdPaczki(), paczka));
+        });
 
         Button dodajPaczkeBtn = new Button("Dodaj paczkę");
         dodajPaczkeBtn.setOnAction(e -> new PackageFormWindow().show());
@@ -43,10 +59,14 @@ public class WorkerAdmin extends Application {
         pojazdyScroll.setFitToWidth(true);
         pojazdyScroll.setPrefHeight(300);
 
+        List<Pojazd> pojazdy = getPojazdy();
+
+        pojazdy.forEach(pojazd -> {
+            pojazdyList.getChildren().add(createVehicleItem("ID pojazdu: " + pojazd.getIdPojazdu(), pojazd));
+        });
+        
+        
         final String[] pojazdyArray = {"Pojazd A", "Pojazd B", "Pojazd C"};
-        for (String name : pojazdyArray) {
-            pojazdyList.getChildren().add(createVehicleItem(name));
-        }
 
         Button dodajPojazdBtn = new Button("Dodaj pojazd");
         dodajPojazdBtn.setOnAction(e -> new VehicleFormWindow().show());
@@ -59,10 +79,12 @@ public class WorkerAdmin extends Application {
         dostawyScroll.setFitToWidth(true);
         dostawyScroll.setPrefHeight(300);
 
-        final String[] dostawyArray = {"Dostawa 1", "Dostawa 2", "Dostawa 3"};
-        for (String name : dostawyArray) {
-            dostawyList.getChildren().add(createDeliveryItem(name));
-        }
+        List<Dostawa> dostawy = getDostawy();
+
+        dostawy.forEach(dostawa -> {
+            dostawyList.getChildren().add(createDeliveryItem("ID dostawy: " + dostawa.getIdDostawy(), dostawa.getIdDostawy()));
+        });
+
         final String[] employeesArray = {"Adam Kowalski", "Beata Nowak", "Celina Wiśniewska"};
 
         Button dodajDostaweBtn = new Button("Dodaj dostawę");
@@ -121,19 +143,20 @@ public class WorkerAdmin extends Application {
         return col;
     }
 
-    private HBox createPackageItem(String name) {
+    private HBox createPackageItem(String name, Paczka paczkaData) {
         Button itemBtn = new Button(name);
         itemBtn.setPrefWidth(140);
         itemBtn.setOnAction(e -> {
+
             var produkty = List.of(
                 new PackageDescription.Product("Mysz bezprzewodowa", "0.2 kg", "Elektronika", "SN12345", "LogiTech"),
                 new PackageDescription.Product("Kabel HDMI", "0.15 kg", "Akcesoria", "SN67890", "KabelPro"),
                 new PackageDescription.Product("Notebook A4", "0.5 kg", "Papier", "SN54321", "PapierPlus")
             );
             new PackageDescription().show(
-                "Jan",
-                "Kowalski",
-                1.2,
+                "",
+                "",
+                paczkaData.getWagaPaczki(),
                 produkty
             );
         });
@@ -150,18 +173,18 @@ public class WorkerAdmin extends Application {
         return box;
     }
 
-    private HBox createVehicleItem(String name) {
+    private HBox createVehicleItem(String name, Pojazd pojazdData) {
         Button itemBtn = new Button(name);
         itemBtn.setPrefWidth(140);
         itemBtn.setOnAction(e -> {
             new VehicleDescription()
                 .show(
                     name,
-                    "Ciężarowy",
-                    "Volvo",
-                    "FH16",
-                    "16 L",
-                    "ABC-1234"
+                    pojazdData.getTypPojazdu(),
+                    pojazdData.getMarka(),
+                    pojazdData.getModel(),
+                    Double.toString(pojazdData.getPojemnosc()),
+                    pojazdData.getNrRejestr()
                 );
         });
         Button delBtn = new Button("X");
@@ -177,23 +200,12 @@ public class WorkerAdmin extends Application {
         return box;
     }
 
-    private HBox createDeliveryItem(String name) {
+    private HBox createDeliveryItem(String name, int dostawaId) {
         Button itemBtn = new Button(name);
         itemBtn.setPrefWidth(140);
-        /*
         itemBtn.setOnAction(e -> {
-            new DeliveryDescription().show(
-                name,
-                "Anna",
-                "Nowak",
-                "Samochód X",
-                "2025-04-17",
-                "12:00",
-                "Magazyn A",
-                "Magazyn B",
-                List.of("Paczka 1", "Paczka 2")
-            );
-        }); */
+            new DeliveryDescription().open(dostawaId, "", "");
+        });
         Button delBtn = new Button("X");
         delBtn.setOnAction(e -> dostawyList.getChildren().removeIf(node -> {
             if (node instanceof HBox hbox) {
@@ -207,7 +219,78 @@ public class WorkerAdmin extends Application {
         return box;
     }
 
-    public static void main(String[] args) {
-        launch(args);
+    private List<Dostawa> getDostawy() {
+        List<Dostawa> mojeDostawy = new ArrayList<>();
+        RequestController rq = new RequestController("/dostawa", 0);
+        String response = "";
+        boolean goFurther = true;
+
+        try {
+            response = rq.sendPathReq();
+        } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+            goFurther = false;
+        }
+        if (goFurther) {
+            ObjectMapper mapper = new ObjectMapper().configure(
+                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            mapper.registerModule(new JavaTimeModule());
+            try {
+                mojeDostawy = mapper.readValue(response, new TypeReference<List<Dostawa>>(){});
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
+        }       
+        return mojeDostawy;
+    }
+
+    private List<Pojazd> getPojazdy() {
+        List<Pojazd> mojePojazdy = new ArrayList<>();
+        RequestController rq = new RequestController("/pojazd", 0);
+        String response = "";
+        boolean goFurther = true;
+
+        try {
+            response = rq.sendPathReq();
+        } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+            goFurther = false;
+        }
+        if (goFurther) {
+            ObjectMapper mapper = new ObjectMapper().configure(
+                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            mapper.registerModule(new JavaTimeModule());
+            try {
+                mojePojazdy = mapper.readValue(response, new TypeReference<List<Pojazd>>(){});
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
+        }       
+        return mojePojazdy;
+    }
+
+    private List<Paczka> getPaczki() {
+        List<Paczka> mojePaczki = new ArrayList<>();
+        RequestController rq = new RequestController("/paczka", 0);
+        String response = "";
+        boolean goFurther = true;
+
+        try {
+            response = rq.sendPathReq();
+        } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+            goFurther = false;
+        }
+        if (goFurther) {
+            ObjectMapper mapper = new ObjectMapper().configure(
+                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            mapper.registerModule(new JavaTimeModule());
+            try {
+                mojePaczki = mapper.readValue(response, new TypeReference<List<Paczka>>(){});
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
+        }       
+        return mojePaczki;
     }
 }

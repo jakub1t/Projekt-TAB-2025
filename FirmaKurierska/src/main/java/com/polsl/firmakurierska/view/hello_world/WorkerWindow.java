@@ -30,6 +30,14 @@ public class WorkerWindow extends Application {
     private int loggedUserId = 0;
     private String loggedUserName = "Imię";
     private String loggedUserSurname = "Nazwisko";
+
+
+    public void open(int userId) {
+        this.loggedUserId = userId;
+        getMyName();
+        this.start(new Stage());
+    }
+
     /**
      * Pokazuje okno dla pracownika z listą tras (dostaw).
      */
@@ -93,12 +101,6 @@ public class WorkerWindow extends Application {
         stage.setTitle("Worker Panel - Dostawy");
         stage.setScene(scene);
         stage.show();
-    }
-
-    public void open(int userId) {
-        this.loggedUserId = userId;
-        getMyName();
-        this.start(new Stage());
     }
 
     private List<Dostawa> getDeliveries() {
