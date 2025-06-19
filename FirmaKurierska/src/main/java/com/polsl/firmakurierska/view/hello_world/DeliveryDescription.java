@@ -38,7 +38,7 @@ public class DeliveryDescription {
      * – nazwisko pracownika
      * – nazwa auta
      * – data
-     * – godzina
+     * – Termin
      * – punkt A
      * – punkt B
      * – lista dołączonych paczek (przewijana)

@@ -25,19 +25,15 @@ import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.model.Dostawa;
 import com.polsl.firmakurierska.model.Pracownik;
 
+
+/**
+ * Panel for Delivery Drivers
+ */
 public class WorkerWindow extends Application {
 
     private int loggedUserId = 0;
     private String loggedUserName = "Imię";
     private String loggedUserSurname = "Nazwisko";
-
-
-    public void open(int userId) {
-        this.loggedUserId = userId;
-        getMyName();
-        this.start(new Stage());
-    }
-
     /**
      * Pokazuje okno dla pracownika z listą tras (dostaw).
      */
@@ -57,9 +53,9 @@ public class WorkerWindow extends Application {
 
         for (Dostawa dv : dostawy) {
             CheckBox cb = new CheckBox();
+            cb.setSelected(dv.getStatus().contains("ZREALIZOWANA") ? true : false);
             cb.setOnAction(e -> {
-                String status = cb.isSelected() ? "Wykonana" : "Nie wykonana";
-                System.out.println(Integer.toString(dv.getIdDostawy()) + ": " + status);
+                updateDeliveryStatus(cb.isSelected(), dv.getIdDostawy());
             });
 
             Button dvBtn = new Button(
@@ -101,6 +97,12 @@ public class WorkerWindow extends Application {
         stage.setTitle("Worker Panel - Dostawy");
         stage.setScene(scene);
         stage.show();
+    }
+
+    public void open(int userId) {
+        this.loggedUserId = userId;
+        getMyName();
+        this.start(new Stage());
     }
 
     private List<Dostawa> getDeliveries() {
@@ -149,5 +151,29 @@ public class WorkerWindow extends Application {
         }
         
         return true;
+    }
+
+    private boolean updateDeliveryStatus(boolean wasCompleted, Integer delId) {
+        String resp = "";
+        String jsonData = "{\"status\": \"" + (wasCompleted ? "ZREALIZOWANA\"}" : "W TRAKCIE\"}");
+        RequestController rq = new RequestController("/dostawa/update/" + Integer.toString(delId), 2);
+
+        try {
+            resp = rq.sendJsonReq(jsonData);
+        } catch (BadRequestException ex) {
+            System.out.println("updateDeliveryStatus: " + ex.getMessage());
+            return false;
+        }
+
+        if (resp.contains("Dostawa o ID " + Integer.toString(delId) + " została zaktualizowana.")) {
+
+            System.out.println("Status dostawy zmieniony na: " + (
+                wasCompleted ? "ZREALIZOWANA" : "W TRAKCIE"
+            ));
+            return true;
+        } else {
+            System.out.println("Nie zaktualizowano dostawy o podanym ID!");
+            return false;
+        }
     }
 }
