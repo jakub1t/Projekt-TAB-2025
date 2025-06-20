@@ -74,6 +74,15 @@ public class KontoController {
         kontoRepository.deleteByLogin(login);
     }
 
+    @DeleteMapping("/delete/{acId}")
+    @Transactional
+    public void deleteKontoById(@PathVariable Integer acId) {
+        if (!kontoRepository.existsById(acId)) {
+            throw new ResourceNotFoundException("Konto o ID '" + acId + "' nie istnieje");   
+        }
+        kontoRepository.deleteById(acId);
+    }
+
     @PutMapping("/update/{login}")
     public Konto updateKonto(@PathVariable String login, @RequestBody Konto newData) {
         if (newData.getHaslo() == null || newData.getHaslo().isEmpty()) {
