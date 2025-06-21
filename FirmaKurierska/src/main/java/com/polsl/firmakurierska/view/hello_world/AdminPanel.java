@@ -108,7 +108,11 @@ public class AdminPanel extends Application {
         stage.show();
     }
 
+<<<<<<< Updated upstream
     private HBox createKontoItem(List<String> data) {
+=======
+    private HBox  createKontoItem(List<String> data) {
+>>>>>>> Stashed changes
         String kontoName = data.getFirst();
 
         Button kontoButton = new Button(kontoName);
