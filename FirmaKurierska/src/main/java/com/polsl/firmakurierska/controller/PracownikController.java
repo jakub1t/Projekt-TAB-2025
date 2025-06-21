@@ -72,8 +72,8 @@ public class PracownikController {
         pracownikRepository.delete(pracownik);
     }
 
-    @DeleteMapping("/delete/{pid}")
     @Transactional
+    @DeleteMapping("/delete/{pid}")
     public void deletePracownikById(@PathVariable Integer pid) {
         Pracownik pracownik = pracownikRepository.findById(pid)
                 .orElseThrow(() -> new ResourceNotFoundException("Nie znaleziono pracownika o ID: " + pid));

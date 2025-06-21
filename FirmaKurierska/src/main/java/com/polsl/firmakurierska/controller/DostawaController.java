@@ -8,6 +8,7 @@ import com.polsl.firmakurierska.repository.DostawaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -100,6 +101,7 @@ public class DostawaController {
 
 
     @DeleteMapping("/delete/{id}")
+    @Transactional
     public ResponseEntity<String> deleteDostawa(@PathVariable String id) {
         try {
             Integer did = Integer.parseInt(id);
