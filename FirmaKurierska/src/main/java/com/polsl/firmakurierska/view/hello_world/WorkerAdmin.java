@@ -39,8 +39,6 @@ public class WorkerAdmin extends Application {
         ScrollPane paczkiScroll = new ScrollPane(paczkiList);
         paczkiScroll.setFitToWidth(true);
         paczkiScroll.setPrefHeight(300);
-
-        final String[] paczkiArray = {"Paczka 1", "Paczka 2", "Paczka 3"};
         
         List<Paczka> paczki = getPaczki();
 
@@ -64,9 +62,6 @@ public class WorkerAdmin extends Application {
         pojazdy.forEach(pojazd -> {
             pojazdyList.getChildren().add(createVehicleItem("ID pojazdu: " + pojazd.getIdPojazdu(), pojazd));
         });
-        
-        
-        final String[] pojazdyArray = {"Pojazd A", "Pojazd B", "Pojazd C"};
 
         Button dodajPojazdBtn = new Button("Dodaj pojazd");
         dodajPojazdBtn.setOnAction(e -> new VehicleFormWindow().show());
@@ -85,16 +80,13 @@ public class WorkerAdmin extends Application {
             dostawyList.getChildren().add(createDeliveryItem("ID dostawy: " + dostawa.getIdDostawy(), dostawa.getIdDostawy()));
         });
 
-        final String[] employeesArray = {"Adam Kowalski", "Beata Nowak", "Celina Wiśniewska"};
-
         Button dodajDostaweBtn = new Button("Dodaj dostawę");
+        /*
         dodajDostaweBtn.setOnAction(e ->
             new DeliveryFormWindow().show(
-                Arrays.asList(paczkiArray),
-                Arrays.asList(pojazdyArray),
-                Arrays.asList(employeesArray)
+                
             )
-        );
+        ); */
         VBox dostawyCol = buildColumn("Dostawy", dostawyScroll, dodajDostaweBtn, "#f4f4f4");
 
         // ===== KOL 4: RAPORTY =====
@@ -207,13 +199,17 @@ public class WorkerAdmin extends Application {
             new DeliveryDescription().open(dostawaId, "", "");
         });
         Button delBtn = new Button("X");
-        delBtn.setOnAction(e -> dostawyList.getChildren().removeIf(node -> {
-            if (node instanceof HBox hbox) {
-                Button b = (Button) hbox.getChildren().get(0);
-                return b.getText().equals(name);
+        delBtn.setOnAction(e -> { 
+            if (deleteDelivery(dostawaId)){
+                dostawyList.getChildren().removeIf(node -> {
+                if (node instanceof HBox hbox) {
+                    Button b = (Button) hbox.getChildren().get(0);
+                    return b.getText().equals(name);
+                }
+                return false;
+                });
             }
-            return false;
-        }));
+        });
         HBox box = new HBox(5, itemBtn, delBtn);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
@@ -292,5 +288,24 @@ public class WorkerAdmin extends Application {
             }
         }       
         return mojePaczki;
+    }
+
+    private boolean deleteDelivery(int delId) {
+        RequestController rq = new RequestController("/dostawa/delete/" + Integer.toString(delId), 3);
+        String resp = "";
+
+        try {
+            resp = rq.sendPathReq();
+
+            if (resp.equals("Dostawa o ID " + Integer.toString(delId) + " została usunięta.")) {
+                System.out.println("Usunięto dostawę");
+                return true;
+            }
+        } catch (BadRequestException bre) {
+            System.out.println("deleteDelivery: " + bre.getMessage());
+            return false;
+        }
+
+        return false;
     }
 }
