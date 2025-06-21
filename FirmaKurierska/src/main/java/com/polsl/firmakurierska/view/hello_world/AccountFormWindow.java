@@ -49,9 +49,9 @@ public class AccountFormWindow {
         positionsIDs = getAllPositionsIDs();
 
         List<String> positionsNames = new ArrayList<>();
-        positionsNames = getAllPositionsNames(licenseIDs);
+        positionsNames = getAllPositionsNames(positionsIDs);
 
-        VBox stanowiskoBox = createCheckboxInputCard("Prawo jazdy:", positionsNames.toArray(new String[0]));
+        VBox stanowiskoBox = createCheckboxInputCard("Stanowisko:", positionsNames.toArray(new String[0]));
 
 
         VBox imieBox       = createInputCard("Imię:", imieField);
@@ -99,9 +99,11 @@ public class AccountFormWindow {
             System.out.println("Login: " + loginField.getText());
             System.out.println("Hasło: " + hasloField.getText());
             
-            
+            String selectedPositionId = getSelectedPositionsId(selectedPosition);
 
-            addNewWorker(imie, nazwisko, pesel, login, selectedPosition, haslo, selectedLicenses);
+            String selectedPositionJSON = getSelectedPositionJSON(selectedPositionId, selectedPosition);
+
+            addNewWorker(imie, nazwisko, pesel, login, selectedPositionJSON, haslo, selectedLicenses);
         });
 
         HBox dodajBox = new HBox(dodajButton);
@@ -242,7 +244,7 @@ public class AccountFormWindow {
         }
 
     //new add 
-    private void addNewWorker(String imie, String nazwisko, String pesel, String login, String stanowisko, String haslo, List<String> prawoJazdy) {
+    private void addNewWorker(String imie, String nazwisko, String pesel, String login, String stanowiskoId, String haslo, List<String> prawoJazdy) {
         
         String kontoResp = "";
         String pracownikResp = "";
@@ -273,8 +275,8 @@ public class AccountFormWindow {
 
         String licenseJsonArray = prawoJazdy.toString().replace("[", "[\"").replace("]", "\"]").replace(", ", "\", \"");
         String pracownikJson = String.format(
-            "{\"imie\": \"%s\", \"nazwisko\": \"%s\", \"pesel\": \"%s\", \"stanowisko\": 2, \"prawo_jazdy\": %s, \"konto_id\": \"%s\"}",
-            imie, nazwisko, pesel, stanowisko, licenseJsonArray, kontoId
+            "{\"imie\": \"%s\", \"nazwisko\": \"%s\", \"pesel\": \"%s\", \"stanowisko\": \"%s\", \"prawo_jazdy\": %s, \"konto_id\": \"%s\"}",
+            imie, nazwisko, pesel, stanowiskoId, licenseJsonArray, kontoId
         );
 
         // try to create pracownik
@@ -326,5 +328,43 @@ public class AccountFormWindow {
 
         return categoriesID;
     }
+
+    private String getSelectedPositionsId(String selectedPosition) {
+        String response = "";
+
+        RequestController rq = new RequestController("/stanowisko/szukaj?nazwa=" + selectedPosition, 0);
+        try {
+            response = rq.sendPathReq();
+            System.out.println(response);
+
+        } catch (BadRequestException ex) {
+            System.out.println("getSelectedPositionsId: " + ex.getMessage());
+        }
+
+        String positionId = "";
+        try {
+            JSONArray stanowiskoJArray = new JSONArray(response);
+            
+            positionId = stanowiskoJArray.getJSONObject(0).getString("idStanowisko");
+                
+        } catch (JSONException ex) {
+            System.out.println("Error parsing JSON: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+
+        return positionId;
+    }
+
+    private String getSelectedPositionJSON(String positionId, String positionName) {
+        
+        String stanowiskoJSON = String.format(
+            "{\"idStanowisko\": \"%s\", \"nazwaStanowiska\": \"%s\"}",
+            positionId, positionName
+        );
+
+        return stanowiskoJSON;
+    }
+
+
 }
 

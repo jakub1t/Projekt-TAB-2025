@@ -75,7 +75,7 @@ public class AdminPanel extends Application {
         dodajKontoButton.setOnAction(e -> {
             // String name = "Nowe Konto #" + (kontaList.getChildren().size() + 1);
             kontaList.getChildren().add(createKontoItem(Arrays.asList(
-                "Imię", "Nazwisko", "PESEL", "Stanowisko", "Kategoria prawa jazdy"
+                "Imię", "Nazwisko", "12345678901", "Stanowisko", "Kategoria prawa jazdy"
                 )));
             new AccountFormWindow().show();
         });
@@ -108,11 +108,7 @@ public class AdminPanel extends Application {
         stage.show();
     }
 
-<<<<<<< Updated upstream
     private HBox createKontoItem(List<String> data) {
-=======
-    private HBox  createKontoItem(List<String> data) {
->>>>>>> Stashed changes
         String kontoName = data.getFirst();
 
         Button kontoButton = new Button(kontoName);
