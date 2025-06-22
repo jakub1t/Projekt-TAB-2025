@@ -30,6 +30,19 @@
 		<java.version>21</java.version>
 	</properties>
 	<dependencies>
+		<!-- Bean Validation API -->
+		<dependency>
+		    <groupId>jakarta.validation</groupId>
+		    <artifactId>jakarta.validation-api</artifactId>
+		    <version>3.0.2</version> <!-- lub nowsza -->
+		</dependency>
+		
+		<!-- Hibernate Validator (implementacja) -->
+		<dependency>
+		    <groupId>org.hibernate.validator</groupId>
+		    <artifactId>hibernate-validator</artifactId>
+		    <version>8.0.0.Final</version> <!-- dopasuj wersję do swojego Spring Boot -->
+		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -92,6 +105,11 @@
             <groupId>io.github.palexdev</groupId>
             <artifactId>materialfx</artifactId>
             <version>11.13.6</version>
+        </dependency>
+        <dependency>
+        	<groupId>com.example</groupId>
+        	<artifactId>kredyt</artifactId>
+        	<version>0.0.1-SNAPSHOT</version>
         </dependency>
 	</dependencies>
 
