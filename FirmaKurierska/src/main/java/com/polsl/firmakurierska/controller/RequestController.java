@@ -172,17 +172,18 @@ public class RequestController {
             JSONObject stanowiskoData = new JSONObject(stanowisko);
             String href = stanowiskoData.getString("href");
 
-            String[] hrefTokens = href.split("/");
-            boolean stupidFlag = false;
-            for (String t : hrefTokens) {
-                if (stupidFlag == true) {
-                    stanowiskoID = new String(t);
-                    break;
-                }
-                if (t.equals("stanowisko")) stupidFlag = true;
-            }
-        }
-        catch (JSONException jex) {
+            // String[] hrefTokens = href.split("/");
+            // boolean stupidFlag = false;
+            // for (String t : hrefTokens) {
+            //     if (stupidFlag == true) {
+            //         stanowiskoID = new String(t);
+            //         break;
+            //     }
+            //     if (t.equals("stanowisko")) stupidFlag = true;
+            // }
+            stanowiskoID = returnValueFromHref("stanowisko", href);
+
+        } catch (JSONException jex) {
             System.out.println(jex.toString());
             jex.printStackTrace();
         }
@@ -252,5 +253,26 @@ public class RequestController {
         }
 
         return categoriesID;
+    }
+
+    /**
+     * Method that parses href links from DTO
+     * @param fieldToRetrieve field that we want value from, eg. stanowisko in pracownik
+     * @param href link to parse
+     * @return all driving license categories from jsonData
+     */
+    public String returnValueFromHref(String fieldToRetrieve, String href) {
+        String result = "";
+
+        String[] hrefTokens = href.split("/");
+        boolean stupidFlag = false;
+        for (String t : hrefTokens) {
+            if (stupidFlag == true) {
+                result = t;
+                break;
+            }
+            if (t.equals(fieldToRetrieve)) stupidFlag = true;
+        }
+        return result;
     }
 }

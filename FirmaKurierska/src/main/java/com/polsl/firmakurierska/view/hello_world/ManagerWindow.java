@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.hateoas.Link;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,8 +22,10 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.dto.DostawaDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Paczka;
 import com.polsl.firmakurierska.model.Pojazd;
+import com.polsl.firmakurierska.model.Pracownik;
 
 public class ManagerWindow extends Application {
 
@@ -42,7 +46,7 @@ public class ManagerWindow extends Application {
         List<Paczka> paczki = getPaczki();
 
         paczki.forEach(paczka -> {
-            paczkiList.getChildren().add(createPackageItem("ID paczki: " + paczka.getIdPaczki(), paczka));
+            paczkiList.getChildren().add(createPackageItem(paczka.getIdPaczki(), paczka));
         });
 
         Button dodajPaczkeBtn = new Button("Dodaj paczkę");
@@ -59,7 +63,7 @@ public class ManagerWindow extends Application {
         List<Pojazd> pojazdy = getPojazdy();
 
         pojazdy.forEach(pojazd -> {
-            pojazdyList.getChildren().add(createVehicleItem("ID pojazdu: " + pojazd.getIdPojazdu(), pojazd));
+            pojazdyList.getChildren().add(createVehicleItem(pojazd.getIdPojazdu(), pojazd));
         });
 
         Button dodajPojazdBtn = new Button("Dodaj pojazd");
@@ -76,7 +80,7 @@ public class ManagerWindow extends Application {
         List<DostawaDTO> dostawy = getDostawy();
 
         dostawy.forEach(dostawa -> {
-            dostawyList.getChildren().add(createDeliveryItem("ID dostawy: " + dostawa.getIdDostawy(), dostawa.getIdDostawy()));
+            dostawyList.getChildren().add(createDeliveryItem(dostawa.getIdDostawy(), dostawa));
         });
 
         Button dodajDostaweBtn = new Button("Dodaj dostawę");
@@ -134,7 +138,9 @@ public class ManagerWindow extends Application {
         return col;
     }
 
-    private HBox createPackageItem(String name, Paczka paczkaData) {
+    private HBox createPackageItem(int paczkaId, Paczka paczkaData) {
+        String name = "ID paczki: " + paczkaId;
+
         Button itemBtn = new Button(name);
         itemBtn.setPrefWidth(140);
         itemBtn.setOnAction(e -> {
@@ -154,6 +160,9 @@ public class ManagerWindow extends Application {
         Button delBtn = new Button("X");
         delBtn.setOnAction(e -> paczkiList.getChildren().removeIf(node -> {
             if (node instanceof HBox hbox) {
+                // Delete package here
+                deletePackage(paczkaId);
+
                 Button b = (Button) hbox.getChildren().get(0);
                 return b.getText().equals(name);
             }
@@ -164,7 +173,9 @@ public class ManagerWindow extends Application {
         return box;
     }
 
-    private HBox createVehicleItem(String name, Pojazd pojazdData) {
+    private HBox createVehicleItem(int pojazdId, Pojazd pojazdData) {
+        String name = "ID pojazdu: " + pojazdId;
+
         Button itemBtn = new Button(name);
         itemBtn.setPrefWidth(140);
         itemBtn.setOnAction(e -> {
@@ -181,6 +192,9 @@ public class ManagerWindow extends Application {
         Button delBtn = new Button("X");
         delBtn.setOnAction(e -> pojazdyList.getChildren().removeIf(node -> {
             if (node instanceof HBox hbox) {
+                // Delete vehicle here
+                deleteVehicle(pojazdId);
+
                 Button b = (Button) hbox.getChildren().get(0);
                 return b.getText().equals(name);
             }
@@ -191,11 +205,23 @@ public class ManagerWindow extends Application {
         return box;
     }
 
-    private HBox createDeliveryItem(String name, int dostawaId) {
+    private HBox createDeliveryItem(int dostawaId, DostawaDTO dostawaData) {
+        String name = "ID dostawy: " + dostawaId;
+        RequestController rq_helper = new RequestController("", 0);
+
+
         Button itemBtn = new Button(name);
         itemBtn.setPrefWidth(140);
         itemBtn.setOnAction(e -> {
-            new DeliveryDescription().open(dostawaId, "", "");
+            Link pracownikLink = dostawaData.getLink("pracownik").get();
+
+            String pracownikHref = pracownikLink.getHref();
+
+            String pracownikId = rq_helper.returnValueFromHref("pracownik", pracownikHref);
+
+            Pracownik pracownikData = getPracownikNameAndSurname(Integer.parseInt(pracownikId));
+
+            new DeliveryDescription().open(dostawaId, pracownikData.getImie(), pracownikData.getNazwisko());
         });
         Button delBtn = new Button("X");
         delBtn.setOnAction(e -> { 
@@ -237,6 +263,29 @@ public class ManagerWindow extends Application {
             }
         }       
         return mojeDostawy;
+    }
+
+    private Pracownik getPracownikNameAndSurname(int workerId) {
+        Pracownik pracownik = new Pracownik();
+        String response = "";
+        RequestController rq = new RequestController("/pracownik/" + workerId, 1);
+
+        try {
+            response = rq.sendPathReq();
+        } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+        }
+        
+        ObjectMapper mapper = new ObjectMapper().configure(
+                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.registerModule(new JavaTimeModule());
+        try {
+            pracownik = mapper.readValue(response, new TypeReference<Pracownik>(){});
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return pracownik;
     }
 
     private List<Pojazd> getPojazdy() {
@@ -306,5 +355,41 @@ public class ManagerWindow extends Application {
         }
 
         return false;
+    }
+
+    private boolean deletePackage(int packId) {
+        // Works but returns exceptions because tries to delete repeatedly for some reason
+
+        RequestController rq = new RequestController("/paczka/delete/" + packId, 3);
+
+        try {
+            rq.sendPathReq();
+            
+        } catch (ResourceNotFoundException rex) {
+            System.out.println("deleteDelivery: " + rex.getMessage()); 
+        } catch (BadRequestException bre) {
+            System.out.println("deleteDelivery: " + bre.getMessage());
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean deleteVehicle(int vehicleId) {
+        // Works but returns exceptions because tries to delete repeatedly for some reason
+
+        RequestController rq = new RequestController("/pojazd/" + vehicleId, 3);
+
+        try {
+            rq.sendPathReq();
+            
+        } catch (ResourceNotFoundException rex) {
+            System.out.println("deleteVehicle: " + rex.getMessage());
+        } catch (BadRequestException bre) {
+            System.out.println("deleteVehicle: " + bre.getMessage());
+            return false;
+        }
+
+        return true;
     }
 }

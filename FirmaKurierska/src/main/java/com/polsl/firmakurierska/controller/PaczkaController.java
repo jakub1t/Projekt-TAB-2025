@@ -121,7 +121,7 @@ public class PaczkaController {
         return paczkaRepository.save(paczka);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public void deletePaczka(@PathVariable Integer id) {
         Paczka paczka = paczkaRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Paczka o ID " + id + " nie istnieje"));
