@@ -1,12 +1,20 @@
 package com.polsl.firmakurierska.controller;
 
 import com.polsl.firmakurierska.dto.PracownikDTO;
+import com.polsl.firmakurierska.dto.PracownikCreateDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
+import com.polsl.firmakurierska.model.Dostawa;
+import com.polsl.firmakurierska.model.Konto;
+import com.polsl.firmakurierska.model.Stanowisko;
 import com.polsl.firmakurierska.model.Pracownik;
 import com.polsl.firmakurierska.model.PrawoJazdy;
+import com.polsl.firmakurierska.repository.StanowiskoRepository;
+import com.polsl.firmakurierska.repository.PrawoJazdyRepository;
 import com.polsl.firmakurierska.repository.PracownikRepository;
+import com.polsl.firmakurierska.repository.KontoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -23,12 +31,22 @@ import org.springframework.hateoas.CollectionModel;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 
+
 @RestController
 @RequestMapping("/pracownik")
 public class PracownikController {
 
     @Autowired
     PracownikRepository pracownikRepository;
+
+    @Autowired
+    KontoRepository kontoRepository;
+
+    @Autowired
+    private StanowiskoRepository stanowiskoRepository;
+    
+    @Autowired
+    PrawoJazdyRepository prawoJazdyRepository;
 
     @GetMapping
     public @ResponseBody Iterable<PracownikDTO> getAllPracownicy() {
@@ -56,15 +74,62 @@ public class PracownikController {
         return ResponseEntity.ok(new PracownikDTO(pracownik));
     }
 
-   
-    @PostMapping
-    public Pracownik addPracownik(@RequestBody Pracownik pracownik) {
-    	if(pracownik == null) {
-    		throw new BadRequestException("Dane pracownika nie mogą być puste.");
-    	}
-        return pracownikRepository.save(pracownik);
+    @GetMapping("/get")
+    public Pracownik getPracownikByIdRaw(@RequestParam String id) {
+        int pid;
+        try {
+            pid = Integer.parseInt(id);
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("ID musi być liczbą całkowitą: " + id);
+        }
+        Pracownik pracownik = pracownikRepository.findById(pid)
+                .orElseThrow(() -> new ResourceNotFoundException("Nie znaleziono pracownika o ID: " + pid));
+
+        return pracownik;
+    }
+    
+    @PostMapping("/create")
+    @Transactional
+    public ResponseEntity<PracownikDTO> createPracownik(@RequestBody PracownikCreateDTO dto) {
+        if (dto == null) {
+            throw new BadRequestException("Dane pracownika nie mogą być puste.");
+        }
+
+        // Tworzymy nowe konto
+        Konto konto = new Konto();
+        konto.setLogin(dto.getKonto().getLogin());
+        konto.setHaslo(dto.getKonto().getHaslo());
+        konto = kontoRepository.save(konto);
+
+        // Szukamy stanowiska
+        Stanowisko stanowisko = stanowiskoRepository.findById(dto.getStanowiskoId())
+                .orElseThrow(() -> new BadRequestException("Stanowisko o ID " + dto.getStanowiskoId() + " nie istnieje"));
+
+        // Szukamy praw jazdy
+        Set<PrawoJazdy> prawaJazdy = null;
+        if (dto.getPrawaJazdyIds() != null && !dto.getPrawaJazdyIds().isEmpty()) {
+            prawaJazdy = dto.getPrawaJazdyIds().stream()
+                    .map(id -> prawoJazdyRepository.findById(id)
+                            .orElseThrow(() -> new BadRequestException("Prawo jazdy o ID " + id + " nie istnieje")))
+                    .collect(Collectors.toSet());
+        }
+
+        // Tworzymy pracownika
+        Pracownik pracownik = new Pracownik();
+        pracownik.setImie(dto.getImie());
+        pracownik.setNazwisko(dto.getNazwisko());
+        pracownik.setPesel(dto.getPesel());
+        pracownik.setKonto(konto);
+        pracownik.setStanowisko(stanowisko);
+        pracownik.setPrawoJazdy(prawaJazdy);
+
+        pracownik = pracownikRepository.save(pracownik);
+
+        return new ResponseEntity<>(new PracownikDTO(pracownik), HttpStatus.CREATED);
     }
 
+
+    @Transactional
     @DeleteMapping("/{pesel}")
     public void deletePracownikByPesel(@PathVariable String pesel) {
         Pracownik pracownik = pracownikRepository.findByPesel(pesel)
@@ -72,30 +137,44 @@ public class PracownikController {
         pracownikRepository.delete(pracownik);
     }
 
-	/*
-	 * @GetMapping("/imie/{imie}") public List<Pracownik>
-	 * getPracownicyByImie(@PathVariable String imie) { List<Pracownik> pracownicy =
-	 * pracownikRepository.findByImie(imie); if (pracownicy.isEmpty()) { throw new
-	 * ResourceNotFoundException("Brak pracowników o imieniu: " + imie); } return
-	 * pracownicy; }
-	 * 
-	 * @GetMapping("/nazwisko/{nazwisko}") public List<Pracownik>
-	 * getPracownicyByNazwisko(@PathVariable String nazwisko) { return
-	 * pracownikRepository.findByNazwisko(nazwisko); }
-	 * 
-	 * @GetMapping("/imieNazwisko/{imie}/{nazwisko}") public List<Pracownik>
-	 * getPracownicyByImieAndNazwisko(@PathVariable String imie, @PathVariable
-	 * String nazwisko) { return pracownikRepository.findByImieAndNazwisko(imie,
-	 * nazwisko); }
-	 * 
-	 * @GetMapping("/pesel/{pesel}") public Optional<Pracownik>
-	 * getPracownikByPesel(@PathVariable String pesel) { return
-	 * pracownikRepository.findByPesel(pesel); }
-	 * 
-	 * @GetMapping("/imieStartingWith/{prefix}") public List<Pracownik>
-	 * getPracownicyByImieStartingWith(@PathVariable String prefix) { return
-	 * pracownikRepository.findByImieStartingWith(prefix); }
-	 */
+
+    @DeleteMapping("/delete/{id}")
+    @Transactional
+    public ResponseEntity<String> deletePracownik(@PathVariable Integer id) {
+        Optional<Pracownik> optional = pracownikRepository.findById(id);
+        if (optional.isPresent()) {
+            Pracownik pracownik = optional.get();
+
+            // Usuń referencje z drugiej strony relacji
+            if (pracownik.getPrawoJazdy() != null) {
+                for (PrawoJazdy pj : pracownik.getPrawoJazdy()) {
+                    pj.getPracownicy().remove(pracownik);
+                }
+                pracownik.getPrawoJazdy().clear();
+            }
+
+            // Usuń referencje z dostaw
+            if (pracownik.getDostawy() != null) {
+                for (Dostawa d : pracownik.getDostawy()) {
+                    d.setPracownik(null);  // o ile Dostawa ma `@ManyToOne Pracownik`
+                }
+            }
+
+            pracownik.setStanowisko(null);
+            pracownik.setKonto(null); // Konto ma CascadeType.ALL, więc zostanie usunięte
+
+            pracownikRepository.save(pracownik); // zapis zmian w relacjach
+            pracownikRepository.delete(pracownik); // teraz można bezpiecznie usunąć
+
+            return ResponseEntity.ok("Pracownik został usunięty.");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Pracownik nie istnieje.");
+        }
+    }
+
+
+
+
 
     @GetMapping("/nazwiskoContaining/{fragment}")
     public List<Pracownik> getPracownicyByNazwiskoContaining(@PathVariable String fragment) {
@@ -137,17 +216,18 @@ public class PracownikController {
         }
     }
     
-    @PutMapping("/{pesel}")
-    public Pracownik updatePracownik(@PathVariable String pesel, @RequestBody Pracownik pracownikDetails) {
-        Pracownik pracownik = pracownikRepository.findByPesel(pesel)
-                .orElseThrow(() -> new RuntimeException("Pracownik z pesel " + pesel + " nie istnieje"));
+    @PutMapping("/{id}")
+    public Pracownik updatePracownik(@PathVariable Integer id, @RequestBody Pracownik pracownikDetails) {
+        Pracownik pracownik = pracownikRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pracownik z id " + id + " nie istnieje"));
 
-        
+        // Aktualizujemy tylko podstawowe dane
         pracownik.setImie(pracownikDetails.getImie());
         pracownik.setNazwisko(pracownikDetails.getNazwisko());
-        pracownik.setStanowisko(pracownikDetails.getStanowisko());
+        pracownik.setPesel(pracownikDetails.getPesel());
 
-        return pracownikRepository.save(pracownik);  
+        // NIE dotykamy: stanowisko, konto, prawoJazdy
+        return pracownikRepository.save(pracownik); 
     }
 
 

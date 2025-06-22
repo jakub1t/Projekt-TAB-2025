@@ -5,7 +5,6 @@ import lombok.*;
 
 import java.time.*;
 import java.util.List;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 
@@ -27,9 +26,8 @@ public class Dostawa {
 	
 	@OneToMany(mappedBy = "dostawa", fetch = FetchType.EAGER)
 	@JsonManagedReference
-	@JsonIgnore
-	//zapobiegają błędowi nieskończonej rekursji w JSON
 	private List<Paczka> paczki;
+
 	
 	@ManyToOne
 	@JoinColumn(name = "pojazd_id")

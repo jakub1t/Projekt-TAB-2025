@@ -22,21 +22,22 @@ public class Pracownik {
 	@Column(unique = true) 
 	private String pesel; 
 	
-	@ManyToOne(cascade = CascadeType.ALL)
+	@ManyToOne
 	@JoinColumn(name = "stanowisko_id")  
 	private Stanowisko stanowisko;
 	
-	@OneToOne
-    @JoinColumn(name = "konto_id", unique = true)
-    private Konto konto;
+	@OneToOne(cascade = CascadeType.ALL)
+	@JoinColumn(name = "konto_id", nullable = true)
+	private Konto konto;
 	
-	@ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable( //tworzy posredniczą tabelę
-        name = "pracownik_prawojazdy",
-        joinColumns = @JoinColumn(name = "pracownik_id"),
-        inverseJoinColumns = @JoinColumn(name = "prawojazdy_id")
-    )
-    private Set<PrawoJazdy> prawoJazdy;
+	@ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+	@JoinTable(
+	    name = "pracownik_prawojazdy",
+	    joinColumns = @JoinColumn(name = "pracownik_id"),
+	    inverseJoinColumns = @JoinColumn(name = "prawojazdy_id")
+	)
+	private Set<PrawoJazdy> prawoJazdy;
+
 	
 	
 	@OneToMany(mappedBy = "pracownik", fetch = FetchType.EAGER)

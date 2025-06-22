@@ -1,18 +1,29 @@
 package com.polsl.firmakurierska.controller;
 
-import com.polsl.firmakurierska.exception.BadRequestException;
-import com.polsl.firmakurierska.exception.ResourceNotFoundException;
-import com.polsl.firmakurierska.model.Konto;
-import com.polsl.firmakurierska.repository.KontoRepository;
-
-import jakarta.transaction.Transactional;
-
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.StreamSupport;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
-import java.util.ArrayList;
-import java.util.List;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.exception.ResourceNotFoundException;
+import com.polsl.firmakurierska.model.Konto;
+import com.polsl.firmakurierska.model.Pracownik;
+import com.polsl.firmakurierska.repository.KontoRepository;
+import com.polsl.firmakurierska.repository.PracownikRepository;
+
+import jakarta.transaction.Transactional;
+import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/konto")
@@ -21,10 +32,13 @@ public class KontoController {
     @Autowired
     KontoRepository kontoRepository;
 
+    @Autowired
+    PracownikRepository pracownikRepository;
+    
     @GetMapping("/all")
     public List<Konto> getAllKonta() {
         List<Konto> accounts = new ArrayList<>();
-        kontoRepository.findAll().forEach(accounts::add);;
+        kontoRepository.findAll().forEach(accounts::add);
 
         return accounts;
     }
@@ -52,8 +66,9 @@ public class KontoController {
         return correct ? "Zalogowano pomyślnie" : "Błędny login lub hasło";
     }
 
-    @PostMapping
-    public Konto login(@RequestBody Konto konto) {
+
+    @PostMapping("/add")
+    public Konto addKonto(@RequestBody Konto konto) {
         if (konto.getLogin() == null || konto.getHaslo() == null) {
             throw new BadRequestException("Login i hasło nie mogą być puste");
         }
@@ -65,6 +80,10 @@ public class KontoController {
         return kontoRepository.save(konto);
     }
 
+
+
+
+
     @DeleteMapping("/login")
     @Transactional
     public void deleteKonto(@RequestParam String login) {
@@ -73,6 +92,27 @@ public class KontoController {
         }
         kontoRepository.deleteByLogin(login);
     }
+
+
+    
+    @Transactional
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<String> deleteKontoById(@PathVariable Integer id) {
+        Konto konto = kontoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Konto nie istnieje"));
+
+        Pracownik pracownik = pracownikRepository.findByKonto_IdKonta(id).orElse(null);
+
+        if (pracownik != null) {
+            pracownik.setKonto(null); // odłącz konto od pracownika
+            pracownikRepository.save(pracownik); // zapisz zmiany w pracowniku
+        }
+
+        kontoRepository.delete(konto);
+
+        return ResponseEntity.ok("Konto usunięte pomyślnie");
+    }
+
 
     @PutMapping("/update/{login}")
     public Konto updateKonto(@PathVariable String login, @RequestBody Konto newData) {

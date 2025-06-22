@@ -18,12 +18,12 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.polsl.firmakurierska.controller.RequestController;
+import com.polsl.firmakurierska.dto.DostawaDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
-import com.polsl.firmakurierska.model.Dostawa;
 import com.polsl.firmakurierska.model.Paczka;
 import com.polsl.firmakurierska.model.Pojazd;
 
-public class WorkerAdmin extends Application {
+public class ManagerWindow extends Application {
 
     private VBox paczkiList;
     private VBox pojazdyList;
@@ -73,7 +73,7 @@ public class WorkerAdmin extends Application {
         dostawyScroll.setFitToWidth(true);
         dostawyScroll.setPrefHeight(300);
 
-        List<Dostawa> dostawy = getDostawy();
+        List<DostawaDTO> dostawy = getDostawy();
 
         dostawy.forEach(dostawa -> {
             dostawyList.getChildren().add(createDeliveryItem("ID dostawy: " + dostawa.getIdDostawy(), dostawa.getIdDostawy()));
@@ -214,8 +214,8 @@ public class WorkerAdmin extends Application {
         return box;
     }
 
-    private List<Dostawa> getDostawy() {
-        List<Dostawa> mojeDostawy = new ArrayList<>();
+    private List<DostawaDTO> getDostawy() {
+        List<DostawaDTO> mojeDostawy = new ArrayList<>();
         RequestController rq = new RequestController("/dostawa", 0);
         String response = "";
         boolean goFurther = true;
@@ -231,7 +231,7 @@ public class WorkerAdmin extends Application {
                 DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             mapper.registerModule(new JavaTimeModule());
             try {
-                mojeDostawy = mapper.readValue(response, new TypeReference<List<Dostawa>>(){});
+                mojeDostawy = mapper.readValue(response, new TypeReference<List<DostawaDTO>>(){});
             } catch (IOException e) {
                 System.out.println(e.getMessage());
             }

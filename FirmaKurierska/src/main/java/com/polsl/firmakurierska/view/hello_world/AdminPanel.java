@@ -2,7 +2,6 @@ package com.polsl.firmakurierska.view.hello_world;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.boot.configurationprocessor.json.JSONException;
@@ -12,6 +11,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Konto;
 
 import javafx.application.Application;
@@ -36,18 +36,17 @@ public class AdminPanel extends Application {
         kontaList = new VBox(5);
         kontaList.setPadding(new Insets(5));
 
-        List<Konto> accounts = new ArrayList<>();
+        List<Konto> accounts = getAllAccounts();
 
-        accounts = getAllAccounts();
-
-        List<List<String>> workerData = new ArrayList<>();
+        List<String> workerNames = new ArrayList<>();
         
         accounts.forEach(account -> {
             List<String> listData = getWorkerData(account.getIdKonta());
-            workerData.add(listData);
-        });
+            workerNames.add(listData.getFirst());
 
-        workerData.forEach(data -> {kontaList.getChildren().add(createKontoItem(data));});
+            kontaList.getChildren().add(createKontoItem(account.getIdKonta(), listData));
+        });
+        //workerData.forEach(data -> {kontaList.getChildren().add(createKontoItem(data));});
 
         // Pasek wyszukiwania
         TextField searchField = new TextField();
@@ -57,9 +56,10 @@ public class AdminPanel extends Application {
             String query = searchField.getText().toLowerCase();
             kontaList.getChildren().clear();
 
-            workerData.forEach(data -> {
-                if (data.getFirst().toLowerCase().contains(query)) {
-                    kontaList.getChildren().add(createKontoItem(data));
+            accounts.forEach(account -> {
+                List<String> listData = getWorkerData(account.getIdKonta());
+                if (workerNames.get(accounts.indexOf(account)).contains(query)) {
+                    kontaList.getChildren().add(createKontoItem(account.getIdKonta(), listData));
                 }
             });
         });
@@ -74,9 +74,12 @@ public class AdminPanel extends Application {
         Button dodajKontoButton = new Button("Dodaj konto");
         dodajKontoButton.setOnAction(e -> {
             // String name = "Nowe Konto #" + (kontaList.getChildren().size() + 1);
+            /*
             kontaList.getChildren().add(createKontoItem(Arrays.asList(
+
                 "Imię", "Nazwisko", "PESEL", "Stanowisko", "Kategoria prawa jazdy"
-                )));
+            ))); */
+          
             new AccountFormWindow().show();
         });
 
@@ -108,10 +111,11 @@ public class AdminPanel extends Application {
         stage.show();
     }
 
-    private HBox createKontoItem(List<String> data) {
+    private HBox createKontoItem(Integer acId, List<String> data) {
         String kontoName = data.getFirst();
+        Integer kontoId = acId;
 
-        Button kontoButton = new Button(kontoName);
+        Button kontoButton = new Button(acId.toString() + ": " + kontoName);
         kontoButton.setPrefWidth(200);
         kontoButton.setOnAction(e -> {
             System.out.println("Naciśnięto " + kontoName);
@@ -120,22 +124,30 @@ public class AdminPanel extends Application {
             );
         });
 
-        Button deleteButton = new Button("X");
+        Button deleteButton = new Button("X"); /*
         deleteButton.setOnAction(e -> kontaList.getChildren().removeIf(node -> {
             if (node instanceof HBox hbox) {
                 Button btn = (Button) hbox.getChildren().get(0);
                 return btn.getText().equals(kontoName);
             }
             return false;
-        }));
+        })); */
+
+        deleteButton.setOnAction(e -> {
+            if (deleteAcc(kontoId)) {
+                kontaList.getChildren().removeIf(acc -> {
+                    if (acc instanceof HBox hbox) {
+                        Button btn = (Button) hbox.getChildren().get(0);
+                        return btn.getText().equals(acId.toString() + ": " + kontoName);
+                    }
+                    return false;
+                });
+            }
+        });
 
         HBox hbox = new HBox(10, kontoButton, deleteButton);
         hbox.setAlignment(Pos.CENTER_LEFT);
         return hbox;
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 
     private List<Konto> getAllAccounts(){
@@ -215,5 +227,40 @@ public class AdminPanel extends Application {
         }
 
         return workerData;
+    }
+
+    private boolean deleteAcc(int acId) {
+        RequestController rq = new RequestController("/pracownik/delete/" + Integer.toString(acId), 3);
+        String resp = "";
+        
+        try {
+            resp = rq.sendPathReq();
+
+        } catch (ResourceNotFoundException rex) {
+            System.out.println("Nie udało się usunąć konta");
+            return false;
+        } catch (BadRequestException bre) {
+            System.out.println("Niepoprawny request!");
+            return false;
+        }
+
+        try {
+            rq = new RequestController("/konto/delete/" + Integer.toString(acId), 3);
+            resp = rq.sendPathReq();
+
+        } catch (ResourceNotFoundException rex) {
+            System.out.println("Nie udało się usunąć konta");
+            return false;
+        } catch (BadRequestException bre) {
+            System.out.println("Niepoprawny request!");
+            return false;
+        }
+
+        if (resp == "NRP") {
+            return false;
+        }
+
+        System.out.println("Konto zostało usunięte!");
+        return true;
     }
 }
