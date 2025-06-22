@@ -1,10 +1,13 @@
 package com.polsl.firmakurierska.controller;
 
+import com.polsl.firmakurierska.dto.PaczkaCreateDTO;
 import com.polsl.firmakurierska.dto.PaczkaDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Paczka;
 import com.polsl.firmakurierska.model.Produkt;
+import com.polsl.firmakurierska.repository.DostawaRepository;
+import com.polsl.firmakurierska.repository.KlientRepository;
 import com.polsl.firmakurierska.repository.PaczkaRepository;
 import com.polsl.firmakurierska.repository.ProduktRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/paczka")
@@ -24,6 +29,12 @@ public class PaczkaController {
     
     @Autowired
     ProduktRepository produktRepository;
+
+    @Autowired
+    private KlientRepository klientRepository;
+
+    @Autowired
+    private DostawaRepository dostawaRepository;
     
     @GetMapping
     public List<PaczkaDTO> getAllPaczki() {
@@ -42,6 +53,7 @@ public class PaczkaController {
             Integer pid = Integer.parseInt(id);
             Paczka paczka = paczkaRepository.findById(pid)
             		.orElseThrow(() -> new ResourceNotFoundException("Paczka o ID \" + pid + \" nie znaleziona"));
+            paczka.getProdukt().size();
             return new PaczkaDTO(paczka);
         } catch (NumberFormatException e) {
             throw new BadRequestException("ID " + id + " ma nieprawidłowy format. Oczekiwano liczby całkowitej.");
@@ -59,11 +71,43 @@ public class PaczkaController {
     }
     
     @PostMapping
-    public Paczka addPaczka(@RequestBody Paczka paczka) {
-    	if(paczka == null) {
-    		throw new BadRequestException("Dane paczki nie mogą być puste.");
-    	}
-        return paczkaRepository.save(paczka);
+    public ResponseEntity<PaczkaDTO> addPaczka(@Valid @RequestBody PaczkaCreateDTO dto) {
+        Paczka paczka = new Paczka();
+        paczka.setWagaPaczki(dto.getWagaPaczki());
+
+        // Ustaw klienta jeśli podano
+        if (dto.getKlientId() != null) {
+            // musisz mieć klientRepository
+            var klient = klientRepository.findById(dto.getKlientId())
+                    .orElseThrow(() -> new BadRequestException("Klient o ID " + dto.getKlientId() + " nie istnieje"));
+            paczka.setKlient(klient);
+        }
+
+        // Ustaw dostawę jeśli podano
+        if (dto.getDostawaId() != null) {
+            var dostawa = dostawaRepository.findById(dto.getDostawaId())
+                    .orElseThrow(() -> new BadRequestException("Dostawa o ID " + dto.getDostawaId() + " nie istnieje"));
+            paczka.setDostawa(dostawa);
+        }
+
+        // Produkty - pobierz po ID i ustaw do paczki
+        if (dto.getProduktIds() != null && !dto.getProduktIds().isEmpty()) {
+            var produkty = dto.getProduktIds().stream()
+                    .map(id -> produktRepository.findById(id)
+                            .orElseThrow(() -> new BadRequestException("Produkt o ID " + id + " nie istnieje")))
+                    .collect(Collectors.toList());
+
+            // ustaw listę produktów w paczce
+            paczka.setProdukt(produkty);
+
+            // ustaw paczkę w każdym produkcie (dwukierunkowo)
+            produkty.forEach(p -> p.setPaczka(paczka));
+        }
+
+        // Zapisz paczkę
+        Paczka saved = paczkaRepository.save(paczka);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(new PaczkaDTO(saved));
     }
  
     @PutMapping("/{id}")
