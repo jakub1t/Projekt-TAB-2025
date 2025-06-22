@@ -261,17 +261,6 @@ public class AccountFormWindow {
         }
         System.out.println("Konto response: " + kontoResp);
 
-        /*int kontoId = 0;
-                            
-        try {
-           kontoId = new JSONObject(kontoResp).getInt("idKonta");
-        }
-        catch (JSONException jex) {
-            System.out.println(jex.toString());
-            jex.printStackTrace();
-        }*/
-
-
         String licenseJsonArray = prawoJazdy.toString().replace("[", "[\"").replace("]", "\"]").replace(", ", "\", \"");
         String pracownikJson = String.format(
             "{\"imie\":\"%s\",\"nazwisko\":\"%s\",\"pesel\":\"%s\",\"stanowisko\":%s,\"konto\":%s,\"prawo_jazdy\":%s}",

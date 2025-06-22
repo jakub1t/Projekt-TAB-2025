@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.hateoas.Link;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -21,11 +23,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.dto.DostawaDTO;
+import com.polsl.firmakurierska.dto.PaczkaDTO;
+import com.polsl.firmakurierska.dto.ProduktDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
-import com.polsl.firmakurierska.model.Paczka;
+import com.polsl.firmakurierska.model.Klient;
 import com.polsl.firmakurierska.model.Pojazd;
 import com.polsl.firmakurierska.model.Pracownik;
+import com.polsl.firmakurierska.model.Producent;
+import com.polsl.firmakurierska.view.hello_world.PackageDescription.Product;
 
 public class ManagerWindow extends Application {
 
@@ -43,7 +49,7 @@ public class ManagerWindow extends Application {
         paczkiScroll.setFitToWidth(true);
         paczkiScroll.setPrefHeight(300);
         
-        List<Paczka> paczki = getPaczki();
+        List<PaczkaDTO> paczki = getPaczki();
 
         paczki.forEach(paczka -> {
             paczkiList.getChildren().add(createPackageItem(paczka.getIdPaczki(), paczka));
@@ -138,23 +144,45 @@ public class ManagerWindow extends Application {
         return col;
     }
 
-    private HBox createPackageItem(int paczkaId, Paczka paczkaData) {
+    private HBox createPackageItem(int paczkaId, PaczkaDTO paczkaData) {
         String name = "ID paczki: " + paczkaId;
 
         Button itemBtn = new Button(name);
         itemBtn.setPrefWidth(140);
         itemBtn.setOnAction(e -> {
 
-            var produkty = List.of(
-                new PackageDescription.Product("Mysz bezprzewodowa", "0.2 kg", "Elektronika", "SN12345", "LogiTech"),
-                new PackageDescription.Product("Kabel HDMI", "0.15 kg", "Akcesoria", "SN67890", "KabelPro"),
-                new PackageDescription.Product("Notebook A4", "0.5 kg", "Papier", "SN54321", "PapierPlus")
-            );
+            int klientId = paczkaData.getKlientId();
+            List<Integer> procuktIds = paczkaData.getProduktIds();
+            final List<Product> productsForDisplay = new ArrayList<>();
+            RequestController rq_helper = new RequestController("", 0);
+
+            Klient client = getKlientById(klientId);
+
+            procuktIds.forEach(id -> {
+                ProduktDTO tempProdukt = getProduktById(id);
+
+                Link producentLink = tempProdukt.getLink("producent").get();
+
+                String producentHref = producentLink.getHref();
+
+                String producentId = rq_helper.returnValueFromHref("producent", producentHref);
+
+                Producent producentData = getProducentById(Integer.parseInt(producentId));
+                    
+                
+                productsForDisplay.add(new Product(tempProdukt.getNazwaProduktu(), 
+                    Double.toString(tempProdukt.getWaga()) + " kg", 
+                    tempProdukt.getKategoriaProd(), 
+                    tempProdukt.getNrSeryjny(), 
+                    producentData.getNazwaProducenta()
+                ));
+            });
+
             new PackageDescription().show(
-                "",
-                "",
+                client.getImieK(),
+                client.getNazwiskoK(),
                 paczkaData.getWagaPaczki(),
-                produkty
+                productsForDisplay
             );
         });
         Button delBtn = new Button("X");
@@ -219,7 +247,7 @@ public class ManagerWindow extends Application {
 
             String pracownikId = rq_helper.returnValueFromHref("pracownik", pracownikHref);
 
-            Pracownik pracownikData = getPracownikNameAndSurname(Integer.parseInt(pracownikId));
+            Pracownik pracownikData = getPracownikById(Integer.parseInt(pracownikId));
 
             new DeliveryDescription().open(dostawaId, pracownikData.getImie(), pracownikData.getNazwisko());
         });
@@ -265,29 +293,6 @@ public class ManagerWindow extends Application {
         return mojeDostawy;
     }
 
-    private Pracownik getPracownikNameAndSurname(int workerId) {
-        Pracownik pracownik = new Pracownik();
-        String response = "";
-        RequestController rq = new RequestController("/pracownik/" + workerId, 1);
-
-        try {
-            response = rq.sendPathReq();
-        } catch (BadRequestException e) {
-            System.out.println(e.getMessage());
-        }
-        
-        ObjectMapper mapper = new ObjectMapper().configure(
-                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.registerModule(new JavaTimeModule());
-        try {
-            pracownik = mapper.readValue(response, new TypeReference<Pracownik>(){});
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        }
-
-        return pracownik;
-    }
-
     private List<Pojazd> getPojazdy() {
         List<Pojazd> mojePojazdy = new ArrayList<>();
         RequestController rq = new RequestController("/pojazd", 0);
@@ -313,14 +318,15 @@ public class ManagerWindow extends Application {
         return mojePojazdy;
     }
 
-    private List<Paczka> getPaczki() {
-        List<Paczka> mojePaczki = new ArrayList<>();
+    private List<PaczkaDTO> getPaczki() {
+        List<PaczkaDTO> mojePaczki = new ArrayList<>();
         RequestController rq = new RequestController("/paczka", 0);
         String response = "";
         boolean goFurther = true;
 
         try {
             response = rq.sendPathReq();
+
         } catch (BadRequestException e) {
             System.out.println(e.getMessage());
             goFurther = false;
@@ -330,12 +336,126 @@ public class ManagerWindow extends Application {
                 DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             mapper.registerModule(new JavaTimeModule());
             try {
-                mojePaczki = mapper.readValue(response, new TypeReference<List<Paczka>>(){});
+                mojePaczki = mapper.readValue(response, new TypeReference<List<PaczkaDTO>>(){});
             } catch (IOException e) {
                 System.out.println(e.getMessage());
             }
         }       
         return mojePaczki;
+    }
+
+    private Pracownik getPracownikById(int workerId) {
+        Pracownik pracownik = new Pracownik();
+        String response = "";
+        RequestController rq = new RequestController("/pracownik/" + workerId, 1);
+
+        try {
+            response = rq.sendPathReq();
+        } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+        }
+        
+        ObjectMapper mapper = new ObjectMapper().configure(
+                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.registerModule(new JavaTimeModule());
+        try {
+            pracownik = mapper.readValue(response, new TypeReference<Pracownik>(){});
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return pracownik;
+    }
+
+    private Klient getKlientById(int clientId) {
+        Klient klient = new Klient();
+        String response = "";
+        RequestController rq = new RequestController("/klient/" + clientId, 0);
+
+        try {
+            response = rq.sendPathReq();
+        } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+        }
+        
+        ObjectMapper mapper = new ObjectMapper().configure(
+                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.registerModule(new JavaTimeModule());
+        try {
+            klient = mapper.readValue(response, new TypeReference<Klient>(){});
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return klient;
+    }
+
+    private ProduktDTO getProduktById(int productId) {
+        ProduktDTO produkt = new ProduktDTO();
+        String response = "";
+        RequestController rq = new RequestController("/produkt/" + productId, 0);
+
+        try {
+            response = rq.sendPathReq();
+        } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+        }
+        
+        try {
+            // Object mapper doesnt work so this thing below is used instead...
+
+            // Map response to JSON
+            JSONObject produktJSON = new JSONObject(response);
+
+            // Set produkt object fields that are easy to get
+            produkt.setIdProduktu(produktJSON.getInt("idProduktu"));
+            produkt.setNrSeryjny(produktJSON.getString("nrSeryjny"));
+            produkt.setKategoriaProd(produktJSON.getString("kategoriaProd"));
+            produkt.setNazwaProduktu(produktJSON.getString("nazwaProduktu"));
+            produkt.setWaga(produktJSON.getDouble("waga"));
+
+            // The fun part of adding DTO hrefs to the produkt object
+            String temp = produktJSON.getString("_links");
+            JSONObject linksJ = new JSONObject(temp);
+
+            JSONObject hrefJ1 = new JSONObject(linksJ.getString("self"));
+            produkt.add(Link.of(hrefJ1.getString("href"), "self"));
+
+            JSONObject hrefJ2 = new JSONObject(linksJ.getString("paczka"));
+            produkt.add(Link.of(hrefJ2.getString("href"), "paczka"));
+
+            JSONObject hrefJ3 = new JSONObject(linksJ.getString("producent"));
+            produkt.add(Link.of(hrefJ3.getString("href"), "producent"));
+
+        } catch (JSONException jex) {
+            System.out.println(jex.toString());
+            jex.printStackTrace();
+        }
+
+        return produkt;
+    }
+
+    private Producent getProducentById(int producentId) {
+        Producent producent = new Producent();
+        String response = "";
+        RequestController rq = new RequestController("/producent/" + producentId, 0);
+
+        try {
+            response = rq.sendPathReq();
+        } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+        }
+        
+        ObjectMapper mapper = new ObjectMapper().configure(
+                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.registerModule(new JavaTimeModule());
+        try {
+            producent = mapper.readValue(response, new TypeReference<Producent>(){});
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return producent;
     }
 
     private boolean deleteDelivery(int delId) {

@@ -24,10 +24,17 @@ public class ProducentController {
     ProduktRepository produktRepository;
     
     @GetMapping("/{id}")
-    public Producent getProducentById(@PathVariable Integer id) {
-        Producent producent = producentRepository.findById(id).orElse(null);
+    public Producent getProducentById(@PathVariable String id) {
+        int pid;
+        try {
+            pid = Integer.parseInt(id);
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("ID musi być liczbą całkowitą: " + id);
+        }
+
+        Producent producent = producentRepository.findById(pid).orElse(null);
         if (producent == null) {
-            throw new ResourceNotFoundException("Producent o ID " + id + " nie znaleziony");
+            throw new ResourceNotFoundException("Producent o ID " + pid + " nie znaleziony");
         }
         return producent;
     }

@@ -27,6 +27,8 @@ public class ProduktDTO extends RepresentationModel<ProduktDTO> {
 	private String nazwaProduktu;
 	private double waga;
 	
+    public ProduktDTO() {}
+
     public ProduktDTO(Produkt produkt) {
         this.idProduktu = produkt.getIdProduktu();
         this.nrSeryjny = produkt.getNrSeryjny();
@@ -46,7 +48,7 @@ public class ProduktDTO extends RepresentationModel<ProduktDTO> {
 	    
         if (produkt.getProducent() != null) {
             this.add(linkTo(methodOn(ProducentController.class)
-                    .getProducentById(produkt.getProducent().getIdProducenta()))
+                    .getProducentById(produkt.getProducent().getIdProducenta().toString()))
                     .withRel("producent"));
         }
         

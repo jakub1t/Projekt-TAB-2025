@@ -80,6 +80,14 @@ INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_p
 VALUES (4,1, 5.0, 'Jedzenie', 'Czekolada', 'Wawel');
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
 VALUES (1,5, 3, 'Zabawka', 'Pluszak', 'Toys');
+INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
+VALUES (5,3, 10, 'Zabawka', 'Lalka', 'Other');
+INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
+VALUES (6,4, 1, 'Książki', 'Wiosna', 'SN6666');
+INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
+VALUES (5,5, 1.1, 'Elektronika', 'Miernik', 'SN2323');
+INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
+VALUES (5,1, 4.5, 'Elektronika', 'Mikrofon', 'SN6969');
 
 
 --pracownik_prawojazdy

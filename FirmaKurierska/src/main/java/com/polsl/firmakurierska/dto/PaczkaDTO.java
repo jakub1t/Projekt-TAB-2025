@@ -31,6 +31,8 @@ public class PaczkaDTO extends RepresentationModel<PaczkaDTO> {
     private Integer dostawaId;
     private List<Integer> produktIds;
     
+    public PaczkaDTO() {}
+
     public PaczkaDTO(Paczka paczka) {
         this.idPaczki = paczka.getIdPaczki();
         this.wagaPaczki = paczka.getWagaPaczki();
