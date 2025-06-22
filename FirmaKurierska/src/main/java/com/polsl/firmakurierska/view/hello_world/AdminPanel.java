@@ -231,10 +231,11 @@ public class AdminPanel extends Application {
 
     private boolean deleteAcc(int acId) {
         RequestController rq = new RequestController("/pracownik/delete/" + Integer.toString(acId), 3);
-        String resp = ""; //"{\"login\": \"" + acLogin + "\"}";
+        String resp = "";
         
         try {
             resp = rq.sendPathReq();
+
         } catch (ResourceNotFoundException rex) {
             System.out.println("Nie udało się usunąć konta");
             return false;
@@ -247,17 +248,19 @@ public class AdminPanel extends Application {
             rq = new RequestController("/konto/delete/" + Integer.toString(acId), 3);
             resp = rq.sendPathReq();
 
-            rq = new RequestController("/konto/" + Integer.toString(acId), 0);
-            resp = rq.sendPathReq();
-
         } catch (ResourceNotFoundException rex) {
-            System.out.println("Konto zostało usunięte!");
-            return true;
+            System.out.println("Nie udało się usunąć konta");
+            return false;
         } catch (BadRequestException bre) {
             System.out.println("Niepoprawny request!");
+            return false;
         }
 
-        System.out.println("Nie udało się usunąć konta");
-        return false;
+        if (resp == "NRP") {
+            return false;
+        }
+
+        System.out.println("Konto zostało usunięte!");
+        return true;
     }
 }

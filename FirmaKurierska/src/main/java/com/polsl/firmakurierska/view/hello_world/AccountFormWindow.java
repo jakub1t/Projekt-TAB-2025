@@ -73,7 +73,6 @@ public class AccountFormWindow {
         
             String selectedPosition = "";
             
-            int temp_pos = 0;
             for (Node node : stanowiskoBox.getChildren()) {
                 
                 if (node instanceof CheckBox cb && cb.isSelected()) {

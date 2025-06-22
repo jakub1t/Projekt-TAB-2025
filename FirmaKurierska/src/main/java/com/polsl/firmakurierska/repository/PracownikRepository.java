@@ -1,6 +1,5 @@
 package com.polsl.firmakurierska.repository;
 
-import com.polsl.firmakurierska.model.Konto;
 import com.polsl.firmakurierska.model.Pracownik;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;

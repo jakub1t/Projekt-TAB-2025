@@ -23,12 +23,7 @@ import com.polsl.firmakurierska.repository.KontoRepository;
 import com.polsl.firmakurierska.repository.PracownikRepository;
 
 import jakarta.transaction.Transactional;
-import java.util.stream.StreamSupport;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import java.util.ArrayList;
-import java.util.List;
 
 @RestController
 @RequestMapping("/konto")
