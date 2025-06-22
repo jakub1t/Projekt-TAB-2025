@@ -1,12 +1,16 @@
 package com.polsl.firmakurierska.controller;
 
 import com.polsl.firmakurierska.dto.PracownikDTO;
+import com.polsl.firmakurierska.dto.PracownikCreateDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Dostawa;
 import com.polsl.firmakurierska.model.Konto;
+import com.polsl.firmakurierska.model.Stanowisko;
 import com.polsl.firmakurierska.model.Pracownik;
 import com.polsl.firmakurierska.model.PrawoJazdy;
+import com.polsl.firmakurierska.repository.StanowiskoRepository;
+import com.polsl.firmakurierska.repository.PrawoJazdyRepository;
 import com.polsl.firmakurierska.repository.PracownikRepository;
 import com.polsl.firmakurierska.repository.KontoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +29,6 @@ import java.util.stream.StreamSupport;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.CollectionModel;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 
@@ -39,6 +41,13 @@ public class PracownikController {
 
     @Autowired
     KontoRepository kontoRepository;
+
+    @Autowired
+    private StanowiskoRepository stanowiskoRepository;
+    
+    @Autowired
+    PrawoJazdyRepository prawoJazdyRepository;
+
     @GetMapping
     public @ResponseBody Iterable<PracownikDTO> getAllPracownicy() {
     	Iterable<Pracownik> pracownicy = pracownikRepository.findAll();
@@ -79,24 +88,44 @@ public class PracownikController {
         return pracownik;
     }
     
-   
-    @PostMapping
-    public Pracownik addPracownik(@RequestBody Pracownik pracownik) {
-        if(pracownik == null) {
+    @PostMapping("/create")
+    @Transactional
+    public ResponseEntity<PracownikDTO> createPracownik(@RequestBody PracownikCreateDTO dto) {
+        if (dto == null) {
             throw new BadRequestException("Dane pracownika nie mogą być puste.");
         }
 
-        // Sprawdź czy konto ma ustawione id i istnieje
-        if (pracownik.getKonto() != null && pracownik.getKonto().getIdKonta() != null) {
-            Integer kontoId = pracownik.getKonto().getIdKonta();
-            Konto konto = kontoRepository.findById(kontoId)
-                    .orElseThrow(() -> new BadRequestException("Konto o ID " + kontoId + " nie istnieje"));
-            pracownik.setKonto(konto); // przypisz załadowane konto
-        } else {
-            throw new BadRequestException("Pracownik musi mieć przypisane istniejące konto (idKonta)");
+        // Tworzymy nowe konto
+        Konto konto = new Konto();
+        konto.setLogin(dto.getKonto().getLogin());
+        konto.setHaslo(dto.getKonto().getHaslo());
+        konto = kontoRepository.save(konto);
+
+        // Szukamy stanowiska
+        Stanowisko stanowisko = stanowiskoRepository.findById(dto.getStanowiskoId())
+                .orElseThrow(() -> new BadRequestException("Stanowisko o ID " + dto.getStanowiskoId() + " nie istnieje"));
+
+        // Szukamy praw jazdy
+        Set<PrawoJazdy> prawaJazdy = null;
+        if (dto.getPrawaJazdyIds() != null && !dto.getPrawaJazdyIds().isEmpty()) {
+            prawaJazdy = dto.getPrawaJazdyIds().stream()
+                    .map(id -> prawoJazdyRepository.findById(id)
+                            .orElseThrow(() -> new BadRequestException("Prawo jazdy o ID " + id + " nie istnieje")))
+                    .collect(Collectors.toSet());
         }
 
-        return pracownikRepository.save(pracownik);
+        // Tworzymy pracownika
+        Pracownik pracownik = new Pracownik();
+        pracownik.setImie(dto.getImie());
+        pracownik.setNazwisko(dto.getNazwisko());
+        pracownik.setPesel(dto.getPesel());
+        pracownik.setKonto(konto);
+        pracownik.setStanowisko(stanowisko);
+        pracownik.setPrawoJazdy(prawaJazdy);
+
+        pracownik = pracownikRepository.save(pracownik);
+
+        return new ResponseEntity<>(new PracownikDTO(pracownik), HttpStatus.CREATED);
     }
 
 
@@ -187,17 +216,18 @@ public class PracownikController {
         }
     }
     
-    @PutMapping("/{pesel}")
-    public Pracownik updatePracownik(@PathVariable String pesel, @RequestBody Pracownik pracownikDetails) {
-        Pracownik pracownik = pracownikRepository.findByPesel(pesel)
-                .orElseThrow(() -> new RuntimeException("Pracownik z pesel " + pesel + " nie istnieje"));
+    @PutMapping("/{id}")
+    public Pracownik updatePracownik(@PathVariable Integer id, @RequestBody Pracownik pracownikDetails) {
+        Pracownik pracownik = pracownikRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pracownik z id " + id + " nie istnieje"));
 
-        
+        // Aktualizujemy tylko podstawowe dane
         pracownik.setImie(pracownikDetails.getImie());
         pracownik.setNazwisko(pracownikDetails.getNazwisko());
-        pracownik.setStanowisko(pracownikDetails.getStanowisko());
+        pracownik.setPesel(pracownikDetails.getPesel());
 
-        return pracownikRepository.save(pracownik);  
+        // NIE dotykamy: stanowisko, konto, prawoJazdy
+        return pracownikRepository.save(pracownik); 
     }
 
 

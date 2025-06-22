@@ -278,13 +278,15 @@ public class AccountFormWindow {
             imie, nazwisko, pesel, stanowiskoId, kontoResp, licenseJsonArray
         );
 
+        String pracJson = "{\"imie\":\"Janina\",\"nazwisko\":\"Kowalina\",\"pesel\":\"12342394501\",\"konto\":{\"login\": \"janina\",\"haslo\":\"tajnina123\"},\"stanowiskoId\": 2,\"prawaJazdyIds\": [4, 5]}";
+
         System.out.println("pracownik JSON req: " + pracownikJson);
 
         // try to create pracownik
-        RequestController rqPracownik = new RequestController("/pracownik", 1);
+        RequestController rqPracownik = new RequestController("/pracownik/create", 1);
         try{
 
-            pracownikResp = rqPracownik.sendJsonReq(pracownikJson);
+            pracownikResp = rqPracownik.sendJsonReq(pracJson);
 
         }catch(BadRequestException ex){
             System.out.println("Błąd podczas dodawania konta lub pracownika: " + ex.getMessage());
