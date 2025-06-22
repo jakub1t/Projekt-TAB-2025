@@ -76,8 +76,10 @@ public class AdminPanel extends Application {
             // String name = "Nowe Konto #" + (kontaList.getChildren().size() + 1);
             /*
             kontaList.getChildren().add(createKontoItem(Arrays.asList(
+
                 "Imię", "Nazwisko", "PESEL", "Stanowisko", "Kategoria prawa jazdy"
-                ))); */
+            ))); */
+          
             new AccountFormWindow().show();
         });
 

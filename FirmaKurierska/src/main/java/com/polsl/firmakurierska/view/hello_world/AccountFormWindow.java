@@ -1,15 +1,29 @@
 package com.polsl.firmakurierska.view.hello_world;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.boot.configurationprocessor.json.JSONArray;
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
+
+import com.polsl.firmakurierska.controller.RequestController;
+import com.polsl.firmakurierska.exception.BadRequestException;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Control;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class AccountFormWindow {
 
@@ -18,17 +32,33 @@ public class AccountFormWindow {
         TextField imieField        = new TextField();
         TextField nazwiskoField    = new TextField();
         TextField peselField       = new TextField();
-        TextField stanowiskoField  = new TextField();
+        TextField loginField       = new TextField();
         PasswordField hasloField   = new PasswordField();
 
         // Dostępne typy prawa jazdy
-        String[] licenseTypes = {"A", "B", "C", "D", "T"};
-        VBox prawoJazdyBox = createCheckboxInputCard("Prawo jazdy:", licenseTypes);
+        List<String> licenseIDs = new ArrayList<>();
+        licenseIDs = getAllLicensesIDs();
+
+        List<String> licenseNames = new ArrayList<>();
+        licenseNames = getAllLicensesNames(licenseIDs);
+
+        VBox prawoJazdyBox = createCheckboxInputCard("Prawo jazdy:", licenseNames.toArray(new String[0]));
+
+        // Dostępne typy stanowiska
+        List<String> positionsIDs = new ArrayList<>();
+        positionsIDs = getAllPositionsIDs();
+
+        List<String> positionsNames = new ArrayList<>();
+        positionsNames = getAllPositionsNames(positionsIDs);
+
+        VBox stanowiskoBox = createCheckboxInputCard("Stanowisko:", positionsNames.toArray(new String[0]));
+
 
         VBox imieBox       = createInputCard("Imię:", imieField);
         VBox nazwiskoBox   = createInputCard("Nazwisko:", nazwiskoField);
         VBox peselBox      = createInputCard("PESEL:", peselField);
-        VBox stanowiskoBox = createInputCard("Stanowisko:", stanowiskoField);
+        //VBox stanowiskoBox = createInputCard("Stanowisko:", stanowiskoField);
+        VBox loginBox      = createInputCard("Login:", loginField);
         VBox hasloBox      = createInputCard("Hasło:", hasloField);
 
         Button dodajButton = new Button("Dodaj");
@@ -40,22 +70,47 @@ public class AccountFormWindow {
                     selectedLicenses.add(cb.getText());
                 }
             }
+        
+            String selectedPosition = "";
+            
+            int temp_pos = 0;
+            for (Node node : stanowiskoBox.getChildren()) {
+                
+                if (node instanceof CheckBox cb && cb.isSelected()) {
+                    selectedPosition = cb.getText();
+                    break;
+                }
+            }
+            
+            String imie = imieField.getText();
+            String nazwisko = nazwiskoField.getText();
+            String pesel = peselField.getText();
+            //String stanowisko = stanowiskoField.getText();
+            String login = loginField.getText();
+            String haslo = hasloField.getText();
 
             // Wypisanie danych do terminala
-            System.out.println("Dodano konto:");
+           
             System.out.println("Imię: " + imieField.getText());
             System.out.println("Nazwisko: " + nazwiskoField.getText());
             System.out.println("PESEL: " + peselField.getText());
-            System.out.println("Stanowisko: " + stanowiskoField.getText());
+            System.out.println("Stanowisko: " + selectedPosition);
             System.out.println("Prawo jazdy: " + selectedLicenses);
+            System.out.println("Login: " + loginField.getText());
             System.out.println("Hasło: " + hasloField.getText());
+            
+            String selectedPositionId = getSelectedPositionsId(selectedPosition);
+
+            String selectedPositionJSON = getSelectedPositionJSON(selectedPositionId, selectedPosition);
+
+            addNewWorker(imie, nazwisko, pesel, login, selectedPositionJSON, haslo, selectedLicenses);
         });
 
         HBox dodajBox = new HBox(dodajButton);
         dodajBox.setAlignment(Pos.CENTER);
 
         VBox allFields = new VBox(15,
-                imieBox, nazwiskoBox, peselBox, stanowiskoBox, prawoJazdyBox, hasloBox, dodajBox);
+                imieBox, nazwiskoBox, peselBox, stanowiskoBox, prawoJazdyBox, loginBox, hasloBox, dodajBox);
         allFields.setPadding(new Insets(20));
         allFields.setAlignment(Pos.CENTER);
 
@@ -63,7 +118,7 @@ public class AccountFormWindow {
         root.setStyle("-fx-background-color: #f8f8f8;");
         BorderPane.setAlignment(allFields, Pos.CENTER);
 
-        Scene scene = new Scene(root, 400, 650);
+        Scene scene = new Scene(root, 400, 750);
 
         Stage stage = new Stage();
         stage.setTitle("Dodawanie konta");
@@ -111,4 +166,218 @@ public class AccountFormWindow {
         );
         return box;
     }
+
+    private List<String> getAllLicensesIDs(){
+
+        List<String> licenses_id = new ArrayList<>();
+        
+        String response = "";
+
+        // Prepare request to get all accounts from db
+        RequestController rq = new RequestController("/prawojazdy", 0);
+        
+
+        response = rq.sendPathReq();
+        // Get licenses
+        
+        licenses_id = extractID(response);
+        return licenses_id;
+        
+    }
+
+    private List<String> getAllLicensesNames(List<String> licenses_id){
+
+        List<String> licenses_names = new ArrayList<>();
+
+        licenses_id.forEach(kategoria -> {
+            RequestController tempRq = new RequestController("/prawojazdy/" + kategoria, 0);
+            String tempResponse = new String(tempRq.sendPathReq());
+               
+            try {
+                JSONObject prawoJazdyJson = new JSONObject(tempResponse);
+                   licenses_names.add(prawoJazdyJson.getString("kategoria"));
+            }
+            catch (JSONException jex) {
+                System.out.println(jex.toString());
+                jex.printStackTrace();
+            }
+        });
+
+        return licenses_names;
+    }
+
+      private List<String> getAllPositionsIDs(){ // do poprawy
+
+        List<String> positions_id = new ArrayList<>();
+        
+        String response = "";
+
+        // Prepare request to get all accounts from db
+        RequestController rq = new RequestController("/stanowisko", 0);
+        
+        response = rq.sendPathReq();
+        // Get licenses
+        
+        positions_id = extractID(response);
+        return positions_id;
+    }
+
+    private List<String> getAllPositionsNames(List<String> positions_id){
+
+            List<String> positions_names = new ArrayList<>();
+
+            positions_id.forEach(kategoria -> {
+                RequestController tempRq = new RequestController("/stanowisko/" + kategoria, 0);
+                String tempResponse = new String(tempRq.sendPathReq());
+                
+                try {
+                    JSONObject stanowiskoJson = new JSONObject(tempResponse);
+                    positions_names.add(stanowiskoJson.getString("nazwaStanowiska"));
+                }
+                catch (JSONException jex) {
+                    System.out.println(jex.toString());
+                    jex.printStackTrace();
+                }
+            });
+
+            return positions_names;
+        }
+
+    //new add 
+    private void addNewWorker(String imie, String nazwisko, String pesel, String login, String stanowiskoId, String haslo, List<String> prawoJazdy) {
+        
+        String kontoResp = "";
+        String pracownikResp = "";
+        String kontoJson = String.format("{\"login\": \"%s\", \"haslo\": \"%s\"}", login, haslo);
+        
+        //try to create konto
+        RequestController rqKonto = new RequestController("/konto/add", 1);
+        try {
+            
+            kontoResp = rqKonto.sendJsonReq(kontoJson);
+
+        } catch (BadRequestException ex) {
+            System.out.println("Błąd podczas dodawania konta: " + ex.getMessage());
+            return ;
+        }
+        System.out.println("Konto response: " + kontoResp);
+
+        /*int kontoId = 0;
+                            
+        try {
+           kontoId = new JSONObject(kontoResp).getInt("idKonta");
+        }
+        catch (JSONException jex) {
+            System.out.println(jex.toString());
+            jex.printStackTrace();
+        }*/
+
+
+        String licenseJsonArray = prawoJazdy.toString().replace("[", "[\"").replace("]", "\"]").replace(", ", "\", \"");
+        String pracownikJson = String.format(
+            "{\"imie\":\"%s\",\"nazwisko\":\"%s\",\"pesel\":\"%s\",\"stanowisko\":%s,\"konto\":%s,\"prawo_jazdy\":%s}",
+            imie, nazwisko, pesel, stanowiskoId, kontoResp, licenseJsonArray
+        );
+
+        System.out.println("pracownik JSON req: " + pracownikJson);
+
+        // try to create pracownik
+        RequestController rqPracownik = new RequestController("/pracownik", 1);
+        try{
+
+            pracownikResp = rqPracownik.sendJsonReq(pracownikJson);
+
+        }catch(BadRequestException ex){
+            System.out.println("Błąd podczas dodawania konta lub pracownika: " + ex.getMessage());
+            return ;
+        }
+
+        
+        System.out.println("Pracownik response: " + pracownikResp);
+        System.out.println("Dodano konto i pracownika.");    
+
+    }
+
+
+
+
+
+   
+
+    public List<String> extractID(String jsonData) {
+        List<String> categoriesID = new ArrayList<>();
+
+        try {
+            JSONArray categoriesArray = new JSONArray(jsonData);
+
+            for (int i = 0; i < categoriesArray.length(); i++) {
+                JSONObject categoryObj = categoriesArray.getJSONObject(i);
+                
+                if (categoryObj.has("idKat")) {
+                    // Convert idKat to String and add to list
+                    categoriesID.add(String.valueOf(categoryObj.getInt("idKat")));
+                }
+                else if (categoryObj.has("idStanowisko")){
+
+                    categoriesID.add(String.valueOf(categoryObj.getInt("idStanowisko")));
+                }
+            }
+
+        } catch (JSONException ex) {
+            System.out.println("Error parsing JSON: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+
+        return categoriesID;
+    }
+
+    private String getSelectedPositionsId(String selectedPosition) {
+        String response = "";
+
+        RequestController rq = new RequestController("/stanowisko/szukaj?nazwa=" + selectedPosition, 0);
+        try {
+            response = rq.sendPathReq();
+            System.out.println(response);
+
+        } catch (BadRequestException ex) {
+            System.out.println("getSelectedPositionsId: " + ex.getMessage());
+        }
+
+        String positionId = "";
+        try {
+            JSONArray stanowiskoJArray = new JSONArray(response);
+            
+            positionId = stanowiskoJArray.getJSONObject(0).getString("idStanowisko");
+                
+        } catch (JSONException ex) {
+            System.out.println("Error parsing JSON: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+
+        return positionId;
+    }
+
+    private String getSelectedPositionJSON(String positionId, String positionName) {
+        
+        String stanowiskoJSON = String.format(
+            "{\"idStanowisko\": \"%s\", \"nazwaStanowiska\": \"%s\"}",
+            positionId, positionName
+        );
+
+        String response = "";
+
+        RequestController rq = new RequestController("/pracownik/get?id=" + 1, 0);
+        try {
+            response = rq.sendPathReq();
+            System.out.println("pracownik: " + response);
+
+        } catch (BadRequestException ex) {
+            System.out.println("getSelectedPositionsJSON: " + ex.getMessage());
+        }
+
+        return stanowiskoJSON;
+    }
+
+
 }
+

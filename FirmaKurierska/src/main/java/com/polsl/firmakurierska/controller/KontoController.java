@@ -1,5 +1,20 @@
 package com.polsl.firmakurierska.controller;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.StreamSupport;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Konto;
@@ -8,9 +23,7 @@ import com.polsl.firmakurierska.repository.KontoRepository;
 import com.polsl.firmakurierska.repository.PracownikRepository;
 
 import jakarta.transaction.Transactional;
-
 import java.util.stream.StreamSupport;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +43,7 @@ public class KontoController {
     @GetMapping("/all")
     public List<Konto> getAllKonta() {
         List<Konto> accounts = new ArrayList<>();
-        kontoRepository.findAll().forEach(accounts::add);;
+        kontoRepository.findAll().forEach(accounts::add);
 
         return accounts;
     }
@@ -58,8 +71,9 @@ public class KontoController {
         return correct ? "Zalogowano pomyślnie" : "Błędny login lub hasło";
     }
 
-    @PostMapping
-    public Konto login(@RequestBody Konto konto) {
+
+    @PostMapping("/add")
+    public Konto addKonto(@RequestBody Konto konto) {
         if (konto.getLogin() == null || konto.getHaslo() == null) {
             throw new BadRequestException("Login i hasło nie mogą być puste");
         }
@@ -70,6 +84,10 @@ public class KontoController {
 
         return kontoRepository.save(konto);
     }
+
+
+
+
 
     @DeleteMapping("/login")
     @Transactional
