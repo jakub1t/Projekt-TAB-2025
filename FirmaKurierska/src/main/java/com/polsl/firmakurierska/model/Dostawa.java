@@ -27,9 +27,8 @@ public class Dostawa {
 	
 	@OneToMany(mappedBy = "dostawa", fetch = FetchType.EAGER)
 	@JsonManagedReference
-	@JsonIgnore
-	//zapobiegają błędowi nieskończonej rekursji w JSON
 	private List<Paczka> paczki;
+
 	
 	@ManyToOne
 	@JoinColumn(name = "pojazd_id")

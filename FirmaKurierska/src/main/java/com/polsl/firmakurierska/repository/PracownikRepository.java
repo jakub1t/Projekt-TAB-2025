@@ -1,5 +1,6 @@
 package com.polsl.firmakurierska.repository;
 
+import com.polsl.firmakurierska.model.Konto;
 import com.polsl.firmakurierska.model.Pracownik;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -37,4 +38,8 @@ public interface PracownikRepository extends CrudRepository<Pracownik, Integer> 
     long countByNazwisko(String nazwisko);
 
 	void deleteByPesel(String pesel);
+	
+	Optional<Pracownik> findByKonto_IdKonta(Integer idKonta);
+
+
 }

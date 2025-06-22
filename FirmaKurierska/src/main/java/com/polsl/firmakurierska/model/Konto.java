@@ -11,12 +11,13 @@ import lombok.*;
 @Table(name = "konto")
 public class Konto {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Integer idKonta;
-	
-	@Column(unique = true)
-	private String login;
-	@Column(unique = true)
-	private String haslo;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer idKonta;
+
+    @Column(unique = true)
+    private String login;
+
+    @Column(unique = true)
+    private String haslo;
 }

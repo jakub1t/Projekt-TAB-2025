@@ -22,8 +22,9 @@ public class Klient {
 	private String imieK;
 	private String nazwiskoK;
 	
-	@OneToMany(mappedBy = "klient", cascade = CascadeType.ALL)
-    @JsonIgnore
+	//OK, bo klient tworzy paczki, może mieć wiele paczek, a usunięcie klienta może usunąć paczki.
+	@OneToMany(mappedBy = "klient", cascade = CascadeType.ALL, orphanRemoval = true)
+	@JsonIgnore
 	private List<Paczka> paczki;
 	
 }

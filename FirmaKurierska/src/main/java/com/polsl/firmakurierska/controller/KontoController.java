@@ -3,13 +3,16 @@ package com.polsl.firmakurierska.controller;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Konto;
+import com.polsl.firmakurierska.model.Pracownik;
 import com.polsl.firmakurierska.repository.KontoRepository;
+import com.polsl.firmakurierska.repository.PracownikRepository;
 
 import jakarta.transaction.Transactional;
 
 import java.util.stream.StreamSupport;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +24,9 @@ public class KontoController {
     @Autowired
     KontoRepository kontoRepository;
 
+    @Autowired
+    PracownikRepository pracownikRepository;
+    
     @GetMapping("/all")
     public List<Konto> getAllKonta() {
         List<Konto> accounts = new ArrayList<>();
@@ -74,14 +80,26 @@ public class KontoController {
         kontoRepository.deleteByLogin(login);
     }
 
-    @DeleteMapping("/delete/{acId}")
+
+    
     @Transactional
-    public void deleteKontoById(@PathVariable Integer acId) {
-        if (!kontoRepository.existsById(acId)) {
-            throw new ResourceNotFoundException("Konto o ID '" + acId + "' nie istnieje");   
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<String> deleteKontoById(@PathVariable Integer id) {
+        Konto konto = kontoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Konto nie istnieje"));
+
+        Pracownik pracownik = pracownikRepository.findByKonto_IdKonta(id).orElse(null);
+
+        if (pracownik != null) {
+            pracownik.setKonto(null); // odłącz konto od pracownika
+            pracownikRepository.save(pracownik); // zapisz zmiany w pracowniku
         }
-        kontoRepository.deleteById(acId);
+
+        kontoRepository.delete(konto);
+
+        return ResponseEntity.ok("Konto usunięte pomyślnie");
     }
+
 
     @PutMapping("/update/{login}")
     public Konto updateKonto(@PathVariable String login, @RequestBody Konto newData) {

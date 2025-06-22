@@ -4,7 +4,9 @@ import com.polsl.firmakurierska.dto.PaczkaDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Paczka;
+import com.polsl.firmakurierska.model.Produkt;
 import com.polsl.firmakurierska.repository.PaczkaRepository;
+import com.polsl.firmakurierska.repository.ProduktRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +21,9 @@ public class PaczkaController {
 
     @Autowired
     PaczkaRepository paczkaRepository;
+    
+    @Autowired
+    ProduktRepository produktRepository;
     
     @GetMapping
     public List<PaczkaDTO> getAllPaczki() {
@@ -74,11 +79,21 @@ public class PaczkaController {
 
     @DeleteMapping("/{id}")
     public void deletePaczka(@PathVariable Integer id) {
-    	if(!paczkaRepository.existsById(id)) {
-    		throw new ResourceNotFoundException("Paczka o ID " + id + " nie istnieje");
-    	}
-        paczkaRepository.deleteById(id);
+        Paczka paczka = paczkaRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Paczka o ID " + id + " nie istnieje"));
+
+        // Wyzeruj powiązania z produktami i zapisz je
+        if (paczka.getProdukt() != null) {
+            for (Produkt p : paczka.getProdukt()) {
+                p.setPaczka(null);
+                produktRepository.save(p); // <-- konieczne zapisanie zmian
+            }
+        }
+
+        paczkaRepository.delete(paczka);
     }
+
+
 
     @GetMapping("/waga")
     public List<Paczka> filterByWaga(

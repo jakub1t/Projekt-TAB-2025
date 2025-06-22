@@ -23,7 +23,7 @@ public class Stanowisko {
 	@Column(name = "nazwaStanowiska")
 	private String nazwaStanowiska;
   
-	@OneToMany(mappedBy = "stanowisko", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JsonIgnore
+	@OneToMany(mappedBy = "stanowisko", fetch = FetchType.EAGER)
+	@JsonIgnore
 	private List<Pracownik> pracownik;
 	}

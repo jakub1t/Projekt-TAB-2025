@@ -21,11 +21,11 @@ public class Produkt {
 	private String nazwaProduktu;
 	private double waga;
 	
-	@ManyToOne(cascade = CascadeType.ALL)
-	   @JoinColumn(name = "fk_paczka_id")  
+	@ManyToOne
+	   @JoinColumn(name = "fk_paczka_id", nullable = true)  
 	   private Paczka paczka;
 	
-	@ManyToOne(cascade = CascadeType.ALL)
+	@ManyToOne
 	   @JoinColumn(name = "fk_producent_id") 
 	   private Producent producent;
 	

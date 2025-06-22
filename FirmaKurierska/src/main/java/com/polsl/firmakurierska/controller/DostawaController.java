@@ -4,7 +4,9 @@ import com.polsl.firmakurierska.dto.DostawaDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Dostawa;
+import com.polsl.firmakurierska.model.Paczka;
 import com.polsl.firmakurierska.repository.DostawaRepository;
+import com.polsl.firmakurierska.repository.PaczkaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +27,9 @@ public class DostawaController {
 
     @Autowired
     DostawaRepository dostawaRepository;
+    
+    @Autowired
+    PaczkaRepository  paczkaRepository;
 
     @GetMapping
     public @ResponseBody Iterable<DostawaDTO> getAllDostawy() {
@@ -107,12 +112,24 @@ public class DostawaController {
             Integer did = Integer.parseInt(id);
             Dostawa dostawa = dostawaRepository.findById(did)
                     .orElseThrow(() -> new ResourceNotFoundException("Dostawa o ID " + did + " nie istnieje."));
+
+            // Odłącz paczki od tej dostawy
+            if (dostawa.getPaczki() != null) {
+                for (Paczka paczka : dostawa.getPaczki()) {
+                    paczka.setDostawa(null);
+                    // Zapisz zmiany paczki, żeby odłączyć dostawę
+                    paczkaRepository.save(paczka);
+                }
+            }
+
+            // Usuń dostawę
             dostawaRepository.delete(dostawa);
             return ResponseEntity.ok("Dostawa o ID " + did + " została usunięta.");
         } catch (NumberFormatException e) {
             throw new BadRequestException("ID musi być liczbą całkowitą: " + id);
         }
     }
+
 
 
     @PutMapping("/update/{id}")

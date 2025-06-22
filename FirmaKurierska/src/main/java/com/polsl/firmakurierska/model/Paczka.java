@@ -21,16 +21,17 @@ public class Paczka {
 	private Integer idPaczki;
 	private double wagaPaczki;
 	
-	@ManyToOne(cascade = CascadeType.ALL)
-	   @JoinColumn(name = "fk_klient_id")  
-	   private Klient klient;
+	@ManyToOne
+	@JoinColumn(name = "fk_klient_id")
+	private Klient klient;
+
 	
-	@OneToMany(mappedBy = "paczka", cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "paczka", fetch = FetchType.EAGER)
     @JsonIgnore
 	private List<Produkt> produkt;
 	
-	@ManyToOne(cascade = CascadeType.ALL)
-	@JoinColumn(name = "fk_dostawa_id")
+	@ManyToOne
+	@JoinColumn(name = "fk_dostawa_id", nullable = true)
 	@JsonBackReference
 	//zapobiegają błędowi nieskończonej rekursji w JSON
 	private Dostawa dostawa;

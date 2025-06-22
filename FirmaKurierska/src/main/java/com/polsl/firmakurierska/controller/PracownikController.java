@@ -3,10 +3,14 @@ package com.polsl.firmakurierska.controller;
 import com.polsl.firmakurierska.dto.PracownikDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
+import com.polsl.firmakurierska.model.Dostawa;
+import com.polsl.firmakurierska.model.Konto;
 import com.polsl.firmakurierska.model.Pracownik;
 import com.polsl.firmakurierska.model.PrawoJazdy;
 import com.polsl.firmakurierska.repository.PracownikRepository;
+import com.polsl.firmakurierska.repository.KontoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +34,8 @@ public class PracownikController {
     @Autowired
     PracownikRepository pracownikRepository;
 
+    @Autowired
+    KontoRepository kontoRepository;
     @GetMapping
     public @ResponseBody Iterable<PracownikDTO> getAllPracownicy() {
     	Iterable<Pracownik> pracownicy = pracownikRepository.findAll();
@@ -59,12 +65,25 @@ public class PracownikController {
    
     @PostMapping
     public Pracownik addPracownik(@RequestBody Pracownik pracownik) {
-    	if(pracownik == null) {
-    		throw new BadRequestException("Dane pracownika nie mogą być puste.");
-    	}
+        if(pracownik == null) {
+            throw new BadRequestException("Dane pracownika nie mogą być puste.");
+        }
+
+        // Sprawdź czy konto ma ustawione id i istnieje
+        if (pracownik.getKonto() != null && pracownik.getKonto().getIdKonta() != null) {
+            Integer kontoId = pracownik.getKonto().getIdKonta();
+            Konto konto = kontoRepository.findById(kontoId)
+                    .orElseThrow(() -> new BadRequestException("Konto o ID " + kontoId + " nie istnieje"));
+            pracownik.setKonto(konto); // przypisz załadowane konto
+        } else {
+            throw new BadRequestException("Pracownik musi mieć przypisane istniejące konto (idKonta)");
+        }
+
         return pracownikRepository.save(pracownik);
     }
 
+
+    @Transactional
     @DeleteMapping("/{pesel}")
     public void deletePracownikByPesel(@PathVariable String pesel) {
         Pracownik pracownik = pracownikRepository.findByPesel(pesel)
@@ -72,38 +91,44 @@ public class PracownikController {
         pracownikRepository.delete(pracownik);
     }
 
+
+    @DeleteMapping("/delete/{id}")
     @Transactional
-    @DeleteMapping("/delete/{pid}")
-    public void deletePracownikById(@PathVariable Integer pid) {
-        Pracownik pracownik = pracownikRepository.findById(pid)
-                .orElseThrow(() -> new ResourceNotFoundException("Nie znaleziono pracownika o ID: " + pid));
-        pracownikRepository.delete(pracownik);
+    public ResponseEntity<String> deletePracownik(@PathVariable Integer id) {
+        Optional<Pracownik> optional = pracownikRepository.findById(id);
+        if (optional.isPresent()) {
+            Pracownik pracownik = optional.get();
+
+            // Usuń referencje z drugiej strony relacji
+            if (pracownik.getPrawoJazdy() != null) {
+                for (PrawoJazdy pj : pracownik.getPrawoJazdy()) {
+                    pj.getPracownicy().remove(pracownik);
+                }
+                pracownik.getPrawoJazdy().clear();
+            }
+
+            // Usuń referencje z dostaw
+            if (pracownik.getDostawy() != null) {
+                for (Dostawa d : pracownik.getDostawy()) {
+                    d.setPracownik(null);  // o ile Dostawa ma `@ManyToOne Pracownik`
+                }
+            }
+
+            pracownik.setStanowisko(null);
+            pracownik.setKonto(null); // Konto ma CascadeType.ALL, więc zostanie usunięte
+
+            pracownikRepository.save(pracownik); // zapis zmian w relacjach
+            pracownikRepository.delete(pracownik); // teraz można bezpiecznie usunąć
+
+            return ResponseEntity.ok("Pracownik został usunięty.");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Pracownik nie istnieje.");
+        }
     }
 
-	/*
-	 * @GetMapping("/imie/{imie}") public List<Pracownik>
-	 * getPracownicyByImie(@PathVariable String imie) { List<Pracownik> pracownicy =
-	 * pracownikRepository.findByImie(imie); if (pracownicy.isEmpty()) { throw new
-	 * ResourceNotFoundException("Brak pracowników o imieniu: " + imie); } return
-	 * pracownicy; }
-	 * 
-	 * @GetMapping("/nazwisko/{nazwisko}") public List<Pracownik>
-	 * getPracownicyByNazwisko(@PathVariable String nazwisko) { return
-	 * pracownikRepository.findByNazwisko(nazwisko); }
-	 * 
-	 * @GetMapping("/imieNazwisko/{imie}/{nazwisko}") public List<Pracownik>
-	 * getPracownicyByImieAndNazwisko(@PathVariable String imie, @PathVariable
-	 * String nazwisko) { return pracownikRepository.findByImieAndNazwisko(imie,
-	 * nazwisko); }
-	 * 
-	 * @GetMapping("/pesel/{pesel}") public Optional<Pracownik>
-	 * getPracownikByPesel(@PathVariable String pesel) { return
-	 * pracownikRepository.findByPesel(pesel); }
-	 * 
-	 * @GetMapping("/imieStartingWith/{prefix}") public List<Pracownik>
-	 * getPracownicyByImieStartingWith(@PathVariable String prefix) { return
-	 * pracownikRepository.findByImieStartingWith(prefix); }
-	 */
+
+
+
 
     @GetMapping("/nazwiskoContaining/{fragment}")
     public List<Pracownik> getPracownicyByNazwiskoContaining(@PathVariable String fragment) {
