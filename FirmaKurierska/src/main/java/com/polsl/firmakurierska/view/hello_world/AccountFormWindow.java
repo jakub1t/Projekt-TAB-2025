@@ -231,8 +231,8 @@ public class AccountFormWindow {
                 String tempResponse = new String(tempRq.sendPathReq());
                 
                 try {
-                    JSONObject prawoJazdyJson = new JSONObject(tempResponse);
-                    positions_names.add(prawoJazdyJson.getString("nazwaStanowiska"));
+                    JSONObject stanowiskoJson = new JSONObject(tempResponse);
+                    positions_names.add(stanowiskoJson.getString("nazwaStanowiska"));
                 }
                 catch (JSONException jex) {
                     System.out.println(jex.toString());
@@ -262,7 +262,7 @@ public class AccountFormWindow {
         }
         System.out.println("Konto response: " + kontoResp);
 
-        int kontoId = 0;
+        /*int kontoId = 0;
                             
         try {
            kontoId = new JSONObject(kontoResp).getInt("idKonta");
@@ -270,14 +270,16 @@ public class AccountFormWindow {
         catch (JSONException jex) {
             System.out.println(jex.toString());
             jex.printStackTrace();
-        }
+        }*/
 
 
         String licenseJsonArray = prawoJazdy.toString().replace("[", "[\"").replace("]", "\"]").replace(", ", "\", \"");
         String pracownikJson = String.format(
-            "{\"imie\": \"%s\", \"nazwisko\": \"%s\", \"pesel\": \"%s\", \"stanowisko\": \"%s\", \"prawo_jazdy\": %s, \"konto_id\": \"%s\"}",
-            imie, nazwisko, pesel, stanowiskoId, licenseJsonArray, kontoId
+            "{\"imie\":\"%s\",\"nazwisko\":\"%s\",\"pesel\":\"%s\",\"stanowisko\":%s,\"konto\":%s,\"prawo_jazdy\":%s}",
+            imie, nazwisko, pesel, stanowiskoId, kontoResp, licenseJsonArray
         );
+
+        System.out.println("pracownik JSON req: " + pracownikJson);
 
         // try to create pracownik
         RequestController rqPracownik = new RequestController("/pracownik", 1);
@@ -361,6 +363,17 @@ public class AccountFormWindow {
             "{\"idStanowisko\": \"%s\", \"nazwaStanowiska\": \"%s\"}",
             positionId, positionName
         );
+
+        String response = "";
+
+        RequestController rq = new RequestController("/pracownik/get?id=" + 1, 0);
+        try {
+            response = rq.sendPathReq();
+            System.out.println("pracownik: " + response);
+
+        } catch (BadRequestException ex) {
+            System.out.println("getSelectedPositionsJSON: " + ex.getMessage());
+        }
 
         return stanowiskoJSON;
     }

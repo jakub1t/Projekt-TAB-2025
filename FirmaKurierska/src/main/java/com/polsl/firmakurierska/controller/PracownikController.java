@@ -21,6 +21,9 @@ import java.util.stream.StreamSupport;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.CollectionModel;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 
 @RestController
@@ -56,6 +59,20 @@ public class PracownikController {
         return ResponseEntity.ok(new PracownikDTO(pracownik));
     }
 
+    @GetMapping("/get")
+    public Pracownik getPracownikByIdRaw(@RequestParam String id) {
+        int pid;
+        try {
+            pid = Integer.parseInt(id);
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("ID musi być liczbą całkowitą: " + id);
+        }
+        Pracownik pracownik = pracownikRepository.findById(pid)
+                .orElseThrow(() -> new ResourceNotFoundException("Nie znaleziono pracownika o ID: " + pid));
+
+        return pracownik;
+    }
+    
    
     @PostMapping
     public Pracownik addPracownik(@RequestBody Pracownik pracownik) {
