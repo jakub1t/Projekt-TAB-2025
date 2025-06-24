@@ -8,11 +8,13 @@ import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Konto;
+import com.polsl.firmakurierska.model.Pracownik;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -28,12 +30,22 @@ import javafx.stage.Stage;
 
 public class AdminPanel extends Application {
 
+    private int loggedUserId = 0;
+    private String loggedUserName = "Imię";
+    private String loggedUserSurname = "Nazwisko";
     private VBox kontaList;
+
+    public void open(int userId) {
+        this.loggedUserId = userId;
+        getMyName();
+        this.start(new Stage());
+    }
 
     @Override
     public void start(Stage stage) {
         // ================= LEWY PANEL (KONTA) =================
-        Label welcomeLabel = new Label("Witaj " + "smbd" + " " + "smth" + "!");
+
+        Label welcomeLabel = new Label("Witaj " + loggedUserName + " " + loggedUserSurname + "!");
         welcomeLabel.setStyle("-fx-font-size: 12px;");
         Button refreshBtn = new Button("Odśwież Dane");
         refreshBtn.setPrefWidth(200);
@@ -283,6 +295,29 @@ public class AdminPanel extends Application {
         targetContainer.setDisable(false);
         refreshBtn.setDisable(false);
 
+        return true;
+    }
+
+    private boolean getMyName() {
+        String response = "";
+        RequestController rq = new RequestController("/pracownik/" + Integer.toString(loggedUserId), 1);
+        
+        try {
+            response = rq.sendPathReq();    
+        } catch (BadRequestException e) {
+            System.out.println("getMyName: " + e.getMessage());
+            return false;
+        }
+        ObjectMapper mapper = new ObjectMapper().configure(
+            DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        try {
+            Pracownik tmp = mapper.readValue(response, new TypeReference<Pracownik>(){});
+            this.loggedUserName = tmp.getImie();
+            this.loggedUserSurname = tmp.getNazwisko();
+        } catch (IOException ex) {
+            System.out.println("getMyName: " + ex.getMessage());
+        }
+        
         return true;
     }
 }

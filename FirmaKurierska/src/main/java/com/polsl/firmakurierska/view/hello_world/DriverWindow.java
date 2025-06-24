@@ -33,6 +33,13 @@ public class DriverWindow extends Application {
     private int loggedUserId = 0;
     private String loggedUserName = "Imię";
     private String loggedUserSurname = "Nazwisko";
+
+    public void open(int userId) {
+        this.loggedUserId = userId;
+        getMyName();
+        this.start(new Stage());
+    }
+
     /**
      * Pokazuje okno dla pracownika z listą tras (dostaw).
      */
@@ -73,12 +80,6 @@ public class DriverWindow extends Application {
         stage.show();
     }
 
-    public void open(int userId) {
-        this.loggedUserId = userId;
-        getMyName();
-        this.start(new Stage());
-    }
-
     private List<DostawaDTO> getDeliveries() {
         List<DostawaDTO> mojeDostawy = new ArrayList<>();
         RequestController rq = new RequestController("/dostawa/pracownik/" + Integer.toString(loggedUserId), 0);
@@ -102,29 +103,6 @@ public class DriverWindow extends Application {
             }
         }       
         return mojeDostawy;
-    }
-
-    private boolean getMyName() {
-        String response = "";
-        RequestController rq = new RequestController("/pracownik/" + Integer.toString(loggedUserId), 1);
-        
-        try {
-            response = rq.sendPathReq();    
-        } catch (BadRequestException e) {
-            System.out.println("getMyName: " + e.getMessage());
-            return false;
-        }
-        ObjectMapper mapper = new ObjectMapper().configure(
-            DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        try {
-            Pracownik tmp = mapper.readValue(response, new TypeReference<Pracownik>(){});
-            this.loggedUserName = tmp.getImie();
-            this.loggedUserSurname = tmp.getNazwisko();
-        } catch (IOException ex) {
-            System.out.println("getMyName: " + ex.getMessage());
-        }
-        
-        return true;
     }
 
     private boolean updateDeliveryStatus(boolean wasCompleted, Integer delId) {
@@ -197,5 +175,28 @@ public class DriverWindow extends Application {
                 refreshAllData(targetContainer, refreshBtn);
             });
         }
+    }
+
+    private boolean getMyName() {
+        String response = "";
+        RequestController rq = new RequestController("/pracownik/" + Integer.toString(loggedUserId), 1);
+        
+        try {
+            response = rq.sendPathReq();    
+        } catch (BadRequestException e) {
+            System.out.println("getMyName: " + e.getMessage());
+            return false;
+        }
+        ObjectMapper mapper = new ObjectMapper().configure(
+            DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        try {
+            Pracownik tmp = mapper.readValue(response, new TypeReference<Pracownik>(){});
+            this.loggedUserName = tmp.getImie();
+            this.loggedUserSurname = tmp.getNazwisko();
+        } catch (IOException ex) {
+            System.out.println("getMyName: " + ex.getMessage());
+        }
+        
+        return true;
     }
 }
