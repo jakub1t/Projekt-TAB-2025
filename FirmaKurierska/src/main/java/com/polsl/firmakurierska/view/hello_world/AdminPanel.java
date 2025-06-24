@@ -70,7 +70,7 @@ public class AdminPanel extends Application {
 
             accounts.forEach(account -> {
                 List<String> listData = getWorkerData(account.getIdKonta());
-                if (workerNames.get(accounts.indexOf(account)).contains(query)) {
+                if (workerNames.get(accounts.indexOf(account)).toLowerCase().contains(query)) {
                     kontaList.getChildren().add(createKontoItem(account.getIdKonta(), listData));
                 }
             });
