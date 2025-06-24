@@ -33,8 +33,20 @@ public class AdminPanel extends Application {
     @Override
     public void start(Stage stage) {
         // ================= LEWY PANEL (KONTA) =================
+        Label welcomeLabel = new Label("Witaj " + "smbd" + " " + "smth" + "!");
+        welcomeLabel.setStyle("-fx-font-size: 12px;");
+        Button refreshBtn = new Button("Odśwież Dane");
+        refreshBtn.setPrefWidth(200);
+
+        VBox welBox = new VBox(5, welcomeLabel, refreshBtn);
+        welBox.setAlignment(Pos.CENTER);
+
         kontaList = new VBox(5);
         kontaList.setPadding(new Insets(5));
+        
+        refreshBtn.setOnAction(e -> {
+            refreshAllData(kontaList, refreshBtn);
+        });
 
         List<Konto> accounts = getAllAccounts();
 
@@ -73,13 +85,6 @@ public class AdminPanel extends Application {
 
         Button dodajKontoButton = new Button("Dodaj konto");
         dodajKontoButton.setOnAction(e -> {
-            // String name = "Nowe Konto #" + (kontaList.getChildren().size() + 1);
-            /*
-            kontaList.getChildren().add(createKontoItem(Arrays.asList(
-
-                "Imię", "Nazwisko", "PESEL", "Stanowisko", "Kategoria prawa jazdy"
-            ))); */
-          
             new AccountFormWindow().show();
         });
 
@@ -91,18 +96,18 @@ public class AdminPanel extends Application {
         HBox dodajKontoBox = new HBox(dodajKontoButton);
         dodajKontoBox.setAlignment(Pos.CENTER);
 
-        VBox leftPanel = new VBox(10,
+        VBox mainPanel = new VBox(10,
             kontaLabel,
             searchBox,
             kontaScroll,
             dodajKontoBox
         );
-        leftPanel.setPadding(new Insets(10));
-        leftPanel.setPrefWidth(350);
-        leftPanel.setStyle("-fx-background-color: #f4f4f4;");
+        mainPanel.setPadding(new Insets(10));
+        mainPanel.setPrefWidth(350);
+        mainPanel.setStyle("-fx-background-color: #f4f4f4;");
 
         // ================= GŁÓWNY UKŁAD =================
-        HBox root = new HBox(leftPanel);
+        VBox root = new VBox(welBox, mainPanel);
         root.setPadding(new Insets(10));
 
         Scene scene = new Scene(root, 260, 450);
@@ -124,14 +129,7 @@ public class AdminPanel extends Application {
             );
         });
 
-        Button deleteButton = new Button("X"); /*
-        deleteButton.setOnAction(e -> kontaList.getChildren().removeIf(node -> {
-            if (node instanceof HBox hbox) {
-                Button btn = (Button) hbox.getChildren().get(0);
-                return btn.getText().equals(kontoName);
-            }
-            return false;
-        })); */
+        Button deleteButton = new Button("X");
 
         deleteButton.setOnAction(e -> {
             if (deleteAcc(kontoId)) {
@@ -261,6 +259,30 @@ public class AdminPanel extends Application {
         }
 
         System.out.println("Konto zostało usunięte!");
+        return true;
+    }
+
+    private boolean refreshAllData(VBox targetContainer, Button refreshBtn) {
+        targetContainer.setDisable(true);
+        refreshBtn.setDisable(true);
+
+        List<Konto> accounts = getAllAccounts();
+        List<String> workerNames = new ArrayList<>();
+
+        targetContainer.getChildren().clear();
+
+        accounts.forEach(account -> {
+            List<String> listData = getWorkerData(account.getIdKonta());
+            workerNames.add(listData.getFirst());
+
+            targetContainer.getChildren().add(createKontoItem(account.getIdKonta(), listData));
+        });
+
+
+
+        targetContainer.setDisable(false);
+        refreshBtn.setDisable(false);
+
         return true;
     }
 }
