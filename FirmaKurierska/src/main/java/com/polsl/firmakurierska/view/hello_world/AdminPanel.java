@@ -97,7 +97,7 @@ public class AdminPanel extends Application {
 
         Button dodajKontoButton = new Button("Dodaj konto");
         dodajKontoButton.setOnAction(e -> {
-            new AccountFormWindow().show();
+            new AccountFormWindow().show(kontaList, refreshBtn, this);
         });
 
         HBox kontaLabel = new HBox(new Label("Konta"));
@@ -279,7 +279,7 @@ public class AdminPanel extends Application {
         return true;
     }
 
-    private boolean refreshAllData(VBox targetContainer, Button refreshBtn) {
+    public boolean refreshAllData(VBox targetContainer, Button refreshBtn) {
         targetContainer.setDisable(true);
         refreshBtn.setDisable(true);
 

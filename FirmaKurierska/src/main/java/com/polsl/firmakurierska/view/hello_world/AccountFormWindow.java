@@ -27,7 +27,7 @@ import javafx.stage.Stage;
 
 public class AccountFormWindow {
 
-    public void show() {
+    public void show(VBox accountContainer, Button rfshBtn, AdminPanel parent) {
         // Pola do wpisywania danych
         TextField imieField        = new TextField();
         TextField nazwiskoField    = new TextField();
@@ -108,6 +108,10 @@ public class AccountFormWindow {
             }
             
             addNewWorker(imie, nazwisko, pesel, login, selectedPositionId, haslo, selectedLicensesIDs);
+            
+            
+            parent.refreshAllData(accountContainer, rfshBtn);
+            
         });
 
         HBox dodajBox = new HBox(dodajButton);
