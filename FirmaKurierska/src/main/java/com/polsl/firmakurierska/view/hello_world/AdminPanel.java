@@ -143,17 +143,22 @@ public class AdminPanel extends Application {
 
         Button deleteButton = new Button("X");
 
-        deleteButton.setOnAction(e -> {
-            if (deleteAcc(kontoId)) {
-                kontaList.getChildren().removeIf(acc -> {
-                    if (acc instanceof HBox hbox) {
-                        Button btn = (Button) hbox.getChildren().get(0);
-                        return btn.getText().equals(acId.toString() + ": " + kontoName);
-                    }
-                    return false;
-                });
-            }
-        });
+        if (acId != loggedUserId) {
+            deleteButton.setDisable(false);
+            deleteButton.setOnAction(e -> {
+                if (deleteAcc(kontoId)) {
+                    kontaList.getChildren().removeIf(acc -> {
+                        if (acc instanceof HBox hbox) {
+                            Button btn = (Button) hbox.getChildren().get(0);
+                            return btn.getText().equals(acId.toString() + ": " + kontoName);
+                        }
+                        return false;
+                    });
+                }
+            });
+        } else {
+            deleteButton.setDisable(true);
+        }
 
         HBox hbox = new HBox(10, kontoButton, deleteButton);
         hbox.setAlignment(Pos.CENTER_LEFT);
