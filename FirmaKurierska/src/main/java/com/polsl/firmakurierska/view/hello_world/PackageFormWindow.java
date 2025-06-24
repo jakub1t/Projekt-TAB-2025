@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import com.polsl.firmakurierska.controller.RequestController;
+import com.polsl.firmakurierska.exception.BadRequestException;
+
 public class PackageFormWindow {
 
     /** Model pojedynczego produktu */
@@ -202,5 +205,25 @@ class ProductFormWindow {
             -fx-background-radius: 6;
         """);
         return box;
+    }
+
+    /**
+     * 
+     * @param jsonData - already formatted data
+     * @return True when successful / False otherwise
+     */
+    private boolean addPackage(String jsonData) {
+        RequestController rq = new RequestController("/paczka", 1);
+        String resp = "";
+
+        try {
+            resp = rq.sendJsonReq(jsonData);
+
+        } catch (BadRequestException bre) {
+            System.out.println("addPackage: " + bre.getMessage());
+            return false;
+        }
+
+        return true;
     }
 }
