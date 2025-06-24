@@ -41,7 +41,10 @@ public class DriverWindow extends Application {
         // ===== DOSTAWY =====
         Label welcomeLabel = new Label("Witaj " + loggedUserName + " " + loggedUserSurname + "!");
         welcomeLabel.setStyle("-fx-font-size: 12px;");
-        VBox welBox = new VBox(5, welcomeLabel);
+        Button refreshBtn = new Button("Odśwież Dane");
+        refreshBtn.setPrefWidth(200);
+
+        VBox welBox = new VBox(5, welcomeLabel, refreshBtn);
         welBox.setAlignment(Pos.CENTER);
 
         Label delLabel = new Label("Moje dostawy:");
@@ -50,35 +53,7 @@ public class DriverWindow extends Application {
 
         VBox delContainer = new VBox(5);
 
-        for (DostawaDTO dv : dostawy) {
-            CheckBox cb = new CheckBox();
-            cb.setSelected(dv.getStatus().contains("ZREALIZOWANA") ? true : false);
-            cb.setOnAction(e -> {
-                updateDeliveryStatus(cb.isSelected(), dv.getIdDostawy());
-            });
-
-            Button dvBtn = new Button(
-                Integer.toString(dv.getIdDostawy()) 
-                + ": " + dv.getPunktA() 
-                + " do " + dv.getPunktB());
-            dvBtn.setPrefWidth(200);
-            /*
-            dvBtn.setOnAction(e -> new DeliveryDescription().show(
-                Integer.toString(dv.getIdDostawy()),
-                loggedUserName, loggedUserSurname, "Pojazd",
-                dv.getTermin().toString(),
-                dv.getDataWyruszenia().toString(),
-                dv.getPunktA(), dv.getPunktB(),
-                dv.getPaczki()
-            )); */
-            dvBtn.setOnAction(e -> new DeliveryDescription().open(
-                dv.getIdDostawy(), loggedUserName, loggedUserSurname
-            ));
-
-            HBox h = new HBox(10, dvBtn, cb);
-            h.setAlignment(Pos.CENTER_LEFT);
-            delContainer.getChildren().add(h);
-        }
+        createDeliveriesButtons(dostawy, delContainer, refreshBtn);
 
         ScrollPane delScroll = new ScrollPane(delContainer);
         delScroll.setFitToWidth(true);
@@ -173,6 +148,54 @@ public class DriverWindow extends Application {
         } else {
             System.out.println("Nie zaktualizowano dostawy o podanym ID!");
             return false;
+        }
+    }
+
+    private boolean refreshAllData(VBox targetContainer, Button refreshBtn) {
+
+        refreshBtn.setDisable(true);
+        targetContainer.setDisable(true);
+
+        List<DostawaDTO> deliveries = getDeliveries();
+
+        targetContainer.getChildren().clear();
+
+        createDeliveriesButtons(deliveries, targetContainer, refreshBtn);
+
+        targetContainer.setDisable(false);
+        refreshBtn.setDisable(false);
+
+        return true;
+    }
+
+    // Helper method to create delivery buttons
+    private void createDeliveriesButtons(List<DostawaDTO> deliveries, VBox targetContainer, Button refreshBtn) {
+
+        for (DostawaDTO dv : deliveries) {
+            CheckBox cb = new CheckBox();
+            cb.setSelected(dv.getStatus().contains("ZREALIZOWANA") ? true : false);
+            cb.setOnAction(e -> {
+                updateDeliveryStatus(cb.isSelected(), dv.getIdDostawy());
+            });
+
+            Button dvBtn = new Button(
+                Integer.toString(dv.getIdDostawy()) 
+                + ": " + dv.getPunktA() 
+                + " do " + dv.getPunktB());
+
+            dvBtn.setPrefWidth(200);
+
+            dvBtn.setOnAction(e -> new DeliveryDescription().open(
+                dv.getIdDostawy(), loggedUserName, loggedUserSurname
+            ));
+
+            HBox h = new HBox(10, dvBtn, cb);
+            h.setAlignment(Pos.CENTER_LEFT);
+            targetContainer.getChildren().add(h);
+
+            refreshBtn.setOnAction(e -> {
+                refreshAllData(targetContainer, refreshBtn);
+            });
         }
     }
 }
