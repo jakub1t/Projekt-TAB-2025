@@ -36,11 +36,11 @@ public class AccountFormWindow {
         PasswordField hasloField   = new PasswordField();
 
         // Dostępne typy prawa jazdy
-        List<String> licenseIDs = new ArrayList<>();
-        licenseIDs = getAllLicensesIDs();
+        List<String> licenseIDs = getAllLicensesIDs();
+       
 
-        List<String> licenseNames = new ArrayList<>();
-        licenseNames = getAllLicensesNames(licenseIDs);
+        List<String> licenseNames = getAllLicensesNames(licenseIDs);
+
 
         VBox prawoJazdyBox = createCheckboxInputCard("Prawo jazdy:", licenseNames.toArray(new String[0]));
 
@@ -100,9 +100,19 @@ public class AccountFormWindow {
             
             String selectedPositionId = getSelectedPositionsId(selectedPosition);
 
-            String selectedPositionJSON = getSelectedPositionJSON(selectedPositionId, selectedPosition);
+           
 
-            addNewWorker(imie, nazwisko, pesel, login, selectedPositionJSON, haslo, selectedLicenses);
+            List<Integer> selectedLicensesIDs = new ArrayList<>();
+            for (String selected : selectedLicenses) {
+                int index = licenseNames.indexOf(selected);
+                if (index != -1) { // Make sure the selected license exists in licenseNames
+                    selectedLicensesIDs.add(index+1);
+                }
+            }
+
+
+
+            addNewWorker(imie, nazwisko, pesel, login, selectedPositionId, haslo, selectedLicensesIDs);
         });
 
         HBox dodajBox = new HBox(dodajButton);
@@ -243,58 +253,33 @@ public class AccountFormWindow {
         }
 
     //new add 
-    private void addNewWorker(String imie, String nazwisko, String pesel, String login, String stanowiskoId, String haslo, List<String> prawoJazdy) {
+    private void addNewWorker(String imie, String nazwisko, String pesel, String login, String stanowiskoId, String haslo, List<Integer> prawoJazdy) {
         
-        String kontoResp = "";
         String pracownikResp = "";
-        String kontoJson = String.format("{\"login\": \"%s\", \"haslo\": \"%s\"}", login, haslo);
-        
-        //try to create konto
-        RequestController rqKonto = new RequestController("/konto/add", 1);
-        try {
-            
-            kontoResp = rqKonto.sendJsonReq(kontoJson);
+       
 
-        } catch (BadRequestException ex) {
-            System.out.println("Błąd podczas dodawania konta: " + ex.getMessage());
-            return ;
-        }
-        System.out.println("Konto response: " + kontoResp);
-
-        /*int kontoId = 0;
-                            
-        try {
-           kontoId = new JSONObject(kontoResp).getInt("idKonta");
-        }
-        catch (JSONException jex) {
-            System.out.println(jex.toString());
-            jex.printStackTrace();
-        }*/
-
-
-        String licenseJsonArray = prawoJazdy.toString().replace("[", "[\"").replace("]", "\"]").replace(", ", "\", \"");
+        String kontoJson = String.format("{\"login\": \"%s\",\"haslo\": \"%s\"}", login, haslo);
+      
+        String licenseJsonArray = prawoJazdy.toString(); // assume prawoJazdy is a List<Integer>
         String pracownikJson = String.format(
-            "{\"imie\":\"%s\",\"nazwisko\":\"%s\",\"pesel\":\"%s\",\"stanowisko\":%s,\"konto\":%s,\"prawo_jazdy\":%s}",
-            imie, nazwisko, pesel, stanowiskoId, kontoResp, licenseJsonArray
+            "{\"imie\":\"%s\",\"nazwisko\":\"%s\",\"pesel\":\"%s\",\"konto\":%s,\"stanowiskoId\": %s,\"prawaJazdyIds\": %s}",
+            imie, nazwisko, pesel, kontoJson, stanowiskoId, licenseJsonArray
         );
 
-        String pracJson = "{\"imie\":\"Janina\",\"nazwisko\":\"Kowalina\",\"pesel\":\"12342394501\",\"konto\":{\"login\": \"janina\",\"haslo\":\"tajnina123\"},\"stanowiskoId\": 2,\"prawaJazdyIds\": [4, 5]}";
-
+      
         System.out.println("pracownik JSON req: " + pracownikJson);
 
         // try to create pracownik
         RequestController rqPracownik = new RequestController("/pracownik/create", 1);
         try{
 
-            pracownikResp = rqPracownik.sendJsonReq(pracJson);
+            pracownikResp = rqPracownik.sendJsonReq(pracownikJson);
 
         }catch(BadRequestException ex){
             System.out.println("Błąd podczas dodawania konta lub pracownika: " + ex.getMessage());
             return ;
         }
 
-        
-        System.out.println("Pracownik response: " + pracownikResp);
         System.out.println("Dodano konto i pracownika.");    
 
     }
