@@ -186,23 +186,24 @@ public class ManagerWindow extends Application {
             );
         });
         Button delBtn = new Button("X");
-        delBtn.setOnAction(e -> paczkiList.getChildren().removeIf(node -> {
-            if (node instanceof HBox hbox) {
-                // Delete package here
-                deletePackage(paczkaId);
-
-                Button b = (Button) hbox.getChildren().get(0);
-                return b.getText().equals(name);
+        delBtn.setOnAction(e -> {
+            if (deletePackage(paczkaId)) {
+                paczkiList.getChildren().removeIf(node -> {
+                if (node instanceof HBox hbox) {
+                    Button b = (Button) hbox.getChildren().get(0);
+                    return b.getText().equals(name);
+                }
+                return false;
+                });
             }
-            return false;
-        }));
+        });
         HBox box = new HBox(5, itemBtn, delBtn);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }
 
     private HBox createVehicleItem(int pojazdId, Pojazd pojazdData) {
-        String name = "ID pojazdu: " + pojazdId;
+        String name = String.format("ID: %d| ", pojazdId, pojazdData.getMarka());
 
         Button itemBtn = new Button(name);
         itemBtn.setPrefWidth(140);
@@ -218,16 +219,17 @@ public class ManagerWindow extends Application {
                 );
         });
         Button delBtn = new Button("X");
-        delBtn.setOnAction(e -> pojazdyList.getChildren().removeIf(node -> {
-            if (node instanceof HBox hbox) {
-                // Delete vehicle here
-                deleteVehicle(pojazdId);
-
-                Button b = (Button) hbox.getChildren().get(0);
-                return b.getText().equals(name);
+        delBtn.setOnAction(e ->{
+            if (deleteVehicle(pojazdId)) {;    
+                pojazdyList.getChildren().removeIf(node -> {
+                if (node instanceof HBox hbox) {
+                    Button b = (Button) hbox.getChildren().get(0);
+                    return b.getText().equals(name);
+                }
+                return false;
+                });
             }
-            return false;
-        }));
+        });
         HBox box = new HBox(5, itemBtn, delBtn);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
@@ -478,13 +480,12 @@ public class ManagerWindow extends Application {
     }
 
     private boolean deletePackage(int packId) {
-        // Works but returns exceptions because tries to delete repeatedly for some reason
-
         RequestController rq = new RequestController("/paczka/delete/" + packId, 3);
 
         try {
             rq.sendPathReq();
-            
+
+            System.out.println("Usunięto paczkę");
         } catch (ResourceNotFoundException rex) {
             System.out.println("deleteDelivery: " + rex.getMessage()); 
         } catch (BadRequestException bre) {
@@ -496,13 +497,12 @@ public class ManagerWindow extends Application {
     }
 
     private boolean deleteVehicle(int vehicleId) {
-        // Works but returns exceptions because tries to delete repeatedly for some reason
-
         RequestController rq = new RequestController("/pojazd/" + vehicleId, 3);
 
         try {
             rq.sendPathReq();
             
+            System.out.println("Usunięto pojazd");
         } catch (ResourceNotFoundException rex) {
             System.out.println("deleteVehicle: " + rex.getMessage());
         } catch (BadRequestException bre) {

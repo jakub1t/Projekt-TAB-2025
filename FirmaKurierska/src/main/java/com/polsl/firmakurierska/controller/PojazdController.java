@@ -25,11 +25,13 @@ public class PojazdController {
     }
 
     @PostMapping
-    public Pojazd add(@RequestBody Pojazd pojazd) {
+    public String add(@RequestBody Pojazd pojazd) {
     	if(pojazd == null) {
     		throw new BadRequestException("Pojazd nie może być pusty");
     	}
-        return pojazdRepository.save(pojazd);
+        int pId = pojazdRepository.save(pojazd).getIdPojazdu();
+
+        return "Dodano pojazd o ID: " + Integer.toString(pId);
     }
 
     @GetMapping("/{id}")

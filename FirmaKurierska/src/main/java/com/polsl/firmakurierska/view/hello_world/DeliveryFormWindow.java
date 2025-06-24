@@ -12,6 +12,9 @@ import javafx.stage.Stage;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.polsl.firmakurierska.controller.RequestController;
+import com.polsl.firmakurierska.exception.BadRequestException;
+
 public class DeliveryFormWindow {
 
     /**
@@ -157,5 +160,25 @@ public class DeliveryFormWindow {
             "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
         );
         return box;
+    }
+
+    /**
+     * 
+     * @param jsonData - already formatted data
+     * @return True when successful / False otherwise
+     */
+    private boolean addDostawa(String jsonData) {
+        RequestController rq = new RequestController("/dostawa/add", 1);
+        String resp = "";
+
+        try {
+            resp = rq.sendJsonReq(jsonData);
+
+        } catch (BadRequestException bre) {
+            System.out.println("addDostawa: " + bre.getMessage());
+            return false;
+        }
+
+        return true;
     }
 }
