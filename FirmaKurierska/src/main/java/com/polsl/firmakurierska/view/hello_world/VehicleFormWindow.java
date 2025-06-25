@@ -25,7 +25,7 @@ public class VehicleFormWindow {
      * Otwiera formularz dodawania/edycji pojazdu.
      * Po kliknięciu "Zapisz", wypisuje dane w konsoli i zamyka okno.
      */
-    public void show() {
+    public void show(ManagerWindow managerWindow, Button rfshBtn) {
 
         // Pola do wypełnienia
         typField       = new TextField();
@@ -45,6 +45,7 @@ public class VehicleFormWindow {
         Button saveBtn = new Button("Zapisz pojazd");
         saveBtn.setOnMouseClicked(e -> {
             handleButton();
+            managerWindow.refreshAllData(rfshBtn);
         });
         HBox btnBox = new HBox(saveBtn);
         btnBox.setAlignment(Pos.CENTER);

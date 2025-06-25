@@ -94,7 +94,7 @@ public class ManagerWindow extends Application {
         });
 
         Button dodajPojazdBtn = new Button("Dodaj pojazd");
-        dodajPojazdBtn.setOnAction(e -> new VehicleFormWindow().show());
+        dodajPojazdBtn.setOnAction(e -> new VehicleFormWindow().show(this, refreshBtn));
         VBox pojazdyCol = buildColumn("Pojazdy", pojazdyScroll, dodajPojazdBtn, "#eaeaea");
 
         // ===== KOL 3: DOSTAWY =====
@@ -533,7 +533,7 @@ public class ManagerWindow extends Application {
         return true;
     }
 
-    private void refreshAllData(Button refreshButton) {
+    public void refreshAllData(Button refreshButton) {
 
         refreshButton.setDisable(true);
 
