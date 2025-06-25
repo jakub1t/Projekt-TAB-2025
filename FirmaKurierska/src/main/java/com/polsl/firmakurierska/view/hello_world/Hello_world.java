@@ -45,8 +45,8 @@ public class Hello_world extends Application {
                 accType = findAccType(accId);
 
                 if (accType == 1) new AdminPanel().open(accId);
-                else if (accType == 2) new ManagerWindow().start(new Stage());
-                else if (accType == 3) new DriverWindow().open(accId); // Pass user ID ??
+                else if (accType == 2) new ManagerWindow().open(accId);
+                else if (accType == 3) new DriverWindow().open(accId);
                 else System.out.println("Bad account type...");
             };
         });

@@ -35,12 +35,33 @@ import com.polsl.firmakurierska.view.hello_world.PackageDescription.Product;
 
 public class ManagerWindow extends Application {
 
+    private int loggedUserId = 0;
+    private String loggedUserName = "Imię";
+    private String loggedUserSurname = "Nazwisko";
+
     private VBox paczkiList;
     private VBox pojazdyList;
     private VBox dostawyList;
 
+    public void open(int userId) {
+        this.loggedUserId = userId;
+        getMyName();
+        this.start(new Stage());
+    }
+
     @Override
     public void start(Stage stage) {
+        Label welcomeLabel = new Label("Witaj " + loggedUserName + " " + loggedUserSurname + "!");
+        welcomeLabel.setStyle("-fx-font-size: 12px;");
+        Button refreshBtn = new Button("Odśwież Dane");
+        refreshBtn.setPrefWidth(200);
+
+        VBox welBox = new VBox(5, welcomeLabel, refreshBtn);
+        welBox.setAlignment(Pos.CENTER);
+
+        refreshBtn.setOnAction(e -> {
+            refreshAllData(refreshBtn);
+        });
         
         // ===== KOL 1: PACZKI =====
         paczkiList = new VBox(5);
@@ -90,12 +111,7 @@ public class ManagerWindow extends Application {
         });
 
         Button dodajDostaweBtn = new Button("Dodaj dostawę");
-        /*
-        dodajDostaweBtn.setOnAction(e ->
-            new DeliveryFormWindow().show(
-                
-            )
-        ); */
+
         VBox dostawyCol = buildColumn("Dostawy", dostawyScroll, dodajDostaweBtn, "#f4f4f4");
 
         // ===== KOL 4: RAPORTY =====
@@ -116,7 +132,8 @@ public class ManagerWindow extends Application {
         raportCol.setStyle("-fx-background-color: #eaeaea;");
 
         // ===== GŁÓWNY UKŁAD =====
-        HBox root = new HBox(10, paczkiCol, pojazdyCol, dostawyCol, raportCol);
+        HBox dataBox = new HBox(10, paczkiCol, pojazdyCol, dostawyCol, raportCol);
+        VBox root = new VBox(10, welBox, dataBox);
         root.setPadding(new Insets(10));
 
         Scene scene = new Scene(root, 850, 450);
@@ -329,6 +346,9 @@ public class ManagerWindow extends Application {
         try {
             response = rq.sendPathReq();
 
+        } catch (ResourceNotFoundException rex) {
+            System.out.println(rex.getMessage());
+            goFurther = false;
         } catch (BadRequestException e) {
             System.out.println(e.getMessage());
             goFurther = false;
@@ -510,6 +530,66 @@ public class ManagerWindow extends Application {
             return false;
         }
 
+        return true;
+    }
+
+    private void refreshAllData(Button refreshButton) {
+
+        refreshButton.setDisable(true);
+
+        this.paczkiList.setDisable(true);
+        this.pojazdyList.setDisable(true);
+        this.dostawyList.setDisable(true);
+
+        this.paczkiList.getChildren().clear();
+        this.pojazdyList.getChildren().clear();
+        this.dostawyList.getChildren().clear();
+
+        List<PaczkaDTO> paczki = getPaczki();
+
+        paczki.forEach(paczka -> {
+            paczkiList.getChildren().add(createPackageItem(paczka.getIdPaczki(), paczka));
+        });
+
+        List<Pojazd> pojazdy = getPojazdy();
+
+        pojazdy.forEach(pojazd -> {
+            pojazdyList.getChildren().add(createVehicleItem(pojazd.getIdPojazdu(), pojazd));
+        });
+
+        List<DostawaDTO> dostawy = getDostawy();
+
+        dostawy.forEach(dostawa -> {
+            dostawyList.getChildren().add(createDeliveryItem(dostawa.getIdDostawy(), dostawa));
+        });
+
+        this.paczkiList.setDisable(false);
+        this.pojazdyList.setDisable(false);
+        this.dostawyList.setDisable(false);
+
+        refreshButton.setDisable(false);
+    }
+
+    private boolean getMyName() {
+        String response = "";
+        RequestController rq = new RequestController("/pracownik/" + Integer.toString(loggedUserId), 1);
+        
+        try {
+            response = rq.sendPathReq();    
+        } catch (BadRequestException e) {
+            System.out.println("getMyName: " + e.getMessage());
+            return false;
+        }
+        ObjectMapper mapper = new ObjectMapper().configure(
+            DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        try {
+            Pracownik tmp = mapper.readValue(response, new TypeReference<Pracownik>(){});
+            this.loggedUserName = tmp.getImie();
+            this.loggedUserSurname = tmp.getNazwisko();
+        } catch (IOException ex) {
+            System.out.println("getMyName: " + ex.getMessage());
+        }
+        
         return true;
     }
 }
