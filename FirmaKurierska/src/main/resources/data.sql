@@ -57,7 +57,7 @@ VALUES (5, 2, 'Piotr', 'Wójcik', '65498732109');  -- Manager
 INSERT INTO dostawa (data_wyruszenia, pojazd_id, pracownik_id, termin, punkta, punktb, status)
 VALUES ('2025-04-10', 1, 1, '2025-04-11', 'Katowice', 'Warszawa', 'W_TRAKCIE'),
 ('2025-04-09', 2, 2, '2025-04-10', 'Kraków', 'Wrocław', 'ZREALIZOWANA'),
-('2025-04-15', 1, 1, '2025-04-16', 'Gliwice', 'Poznań', 'PLANOWANA'),
+('2025-04-15', 1, 1, '2025-04-16', 'Gliwice', 'Poznań', 'W_TRAKCIE'),
 ('2025-04-14', 2, 2, '2025-04-15', 'Warszawa', 'Łódź', 'W_TRAKCIE'),
 ('2025-04-16', 1, 1, '2025-04-17', 'Zabrze', 'Gdańsk', 'ZREALIZOWANA');
 
