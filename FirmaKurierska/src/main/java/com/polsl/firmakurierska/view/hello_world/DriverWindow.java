@@ -103,6 +103,7 @@ public class DriverWindow extends Application {
             }
         }      
 
+        // zrobić z tego osobną funkcję
         // wyświetlanie tylko aktywnych dostaw 
         List<DostawaDTO> aktywne_dostawy = new ArrayList<>();
 
