@@ -101,8 +101,19 @@ public class DriverWindow extends Application {
             } catch (IOException e) {
                 System.out.println(e.getMessage());
             }
-        }       
-        return mojeDostawy;
+        }      
+
+        // wyświetlanie tylko aktywnych dostaw 
+        List<DostawaDTO> aktywne_dostawy = new ArrayList<>();
+
+        for (DostawaDTO elem : mojeDostawy) {
+            if (elem.getStatus().equals("W_TRAKCIE")){
+                aktywne_dostawy.add(elem);
+            }
+            
+        }
+        return aktywne_dostawy;
+        //return mojeDostawy;
     }
 
     private boolean updateDeliveryStatus(boolean wasCompleted, Integer delId) {
