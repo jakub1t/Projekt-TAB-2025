@@ -1,11 +1,14 @@
 package com.polsl.firmakurierska.view.hello_world;
 
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
@@ -34,6 +37,10 @@ public class DriverWindow extends Application {
     private String loggedUserName = "Imię";
     private String loggedUserSurname = "Nazwisko";
 
+    // Selection options for filtering deliveries: 
+    // 0 - all, 1 - completed, 2 - not completed, any other value - none
+    private int filterDeliveriesOption = 0; 
+
     public void open(int userId) {
         this.loggedUserId = userId;
         getMyName();
@@ -51,14 +58,39 @@ public class DriverWindow extends Application {
         Button refreshBtn = new Button("Odśwież Dane");
         refreshBtn.setPrefWidth(200);
 
-        VBox welBox = new VBox(5, welcomeLabel, refreshBtn);
-        welBox.setAlignment(Pos.CENTER);
+        ObservableList<String> options = 
+            FXCollections.observableArrayList(
+                "Wszystkie",
+                "Wykonane",
+                "Niewykonane"
+            );
+        final ComboBox<String> comboBox = new ComboBox<String>(options);
 
         Label delLabel = new Label("Moje dostawy:");
         delLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 16px;");
         List<DostawaDTO> dostawy = getDeliveries();
 
         VBox delContainer = new VBox(5);
+
+        VBox welBox = new VBox(5, welcomeLabel, refreshBtn, comboBox);
+        welBox.setAlignment(Pos.CENTER);
+        
+        comboBox.setOnAction(event -> {
+            String selectedOption = new String(comboBox.getValue());
+
+            if (selectedOption.equals("Wszystkie")) {
+                this.filterDeliveriesOption = 0;
+            } else if (selectedOption.equals("Wykonane")) {
+                this.filterDeliveriesOption = 1;
+            } else if (selectedOption.equals("Niewykonane")) {
+                this.filterDeliveriesOption = 2;
+            } else {
+                this.filterDeliveriesOption = -1;
+            }
+
+            refreshAllData(delContainer, refreshBtn);
+        });
+        comboBox.setValue("Wszystkie");
 
         createDeliveriesButtons(dostawy, delContainer, refreshBtn);
 
@@ -103,18 +135,41 @@ public class DriverWindow extends Application {
             }
         }      
 
-        // zrobić z tego osobną funkcję
-        // wyświetlanie tylko aktywnych dostaw 
-        List<DostawaDTO> aktywne_dostawy = new ArrayList<>();
+        // wyświetlanie przefiltrowanych dostaw 
+        List<DostawaDTO> wybraneDostawy = filterDeliveries(mojeDostawy, filterDeliveriesOption);
 
-        for (DostawaDTO elem : mojeDostawy) {
-            if (elem.getStatus().equals("W_TRAKCIE")){
-                aktywne_dostawy.add(elem);
-            }
-            
+        return wybraneDostawy;
+    }
+
+    private List<DostawaDTO> filterDeliveries(List<DostawaDTO> deliveries, int filterOption) {
+
+        final List<DostawaDTO> filteredDeliveries = new ArrayList<>();
+
+        switch (filterOption) {
+            case 0:
+                return deliveries;
+            case 1:
+                deliveries.forEach(delivery -> {
+                    if (delivery.getStatus().equals("ZREALIZOWANA")){
+                        filteredDeliveries.add(delivery);
+                    } 
+                });
+                break;
+            case 2:
+                deliveries.forEach(delivery -> {
+                    if (delivery.getStatus().equals("W_TRAKCIE")){
+                        filteredDeliveries.add(delivery);
+                    } 
+                });
+                break;
+        
+            default:
+                System.out.println("Incorrect filter option...");
+                break;
         }
-        return aktywne_dostawy;
-        //return mojeDostawy;
+        
+
+        return filteredDeliveries;
     }
 
     private boolean updateDeliveryStatus(boolean wasCompleted, Integer delId) {
