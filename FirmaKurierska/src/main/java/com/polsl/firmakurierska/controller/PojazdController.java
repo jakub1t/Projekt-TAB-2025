@@ -2,9 +2,15 @@ package com.polsl.firmakurierska.controller;
 
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
+import com.polsl.firmakurierska.model.Dostawa;
 import com.polsl.firmakurierska.model.Pojazd;
 import com.polsl.firmakurierska.repository.PojazdRepository;
+
+import jakarta.transaction.Transactional;
+
+import com.polsl.firmakurierska.repository.DostawaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +24,9 @@ public class PojazdController {
 
     @Autowired
     PojazdRepository pojazdRepository;
+    
+    @Autowired
+    DostawaRepository dostawaRepository;
 
     @GetMapping
     public Iterable<Pojazd> getAll() {
@@ -56,13 +65,7 @@ public class PojazdController {
         return pojazdRepository.save(pojazd);
     }
 
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable Integer id) {
-    	if(!pojazdRepository.existsById(id)) {
-    		throw new ResourceNotFoundException("Nie znaleziono pojazdu o ID " + id);
-    	}
-        pojazdRepository.deleteById(id);
-    }
+    
 
     @GetMapping("/szukaj")
     public List<Pojazd> searchPojazdy(
@@ -141,7 +144,29 @@ public class PojazdController {
         return pojazdy;
     }
 
+    @Transactional
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deletePojazd(@PathVariable String id) {
+        try {
+            Integer pid = Integer.parseInt(id);
+            Pojazd pojazd = pojazdRepository.findById(pid)
+                    .orElseThrow(() -> new ResourceNotFoundException("Pojazd o ID " + pid + " nie istnieje."));
 
+            // Odłącz wszystkie dostawy przypisane do pojazdu
+            if (pojazd.getDostawy() != null) {
+                for (Dostawa dostawa : pojazd.getDostawy()) {
+                    dostawa.setPojazd(null);
+                    dostawaRepository.save(dostawa); // zapisz zmiany
+                }
+            }
+
+            pojazdRepository.delete(pojazd);
+            return ResponseEntity.ok("Pojazd o ID " + pid + " został usunięty.");
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("ID musi być liczbą całkowitą: " + id);
+        }
+    }
+    
     @DeleteMapping("/rejestr/{nr}")
     public void deleteByNrRejestr(@PathVariable String nr) {
         pojazdRepository.deleteByNrRejestr(nr);

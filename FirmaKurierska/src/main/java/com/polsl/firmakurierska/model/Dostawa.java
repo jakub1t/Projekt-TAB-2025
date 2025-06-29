@@ -30,7 +30,7 @@ public class Dostawa {
 
 	
 	@ManyToOne
-	@JoinColumn(name = "pojazd_id")
+	@JoinColumn(name = "pojazd_id", nullable = true)
 	private Pojazd pojazd;
 
 	@ManyToOne
