@@ -9,54 +9,96 @@ import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.boot.configurationprocessor.json.JSONArray;
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.polsl.firmakurierska.controller.RequestController;
+import com.polsl.firmakurierska.dto.PaczkaDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.model.Pojazd;
+import com.polsl.firmakurierska.model.Pracownik;
 
 public class DeliveryFormWindow {
 
+    private List<PaczkaDTO> availablePackages = null;
+    private List<Pojazd> availableVehicles = null;
+    private List<Pracownik> availableDrivers = null;
+
+    private DatePicker startDatePicker = null;
+    private DatePicker endDatePicker = null;
+    private TextField pointAField = null;
+    private TextField pointBField = null;
+
+    private Stage myStage = null;
+    private ManagerWindow myManager = null;
+    private Button myRfsh = null;
+    
     /**
      * Otwiera formularz dodawania nowej dostawy.
-     * @param availablePackageIds lista dostępnych ID paczek
-     * @param availableVehicleNames lista dostępnych nazw pojazdów
-     * @param availableEmployees lista dostępnych imion i nazwisk pracowników
      */
-    public void show(
-            List<String> availablePackageIds,
-            List<String> availableVehicleNames,
-            List<String> availableEmployees
-    ) {
-        // Pole na nazwę dostawy
-        TextField nameField = new TextField();
-        nameField.setPromptText("np. Dostawa 123");
-        VBox nameBox = createInputCard("Nazwa dostawy:", nameField);
+    public void show(ManagerWindow managerWindow, Button rfshBtn, List<Pojazd> pojazdy, List<PaczkaDTO> paczki) {
 
-        // Data
-        DatePicker datePicker = new DatePicker();
-        VBox dateBox = createInputCard("Data:", datePicker);
+        myStage = new Stage();
+        myManager = managerWindow;
+        myRfsh = rfshBtn;
+        availableVehicles = pojazdy;
+        availablePackages = paczki;
+        availableDrivers = getDrivers();
 
-        // Godzina
-        TextField timeField = new TextField();
-        timeField.setPromptText("np. 14:30");
-        VBox timeBox = createInputCard("Godzina:", timeField);
+        // Data startu
+        startDatePicker = new DatePicker();
+        VBox startDateBox = createInputCard("Data wyjazdu:", startDatePicker);
+
+        // Termin
+        endDatePicker = new DatePicker();
+        endDatePicker.setPromptText("Przewidywana data zakończenia dostawy");
+        VBox endDateBox = createInputCard("Termin:", endDatePicker);
+
+        HBox datesRow = new HBox(startDateBox, endDateBox);
+        datesRow.setAlignment(Pos.CENTER);
 
         // Punkty A i B
-        TextField pointAField = new TextField();
-        TextField pointBField = new TextField();
+        pointAField = new TextField();
+        pointBField = new TextField();
         VBox pointABox = createInputCard("Punkt A:", pointAField);
         VBox pointBBox = createInputCard("Punkt B:", pointBField);
+
+        HBox pointsRow = new HBox(pointABox, pointBBox);
+        pointsRow.setAlignment(Pos.CENTER);
 
         // Checkboxy paczek (wielokrotny wybór)
         Label pkgLabel = new Label("Wybierz paczki do dostawy:");
         pkgLabel.setStyle("-fx-font-weight: bold;");
         VBox pkgContainer = new VBox(5);
-        for (String pid : availablePackageIds) {
-            CheckBox cb = new CheckBox(pid);
-            cb.setPrefHeight(25);
-            pkgContainer.getChildren().add(cb);
+        pkgContainer.setStyle("-fx-background-color: white;");
+
+        List<PaczkaDTO> freePacks = new ArrayList<>();
+        for (PaczkaDTO pk : availablePackages) {
+            if (pk.getDostawaId() == null) {
+                freePacks.add(pk);
+            }
         }
+        availablePackages = freePacks;
+        
+        if (availablePackages.size() == 0) {
+            Label emptyPkgAlert = new Label("Wszystkie paczki mają określoną dostawę");
+            pkgContainer.getChildren().add(emptyPkgAlert);
+        } else {
+            for (PaczkaDTO pk : availablePackages) {    
+                CheckBox cb = new CheckBox(pk.getIdPaczki().toString() + "| Waga: " + pk.getWagaPaczki().toString());
+                cb.setPrefHeight(25);
+                pkgContainer.getChildren().add(cb);
+            }
+        } 
+
         ScrollPane pkgScroll = new ScrollPane(pkgContainer);
         pkgScroll.setFitToWidth(true);
         pkgScroll.setPrefHeight(120);
@@ -66,8 +108,11 @@ public class DeliveryFormWindow {
         vehLabel.setStyle("-fx-font-weight: bold;");
         ToggleGroup vehGroup = new ToggleGroup();
         VBox vehContainer = new VBox(5);
-        for (String v : availableVehicleNames) {
-            RadioButton rb = new RadioButton(v);
+        vehContainer.setStyle("-fx-background-color: white;");
+
+        for (Pojazd v : availableVehicles) {
+            String vLabel = v.getIdPojazdu().toString() + ' ' + v.getMarka();
+            RadioButton rb = new RadioButton(vLabel);
             rb.setToggleGroup(vehGroup);
             rb.setPrefHeight(25);
             vehContainer.getChildren().add(rb);
@@ -77,74 +122,61 @@ public class DeliveryFormWindow {
         vehScroll.setPrefHeight(120);
 
         // RadioButtons pracowników (pojedynczy wybór)
-        Label empLabel = new Label("Wybierz pracownika:");
+        Label empLabel = new Label("Wybierz kierowcę:");
         empLabel.setStyle("-fx-font-weight: bold;");
         ToggleGroup empGroup = new ToggleGroup();
         VBox empContainer = new VBox(5);
-        for (String emp : availableEmployees) {
-            RadioButton rb = new RadioButton(emp);
+        empContainer.setStyle("-fx-background-color: white;");
+
+        for (Pracownik dr : availableDrivers) {
+            String drLabel = dr.getIdOsoby().toString() + ' ' + dr.getNazwisko();
+            RadioButton rb = new RadioButton(drLabel);
             rb.setToggleGroup(empGroup);
             rb.setPrefHeight(25);
             empContainer.getChildren().add(rb);
         }
         ScrollPane empScroll = new ScrollPane(empContainer);
         empScroll.setFitToWidth(true);
-        empScroll.setPrefHeight(120);
+        empScroll.setPrefHeight(60);
 
         // Przycisk zapisu
         Button saveBtn = new Button("Zapisz dostawę");
-        saveBtn.setOnAction(e -> {
+        saveBtn.setOnMouseClicked(e -> {
             // Zbieramy dane
-            String name = nameField.getText();
-            String date = datePicker.getValue() != null ? datePicker.getValue().toString() : "";
-            String time = timeField.getText();
-
+            
             List<String> selectedPkgs = new ArrayList<>();
             pkgContainer.getChildren().forEach(node -> {
                 if (node instanceof CheckBox cb && cb.isSelected()) selectedPkgs.add(cb.getText());
             });
-            RadioButton selectedVeh = (RadioButton) vehGroup.getSelectedToggle();
-            String veh = selectedVeh != null ? selectedVeh.getText() : "";
-            RadioButton selectedEmp = (RadioButton) empGroup.getSelectedToggle();
-            String emp = selectedEmp != null ? selectedEmp.getText() : "";
-
-            System.out.println("Nowa dostawa:");
-            System.out.println("Nazwa: " + name);
-            System.out.println("Data: " + date);
-            System.out.println("Godzina: " + time);
-            System.out.println("Punkt A: " + pointAField.getText());
-            System.out.println("Punkt B: " + pointBField.getText());
-            System.out.println("Paczki: " + selectedPkgs);
-            System.out.println("Pojazd: " + veh);
-            System.out.println("Pracownik: " + emp);
-
-            ((Stage) saveBtn.getScene().getWindow()).close();
+            
+            handleButton();
         });
         HBox btnBox = new HBox(saveBtn);
         btnBox.setAlignment(Pos.CENTER);
         btnBox.setPadding(new Insets(10, 0, 0, 0));
 
-        // Główny kontener
-        VBox container = new VBox(12,
-            nameBox,
-            dateBox,
-            timeBox,
-            pointABox, pointBBox,
+        VBox formContainer = new VBox(12,
+            datesRow, pointsRow,
             pkgLabel, pkgScroll,
             vehLabel, vehScroll,
             empLabel, empScroll,
             btnBox
         );
-        container.setPadding(new Insets(20));
-        container.setAlignment(Pos.TOP_CENTER);
 
-        BorderPane root = new BorderPane(container);
+        ScrollPane mainScroll = new ScrollPane(formContainer);
+        mainScroll.setFitToWidth(true);
+
+        formContainer.setPadding(new Insets(20));
+        formContainer.setAlignment(Pos.TOP_CENTER);
+
+        VBox mainContainer = new VBox(formContainer, mainScroll);
+
+        BorderPane root = new BorderPane(mainContainer);
         root.setStyle("-fx-background-color: #f8f8f8;");
 
-        Stage stage = new Stage();
-        stage.setTitle("Formularz dostawy");
-        stage.setScene(new Scene(root, 400, 950));
-        stage.show();
+        myStage.setTitle("Formularz dostawy");
+        myStage.setScene(new Scene(root, 400, 500));
+        myStage.show();
     }
 
     private VBox createInputCard(String labelText, Control inputField) {
@@ -162,6 +194,50 @@ public class DeliveryFormWindow {
         return box;
     }
 
+    private List<Pracownik> getDrivers() {
+        List<Pracownik> theDrivers = new ArrayList<>();
+        RequestController rq = new RequestController("/pracownik", 0);
+
+        String resp = "";
+        boolean goFurther = false;
+
+        try {
+            resp = rq.sendPathReq();
+            goFurther = true;
+        } catch (BadRequestException bre) {
+            System.err.println(bre.getMessage());
+            goFurther = false;
+        }
+
+        if (goFurther) {
+            List<Pracownik> allEmployees = new ArrayList<>();
+            List<Integer> employeeRoles = null;
+            ObjectMapper mapper = new ObjectMapper().configure(
+                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            goFurther = false;
+
+            try {
+                allEmployees = mapper.readValue(resp, new TypeReference<List<Pracownik>>(){});
+
+                employeeRoles = extractEmployeeRoles(allEmployees.size(), resp);
+
+                goFurther = true;
+            } catch (IOException ioe) {
+                System.err.println(ioe.getMessage());
+            }
+
+            if (goFurther) {
+                for (int i = 0; i < employeeRoles.size(); ++i) {
+
+                    if (employeeRoles.get(i) == 3) {
+                        theDrivers.add(allEmployees.get(i));
+                    }
+                }
+            }
+        }
+        return theDrivers;
+    }
+
     /**
      * 
      * @param jsonData - already formatted data
@@ -169,10 +245,9 @@ public class DeliveryFormWindow {
      */
     private boolean addDostawa(String jsonData) {
         RequestController rq = new RequestController("/dostawa/add", 1);
-        String resp = "";
 
         try {
-            resp = rq.sendJsonReq(jsonData);
+            rq.sendJsonReq(jsonData);
 
         } catch (BadRequestException bre) {
             System.out.println("addDostawa: " + bre.getMessage());
@@ -180,5 +255,50 @@ public class DeliveryFormWindow {
         }
 
         return true;
+    }
+
+    private void handleButton() {
+        String startDay = startDatePicker.getValue().toString();
+        String endDay = endDatePicker.getValue().toString();
+
+        String jason = String.format("{\"dataWyruszenia\": \"%s\", \"termin\": \"%s\", \"punktA\": \"%s\", \"punktB\": \"%s\", \"idPojazdu\": %d}",
+                 startDay, endDay, pointAField.getText(), pointBField.getText());
+
+        System.out.println(jason);
+        if (addDostawa(jason)) {
+            myManager.refreshAllData(myRfsh);
+            myStage.close();
+        }
+    }
+
+    /**
+     * Extracts Roles of employees from links in JSON response
+     * @param baseList
+     * @param jsonData
+     * @return List of IDs for each employee
+     */
+    private List<Integer> extractEmployeeRoles(int numberOfEmployees, String jsonData) {
+        List<Integer> roles = new ArrayList<>();
+        try {
+            JSONArray jsonEmployees = new JSONArray(jsonData);
+            
+            for (int i = 0; i < numberOfEmployees; ++i) {
+                JSONObject singleEmpl = jsonEmployees.getJSONObject(i);
+                JSONArray links = singleEmpl.getJSONArray("links");
+                JSONObject stanowiskoLink = links.getJSONObject(1);
+                
+                String href = stanowiskoLink.getString("href");
+                String[] hrefTokens = href.split("/");
+
+                roles.add(Integer.parseInt(hrefTokens[hrefTokens.length - 1]));
+            }
+
+        } catch (NumberFormatException nfe) {
+            System.err.println(nfe.getMessage());
+        } catch (JSONException js) {
+            System.err.println(js.getMessage());
+        }
+
+        return roles;
     }
 }

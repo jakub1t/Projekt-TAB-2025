@@ -109,7 +109,7 @@ public class PackageFormWindow {
 
         Stage stage = new Stage();
         stage.setTitle("Formularz paczki");
-        stage.setScene(new Scene(root, 400, 740));
+        stage.setScene(new Scene(root, 400, 500));
         stage.show();
     }
 
