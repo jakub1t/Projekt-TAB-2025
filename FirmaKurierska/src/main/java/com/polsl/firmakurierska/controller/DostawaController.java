@@ -90,7 +90,7 @@ public class DostawaController {
             dostawa.setPunktB(dto.getPunktB());
             dostawa.setDataWyruszenia(dto.getDataWyruszenia());
             dostawa.setTermin(dto.getTermin());
-            dostawa.setStatus(dto.getStatus()); // Add status here
+            dostawa.setStatus("W_TRAKCIE"); // Add status here
 
             // Save the new delivery to the repository
             Dostawa savedDostawa = dostawaRepository.save(dostawa);
