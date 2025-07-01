@@ -1,20 +1,14 @@
 package com.polsl.firmakurierska.view.hello_world;
 
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.VBox;
-import javafx.scene.layout.HBox;
-import javafx.stage.Stage;
-
-import java.io.IOException;
 import java.io.File;  
 import java.io.FileWriter;
+import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.time.LocalDate;
+
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -23,9 +17,24 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.dto.DostawaDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
-import com.polsl.firmakurierska.model.Pracownik;
 import com.polsl.firmakurierska.model.Konto;
 import com.polsl.firmakurierska.model.Pojazd;
+import com.polsl.firmakurierska.model.Pracownik;
+
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Control;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 
 public class RaportFormWindow {
@@ -145,12 +154,12 @@ public class RaportFormWindow {
     private void generateRaport(LocalDate startDate, LocalDate endDate, String fileLocation, String raportType){
         List<DostawaDTO> allDeliveries = getAllDeliveries();
         List<Konto> accounts = getAllAccounts();
-        List<Pracownik> workers = getAllWorkers();
+        //List<Pracownik> workers = getAllWorkers();
         List<Pojazd> vehicles = getAllVehicles();
 
         List<DostawaDTO> selectedDeliveries = sortDeliveries(allDeliveries, startDate, endDate, raportType);
 
-        writeToFile(fileLocation, selectedDeliveries, accounts, workers, vehicles);
+        writeToFile(fileLocation, selectedDeliveries, accounts, vehicles);
     }
 
     private List<DostawaDTO> sortDeliveries(List<DostawaDTO> allDeliveries,LocalDate startDate, LocalDate endDate,String raportType){
@@ -175,7 +184,7 @@ public class RaportFormWindow {
     
     }
 
-    private void writeToFile(String filePath, List<DostawaDTO> selectedDeliveries, List<Konto> accounts, List<Pracownik> workers, List<Pojazd> vehicles){
+    private void writeToFile(String filePath, List<DostawaDTO> selectedDeliveries, List<Konto> accounts, List<Pojazd> vehicles){
         File raportFile = new File(filePath+ "\\raport.txt");
         
         try{
@@ -183,10 +192,63 @@ public class RaportFormWindow {
         //header
         writer.write("***************" + "\nSUPER RAPORT\n" +"***************\n\n\n");
 
-
+        //list the workers
+        writer.write("Company workers list:\n\n");
         
-        writer.write("***************" + "\nend of SUPER RAPORT\n" +"***************\n\n\n");
+        for(Konto elem : accounts){
+            List<String> workerData = getWorkerData(elem.getIdKonta());
+            writer.write("  " + elem.getIdKonta() + ". " + workerData.get(0) + " " + workerData.get(1) + "\n");
+            writer.write("   Pesel: " + workerData.get(2) + "\n");
+            writer.write("   Stanowisko: " + workerData.get(3) + "\n");
+            writer.write("   Prawo jazdy: " + workerData.get(4)+ "\n\n");
+        }
+
+        writer.write("\nCompany vechicles list:\n\n");
+        
+        //list the vechicles 
+       for(Pojazd elem : vehicles){
+
+            writer.write("  " + elem.getIdPojazdu() + ". " + elem.getMarka() + " " + elem.getModel()+"\n");
+            writer.write("   Typ: " + elem.getTypPojazdu() + "\n");
+            writer.write("   Numer rejestracji: " + elem.getNrRejestr() + "\n");
+            writer.write("   Pojemność: " + elem.getPojemnosc() + "\n\n");
+
+       }
+
+         //list the deliveries
+       writer.write("\nCompany deliveries state:\n\n");
+
+       int finishedDeliveries = 0;
+       int activeDeliveries = 0;
+
+       for (DostawaDTO elem : selectedDeliveries)
+       {
+            if(elem.getStatus().equals("W_TRAKCIE"))
+            {
+                activeDeliveries++;
+            }
+            else{
+                finishedDeliveries++;
+            }
+       }
+        writer.write("   Aktywne dostawy: "+ activeDeliveries +"\n");
+        writer.write("   Ukończone dostawy: "+ finishedDeliveries+"\n\n");
+
+        writer.write("   Lista dostaw: "+ finishedDeliveries+"\n\n");
+        
+        for (DostawaDTO elem : selectedDeliveries)
+       {
+            writer.write("  " + elem.getIdDostawy() + ". Z: " + elem.getPunktA() + "  Do: " + elem.getPunktB()+"\n");
+            writer.write("   Termin, Od: " + elem.getDataWyruszenia()+ "  Do: " + elem.getTermin() + "\n");
+            writer.write("   Status: " + elem.getStatus() + "\n\n");
+       }
+
+
+       
+        writer.write("\n***************" + "\nend of SUPER RAPORT\n" +"***************\n\n\n");
         writer.close();
+
+       
         } catch (IOException e) {
         System.out.println("An error occurred.");
         e.printStackTrace();
@@ -305,7 +367,55 @@ public class RaportFormWindow {
         return vechicles;
     }
 
+    private List<String> getWorkerData(Integer accountID) {
+            List<String> workerData = new ArrayList<>();
+            String response = "";
 
+            // Prepare request to get all accounts from db
+            RequestController rq = new RequestController("/pracownik/" + accountID, 1);
+
+            response = rq.sendPathReq();
+
+            String stanowiskoID = rq.getStanowisko(response);
+
+            List<String> kategoriePrawaJazdy = rq.getKategorie(response);
+
+            try {
+                JSONObject jsonData = new JSONObject(response);
+
+                workerData.add(jsonData.getString("imie"));
+                workerData.add(jsonData.getString("nazwisko"));
+                workerData.add(jsonData.getString("pesel"));
+
+                rq = new RequestController("/stanowisko/" + stanowiskoID, 0);
+
+                response = new String(rq.sendPathReq());
+
+                JSONObject stanowiskoJson = new JSONObject(response);
+                workerData.add(stanowiskoJson.getString("nazwaStanowiska"));
+
+                kategoriePrawaJazdy.forEach(kategoria -> {
+                    RequestController tempRq = new RequestController("/prawojazdy/" + kategoria, 0);
+
+                    String tempResponse = new String(tempRq.sendPathReq());
+                    
+                    try {
+                        JSONObject prawoJazdyJson = new JSONObject(tempResponse);
+                        workerData.add(prawoJazdyJson.getString("kategoria"));
+                    }
+                    catch (JSONException jex) {
+                        System.out.println(jex.toString());
+                        jex.printStackTrace();
+                    }
+                });
+            }
+            catch (JSONException jex) {
+                System.out.println(jex.toString());
+                jex.printStackTrace();
+            }
+
+            return workerData;
+        }
 
 //  ObjectMapper mapper = new ObjectMapper().configure(
 //                 DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
