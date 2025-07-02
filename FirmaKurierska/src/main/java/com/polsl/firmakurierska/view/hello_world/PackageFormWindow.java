@@ -7,96 +7,112 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.IllegalFormatException;
 import java.util.List;
-import java.util.function.Consumer;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.polsl.firmakurierska.controller.RequestController;
+import com.polsl.firmakurierska.dto.ProduktDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.model.Klient;
 
 public class PackageFormWindow {
 
-    /** Model pojedynczego produktu */
-    public static class Product {
-        public final String nazwa;
-        public final String waga;
-        public final String kategoria;
-        public final String numerSeryjny;
-        public final String producent;
+    private List<ProduktDTO> produkty = null;
+    private List<Klient> klienci = null;
 
-        public Product(String nazwa, String waga, String kategoria, String numerSeryjny, String producent) {
-            this.nazwa = nazwa;
-            this.waga = waga;
-            this.kategoria = kategoria;
-            this.numerSeryjny = numerSeryjny;
-            this.producent = producent;
-        }
-    }
-
-    private final List<Product> products = new ArrayList<>();
     private VBox productsList;
+    private VBox klientsList;
+
+    private TextField weightField = null;
+
+    private Integer selectedKlientId = 1;
+    private double currentWeight = 0;
+    private List<Integer> selectedProductIDs = null;
+
+    private ManagerWindow myManager = null;
+    private Button myRfsh = null;
+    private Stage myStage = null;
 
     /** Pokazuje główne okno dodawania paczki */
-    public void show() {
-        // --- Pole na imię klienta ---
-        TextField firstNameField = new TextField();
-        firstNameField.setPromptText("np. Jan");
-        VBox firstNameBox = createInputCard("Imię klienta:", firstNameField);
+    public void show(ManagerWindow parentWindow, Button parentRfsh) {
 
-        // --- Pole na nazwisko klienta ---
-        TextField lastNameField = new TextField();
-        lastNameField.setPromptText("np. Kowalski");
-        VBox lastNameBox = createInputCard("Nazwisko klienta:", lastNameField);
+        myManager = parentWindow;
+        myRfsh = parentRfsh;
 
-        // --- Pole na nazwę paczki ---
-        TextField packageNameField = new TextField();
-        packageNameField.setPromptText("np. Paczka nr 1");
-        VBox packageNameBox = createInputCard("Nazwa paczki:", packageNameField);
+        klienci = getKlients();
+        produkty = getProdukts();
+        selectedProductIDs = new ArrayList<>();
+        
+        myStage = new Stage();
+        myStage.setTitle("Formularz paczki");
 
-        // --- Pole na wagę paczki ---
-        TextField weightField = new TextField();
-        weightField.setPromptText("np. 2.5 kg");
+        klientsList = createKlientRadioList();
+        klientsList.setStyle("-fx-background-color: white");
+        klientsList.setMinHeight(75);
+
+        ScrollPane klientScroll = new ScrollPane(klientsList);
+        klientScroll.setFitToWidth(true);
+        klientScroll.prefHeight(100);
+
+        // --- Waga powinna być obliczana na podstawie produktów
+        weightField = new TextField();
+        weightField.setPromptText("Uzupełnione automatycznie");
+        weightField.setEditable(false);
+        weightField.setDisable(true);
         VBox weightBox = createInputCard("Waga paczki:", weightField);
 
-        // --- Lista produktów (pusta na start) ---
+        // --- Lista produktów do wyboru ---
         productsList = new VBox(8);
         productsList.setPadding(new Insets(5));
+        productsList.setStyle("-fx-background-color: white");
         ScrollPane productsScroll = new ScrollPane(productsList);
         productsScroll.setFitToWidth(true);
         productsScroll.setPrefHeight(250);
 
-        // --- Przycisk dodawania nowego produktu ---
-        Button addProductBtn = new Button("Dodaj produkt");
-        addProductBtn.setOnAction(e -> {
-            new ProductFormWindow().show(product -> {
-                products.add(product);
-                productsList.getChildren().add(createProductCard(product));
+        for (int x = 0; x < produkty.size(); ++x) {
+            ProduktDTO pr = produkty.get(x);
+            CheckBox cb = new CheckBox();
+
+            cb.setOnMouseClicked(e -> {
+                calculateWeight(cb.isSelected(), pr.getWaga());
+                addOrRemoveProductId(cb.isSelected(), pr.getIdProduktu());
             });
+
+            VBox pDetails = createProductCard(pr);
+            HBox prBox = new HBox(cb, pDetails);
+            prBox.setSpacing(5);
+            prBox.setAlignment(Pos.CENTER_LEFT);
+            productsList.getChildren().add(prBox);
+        }
+
+        // --- Przycisk dodawania nowego produktu ---
+        Button addProductBtn = new Button("Dodaj nowy produkt");
+        addProductBtn.setOnMouseClicked(e -> {
+            //new ProductFormWindow().show(product -> {
+            //    products.add(product);
+            //    productsList.getChildren().add(createProductCard(product));
+            //});
         });
         HBox addProdBox = new HBox(addProductBtn);
         addProdBox.setAlignment(Pos.CENTER);
 
         // --- Przycisk zapisania całej paczki ---
         Button savePackageBtn = new Button("Dodaj paczkę");
-        savePackageBtn.setOnAction(e -> {
-            System.out.println("Nowa paczka:");
-            System.out.println("Imię klienta: " + firstNameField.getText());
-            System.out.println("Nazwisko klienta: " + lastNameField.getText());
-            System.out.println("Nazwa: " + packageNameField.getText());
-            System.out.println("Waga: " + weightField.getText());
-            for (Product p : products) {
-                System.out.printf(" - %s | %s | %s | %s | %s%n",
-                    p.nazwa, p.waga, p.kategoria, p.numerSeryjny, p.producent);
-            }
+        savePackageBtn.setOnMouseClicked(e -> {
+            handleButton();
         });
         HBox saveBox = new HBox(savePackageBtn);
         saveBox.setAlignment(Pos.CENTER);
 
         // --- Układ wszystkich elementów ---
         VBox container = new VBox(15,
-            firstNameBox,
-            lastNameBox,
-            packageNameBox,
+            klientsList, klientScroll,
             weightBox,
             new Label("Produkty:"), productsScroll, addProdBox,
             saveBox
@@ -107,10 +123,8 @@ public class PackageFormWindow {
         BorderPane root = new BorderPane(container);
         root.setStyle("-fx-background-color: #f8f8f8;");
 
-        Stage stage = new Stage();
-        stage.setTitle("Formularz paczki");
-        stage.setScene(new Scene(root, 400, 500));
-        stage.show();
+        myStage.setScene(new Scene(root, 400, 600));
+        myStage.show();
     }
 
     /** Karta wejściowa z etykietą i polem */
@@ -130,13 +144,12 @@ public class PackageFormWindow {
     }
 
     /** Karta wyświetlająca dane produktu na liście */
-    private VBox createProductCard(Product p) {
+    private VBox createProductCard(ProduktDTO p) {
         VBox box = new VBox(5,
-            new Label("Nazwa: " + p.nazwa),
-            new Label("Waga: " + p.waga),
-            new Label("Kategoria: " + p.kategoria),
-            new Label("Nr seryjny: " + p.numerSeryjny),
-            new Label("Producent: " + p.producent)
+            new Label("Nazwa: " + p.getNazwaProduktu()),
+            new Label("Waga: " + p.getWaga()),
+            new Label("Kategoria: " + p.getKategoriaProd()),
+            new Label("Nr seryjny: " + p.getNrSeryjny())
         );
         box.setPadding(new Insets(8));
         box.setStyle("""
@@ -147,64 +160,24 @@ public class PackageFormWindow {
         """);
         return box;
     }
-}
 
-/** Okno do wprowadzania jednego produktu */
-class ProductFormWindow {
+    private VBox createKlientRadioList() {
+        VBox klientContainer = new VBox();
+        ToggleGroup kGroup = new ToggleGroup();
 
-    public void show(Consumer<PackageFormWindow.Product> onSave) {
-        TextField nameField = new TextField();
-        TextField weightField = new TextField();
-        TextField categoryField = new TextField();
-        TextField serialField = new TextField();
-        TextField producerField = new TextField();
+        for (Klient kl : klienci) {
+            String klLabel = kl.getIdKlienta().toString() + " | " + kl.getImieK() + ' ' + kl.getNazwiskoK();
+            RadioButton rb = new RadioButton(klLabel);
+            rb.setToggleGroup(kGroup);
+            rb.setPrefHeight(25);
+            rb.setOnMouseClicked(e -> {
+                this.selectedKlientId = kl.getIdKlienta();
+                System.out.println("Selected client: " + this.selectedKlientId.toString());
+            });
+            klientContainer.getChildren().add(rb);
+        }
 
-        VBox nameBox     = createInputCard("Nazwa:", nameField);
-        VBox weightBox   = createInputCard("Waga:", weightField);
-        VBox categoryBox = createInputCard("Kategoria:", categoryField);
-        VBox serialBox   = createInputCard("Nr seryjny:", serialField);
-        VBox prodBox     = createInputCard("Producent:", producerField);
-
-        Button saveBtn = new Button("Zapisz produkt");
-        saveBtn.setOnAction(e -> {
-            PackageFormWindow.Product p = new PackageFormWindow.Product(
-                nameField.getText(),
-                weightField.getText(),
-                categoryField.getText(),
-                serialField.getText(),
-                producerField.getText()
-            );
-            onSave.accept(p);
-            ((Stage) saveBtn.getScene().getWindow()).close();
-        });
-        HBox btnBox = new HBox(saveBtn);
-        btnBox.setAlignment(Pos.CENTER);
-
-        VBox root = new VBox(12,
-            nameBox, weightBox, categoryBox, serialBox, prodBox, btnBox
-        );
-        root.setPadding(new Insets(20));
-        root.setAlignment(Pos.CENTER);
-        root.setStyle("-fx-background-color: #f8f8f8;");
-
-        Stage stage = new Stage();
-        stage.setTitle("Nowy produkt");
-        stage.setScene(new Scene(root, 450, 450));
-        stage.show();
-    }
-
-    private VBox createInputCard(String labelText, Control inputField) {
-        Label label = new Label(labelText);
-        label.setStyle("-fx-font-weight: bold;");
-        VBox box = new VBox(5, label, inputField);
-        box.setPadding(new Insets(8));
-        box.setStyle("""
-            -fx-background-color: white;
-            -fx-border-color: #dddddd;
-            -fx-border-radius: 6;
-            -fx-background-radius: 6;
-        """);
-        return box;
+        return klientContainer;
     }
 
     /**
@@ -214,16 +187,125 @@ class ProductFormWindow {
      */
     private boolean addPackage(String jsonData) {
         RequestController rq = new RequestController("/paczka", 1);
-        String resp = "";
-
+        System.out.println(jsonData);
         try {
-            resp = rq.sendJsonReq(jsonData);
-
+            rq.sendJsonReq(jsonData);
         } catch (BadRequestException bre) {
             System.out.println("addPackage: " + bre.getMessage());
             return false;
         }
 
         return true;
+    }
+
+    private List<Klient> getKlients() {
+        List<Klient> clients = new ArrayList<>();
+        RequestController rq = new RequestController("/klient", 0);
+        String response = "";
+        boolean goFurther = true;
+
+        try {
+            response = rq.sendPathReq();
+        } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+            goFurther = false;
+        }
+        if (goFurther) {
+            ObjectMapper mapper = new ObjectMapper().configure(
+                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            mapper.registerModule(new JavaTimeModule());
+            try {
+                clients = mapper.readValue(response, new TypeReference<List<Klient>>(){});
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
+        }       
+        return clients;
+    }
+
+    private List<ProduktDTO> getProdukts() {
+        List<ProduktDTO> produkts = new ArrayList<>();
+        RequestController rq = new RequestController("/produkt", 0);
+        String response = "";
+        boolean goFurther = true;
+
+        try {
+            response = rq.sendPathReq();
+        } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+            goFurther = false;
+        }
+        if (goFurther) {
+            ObjectMapper mapper = new ObjectMapper().configure(
+                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            mapper.registerModule(new JavaTimeModule());
+            try {
+                produkts = mapper.readValue(response, new TypeReference<List<ProduktDTO>>(){});
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
+        }       
+        return produkts;
+    }
+
+    private void calculateWeight(boolean isAddition, double wg) {
+        if (isAddition) {
+            this.currentWeight += wg;
+        } else {
+            this.currentWeight -= wg;
+        }
+        this.weightField.setText(String.format("%f", this.currentWeight));
+    }
+
+    private void addOrRemoveProductId(boolean isSelected, int productId) {
+        if (isSelected) {
+            this.selectedProductIDs.add(productId);
+        } else {
+            this.selectedProductIDs.remove(this.selectedProductIDs.indexOf(productId));
+        }
+    }
+
+    private void handleButton() {
+        String jasonToSend = "";
+        String errorString = "Error overrides this string";
+        boolean noError = true;
+        
+        try {
+            jasonToSend = String.format("{\"wagaPaczki\": %s, \"klientId\": %s, \"produktIds\": [",
+                this.currentWeight, this.selectedKlientId
+            );
+            int howManyProdukts = this.selectedProductIDs.size();
+
+            for (int a = 0; a < howManyProdukts; ++a) {
+                jasonToSend += selectedProductIDs.get(a).toString();
+                if (a < (howManyProdukts - 1)) {
+                    jasonToSend += ",";
+                }
+            }
+
+            jasonToSend += "]}";
+
+        }  catch (NullPointerException npe) {
+            errorString = npe.getMessage();
+            noError = false;
+        } catch (NumberFormatException nfe) {
+            errorString = nfe.getMessage();
+            noError = false;
+        } catch (IllegalFormatException ife) {
+            errorString = ife.getMessage();
+            noError = false;
+        }
+
+        
+        if (noError) {
+            if (addPackage(jasonToSend)) {
+                myManager.refreshAllData(myRfsh);
+                myStage.close();
+            } else {
+                System.err.println("handleButton: Błąd dodawania paczki");
+            }
+        } else {
+            System.err.println("handleButton: " + errorString);
+        }
     }
 }

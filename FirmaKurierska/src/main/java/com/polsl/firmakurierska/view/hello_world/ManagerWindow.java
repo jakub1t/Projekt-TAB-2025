@@ -31,7 +31,6 @@ import com.polsl.firmakurierska.model.Klient;
 import com.polsl.firmakurierska.model.Pojazd;
 import com.polsl.firmakurierska.model.Pracownik;
 import com.polsl.firmakurierska.model.Producent;
-import com.polsl.firmakurierska.view.hello_world.PackageDescription.Product;
 
 public class ManagerWindow extends Application {
 
@@ -81,7 +80,7 @@ public class ManagerWindow extends Application {
         });
 
         Button dodajPaczkeBtn = new Button("Dodaj paczkę");
-        dodajPaczkeBtn.setOnAction(e -> new PackageFormWindow().show());
+        dodajPaczkeBtn.setOnAction(e -> new PackageFormWindow().show(this, refreshBtn));
         VBox paczkiCol = buildColumn("Paczki", paczkiScroll, dodajPaczkeBtn, "#f4f4f4");
 
         // ===== KOL 2: POJAZDY =====
@@ -174,14 +173,13 @@ public class ManagerWindow extends Application {
         Button itemBtn = new Button(name);
         itemBtn.setPrefWidth(140);
         itemBtn.setOnAction(e -> {
-
+            
             int klientId = paczkaData.getKlientId();
-            List<Integer> procuktIds = paczkaData.getProduktIds();
-            final List<Product> productsForDisplay = new ArrayList<>();
-            RequestController rq_helper = new RequestController("", 0);
+            //List<Integer> procuktIds = paczkaData.getProduktIds();
+            //RequestController rq_helper = new RequestController("", 0);
 
             Klient client = getKlientById(klientId);
-
+            /*
             procuktIds.forEach(id -> {
                 ProduktDTO tempProdukt = getProduktById(id);
 
@@ -192,21 +190,10 @@ public class ManagerWindow extends Application {
                 String producentId = rq_helper.returnValueFromHref("producent", producentHref);
 
                 Producent producentData = getProducentById(Integer.parseInt(producentId));
-                    
-                
-                productsForDisplay.add(new Product(tempProdukt.getNazwaProduktu(), 
-                    Double.toString(tempProdukt.getWaga()) + " kg", 
-                    tempProdukt.getKategoriaProd(), 
-                    tempProdukt.getNrSeryjny(), 
-                    producentData.getNazwaProducenta()
-                ));
-            });
+            }); */
 
             new PackageDescription().show(
-                client.getImieK(),
-                client.getNazwiskoK(),
-                paczkaData.getWagaPaczki(),
-                productsForDisplay
+                paczkaData, client
             );
         });
         Button delBtn = new Button("X");
@@ -553,26 +540,24 @@ public class ManagerWindow extends Application {
         this.dostawyList.getChildren().clear();
 
         List<PaczkaDTO> updatedPaczki = getPaczki();
-
-        updatedPaczki.forEach(paczka -> {
-            paczkiList.getChildren().add(createPackageItem(paczka.getIdPaczki(), paczka));
-        });
-
         List<Pojazd> updatedPojazdy = getPojazdy();
-
-        updatedPojazdy.forEach(pojazd -> {
-            pojazdyList.getChildren().add(createVehicleItem(pojazd.getIdPojazdu(), pojazd));
-        });
-
         List<DostawaDTO> updatedDostawy = getDostawy();
-
-        updatedDostawy.forEach(dostawa -> {
-            dostawyList.getChildren().add(createDeliveryItem(dostawa.getIdDostawy(), dostawa));
-        });
 
         this.paczki = updatedPaczki;
         this.pojazdy = updatedPojazdy;
         this.dostawy = updatedDostawy;
+
+        paczki.forEach(paczka -> {
+            paczkiList.getChildren().add(createPackageItem(paczka.getIdPaczki(), paczka));
+        });
+
+        pojazdy.forEach(pojazd -> {
+            pojazdyList.getChildren().add(createVehicleItem(pojazd.getIdPojazdu(), pojazd));
+        });
+
+        dostawy.forEach(dostawa -> {
+            dostawyList.getChildren().add(createDeliveryItem(dostawa.getIdDostawy(), dostawa));
+        });
 
         this.paczkiList.setDisable(false);
         this.pojazdyList.setDisable(false);
