@@ -14,6 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/produkt")
@@ -47,6 +50,22 @@ public class ProduktController {
             throw new BadRequestException("Błędny format ID: '" + id + "'. Musi być liczbą całkowitą.");
         }
     }
+
+    @GetMapping("/dto/{id}")
+    public ProduktDTO getProduktDTObyId(@PathVariable String id) {
+        try {
+            Integer pid = Integer.parseInt(id);
+            Produkt produkt = produktRepository.findById(pid).orElse(null);
+            if (produkt == null) {
+                throw new ResourceNotFoundException("Nie znaleziono produktu o ID: " + pid);
+            } else {
+                return new ProduktDTO(produkt);
+            }
+        } catch (NumberFormatException e) {
+            throw new BadRequestException("Błędny format ID: '" + id + "'. Musi być liczbą całkowitą.");
+        }
+    }
+    
 
     @PostMapping
     public ResponseEntity<Object> addProdukt(@RequestBody Produkt produkt) {

@@ -33,7 +33,7 @@ public class DeliveryDescription {
 
     /**
      * Pokazuje okno ze szczegółami dostawy:
-     * – nazwa dostawy
+     * – numer dostawy
      * – imię pracownika
      * – nazwisko pracownika
      * – nazwa auta
@@ -92,12 +92,17 @@ public class DeliveryDescription {
         allFields.setPadding(new Insets(20));
         allFields.setAlignment(Pos.CENTER);
 
-        BorderPane root = new BorderPane(allFields);
+        ScrollPane mainScroll = new ScrollPane(allFields);
+        mainScroll.setFitToWidth(true);
+
+        VBox mainColumn = new VBox(allFields, mainScroll);
+
+        BorderPane root = new BorderPane(mainColumn);
         root.setStyle("-fx-background-color: #f8f8f8;");
-        BorderPane.setAlignment(allFields, Pos.CENTER);
+        BorderPane.setAlignment(mainColumn, Pos.CENTER);
 
         // Dostosowana wysokość sceny do nowej zawartości
-        Scene scene = new Scene(root, 400, 800);
+        Scene scene = new Scene(root, 400, 500);
         Stage stage = new Stage();
         stage.setTitle("Szczegóły dostawy");
         stage.setScene(scene);

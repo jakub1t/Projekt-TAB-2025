@@ -9,34 +9,46 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.polsl.firmakurierska.controller.RequestController;
+import com.polsl.firmakurierska.dto.PaczkaDTO;
+import com.polsl.firmakurierska.dto.ProduktDTO;
+import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.model.Klient;
 
 public class PackageDescription {
 
-    /** Prosty model produktu w paczce */
-    public static class Product {
-        public final String nazwa;
-        public final String waga;
-        public final String kategoria;
-        public final String numerSeryjny;
-        public final String producent;
+    private String imieKlienta = "Imie";
+    private String nazwiskoKlienta = "Nazwisko";
+    private String wagaPaczki = "[404]";
 
-        public Product(String nazwa, String waga, String kategoria, String numerSeryjny, String producent) {
-            this.nazwa = nazwa;
-            this.waga = waga;
-            this.kategoria = kategoria;
-            this.numerSeryjny = numerSeryjny;
-            this.producent = producent;
-        }
-    }
-
+    private List<ProduktDTO> zawarteProdukty = null;
+    
     /**
      * Pokazuje okno ze szczegółami paczki:
      * – imię i nazwisko klienta
      * – waga paczki
      * – przewijana lista produktów
      */
-    public void show(String imieKlienta, String nazwiskoKlienta, double wagaPaczki, List<Product> produkty) {
+    public void show(PaczkaDTO paczka, Klient klient) {
+        
+        List<Integer> produktIds = new ArrayList<>();
+
+        produktIds = paczka.getProduktIds();
+        wagaPaczki = paczka.getWagaPaczki().toString();
+
+        imieKlienta = klient.getImieK();
+        nazwiskoKlienta = klient.getNazwiskoK();
+
+        zawarteProdukty = getPackageProducts(produktIds);
+
         // Karta z imieniem klienta
         VBox imieBox = createCard("Imię klienta:", imieKlienta);
 
@@ -49,7 +61,7 @@ public class PackageDescription {
         // Kontener na karty produktów
         VBox produktyList = new VBox(10);
         produktyList.setPadding(new Insets(5));
-        for (Product p : produkty) {
+        for (ProduktDTO p : zawarteProdukty) {
             produktyList.getChildren().add(createProductCard(p));
         }
 
@@ -98,13 +110,12 @@ public class PackageDescription {
     }
 
     /** Tworzy kartę z danymi pojedynczego produktu */
-    private VBox createProductCard(Product p) {
+    private VBox createProductCard(ProduktDTO p) {
         VBox box = new VBox(8,
-            new Label("Nazwa: " + p.nazwa),
-            new Label("Waga: " + p.waga),
-            new Label("Kategoria: " + p.kategoria),
-            new Label("Nr seryjny: " + p.numerSeryjny),
-            new Label("Producent: " + p.producent)
+            new Label("Nazwa: " + p.getNazwaProduktu()),
+            new Label("Waga: " + p.getWaga()),
+            new Label("Kategoria: " + p.getKategoriaProd()),
+            new Label("Nr seryjny: " + p.getNrSeryjny())
         );
         box.setPadding(new Insets(10));
         box.setStyle("""
@@ -115,5 +126,39 @@ public class PackageDescription {
             -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);
         """);
         return box;
+    }
+
+    private List<ProduktDTO> getPackageProducts(List<Integer> ids) {
+        List<ProduktDTO> myContents = new ArrayList<>();
+        String resp = "";
+
+        if (ids.isEmpty()) {
+            System.err.println("No products inside...?");
+        }
+
+        for (Integer i : ids) {
+            ProduktDTO tmp = new ProduktDTO();
+            try {  
+                RequestController rq = new RequestController("/produkt/dto/" + i.toString(), 0);
+
+                resp = rq.sendPathReq();
+            } catch (BadRequestException bre) {
+                System.err.println("getPackageProducts: " + bre.getMessage());
+            }
+
+            System.out.println(resp);
+
+            ObjectMapper mapper = new ObjectMapper().configure(
+                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            mapper.registerModule(new JavaTimeModule());
+            try {
+                tmp = mapper.readValue(resp, new TypeReference<ProduktDTO>(){});
+                myContents.add(tmp);
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+        
+        return myContents;
     }
 }
