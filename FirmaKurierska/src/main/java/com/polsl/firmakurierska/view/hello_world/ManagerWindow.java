@@ -82,7 +82,7 @@ public class ManagerWindow extends Application {
         paczki = getPaczki();
 
         paczki.forEach(paczka -> {
-            paczkiList.getChildren().add(createPackageItem(paczka.getIdPaczki(), paczka));
+            paczkiList.getChildren().add(createPackageItem(paczka.getIdPaczki(), paczka, refreshBtn));
         });
 
         Button dodajPaczkeBtn = new Button("Dodaj paczkę");
@@ -99,7 +99,7 @@ public class ManagerWindow extends Application {
         pojazdy = getPojazdy();
 
         pojazdy.forEach(pojazd -> {
-            pojazdyList.getChildren().add(createVehicleItem(pojazd.getIdPojazdu(), pojazd));
+            pojazdyList.getChildren().add(createVehicleItem(pojazd.getIdPojazdu(), pojazd, refreshBtn));
         });
 
         Button dodajPojazdBtn = new Button("Dodaj pojazd");
@@ -141,7 +141,7 @@ public class ManagerWindow extends Application {
         dostawy = getDostawy();
 
         dostawy.forEach(dostawa -> {
-            dostawyList.getChildren().add(createDeliveryItem(dostawa.getIdDostawy(), dostawa));
+            dostawyList.getChildren().add(createDeliveryItem(dostawa.getIdDostawy(), dostawa, refreshBtn));
         });
 
         Button dodajDostaweBtn = new Button("Dodaj dostawę");
@@ -217,7 +217,7 @@ public class ManagerWindow extends Application {
         return col;
     }
 
-    private HBox createPackageItem(int paczkaId, PaczkaDTO paczkaData) {
+    private HBox createPackageItem(int paczkaId, PaczkaDTO paczkaData, Button refreshBtn) {
         String name = "ID paczki: " + paczkaId;
 
         Button itemBtn = new Button(name);
@@ -256,6 +256,7 @@ public class ManagerWindow extends Application {
                 }
                 return false;
                 });
+                refreshAllData(refreshBtn);
             }
         });
         HBox box = new HBox(5, itemBtn, delBtn);
@@ -263,7 +264,7 @@ public class ManagerWindow extends Application {
         return box;
     }
 
-    private HBox createVehicleItem(int pojazdId, Pojazd pojazdData) {
+    private HBox createVehicleItem(int pojazdId, Pojazd pojazdData, Button refreshBtn) {
         String name = String.format("ID: %d | %s", pojazdId, pojazdData.getMarka());
 
         Button itemBtn = new Button(name);
@@ -289,6 +290,7 @@ public class ManagerWindow extends Application {
                 }
                 return false;
                 });
+                refreshAllData(refreshBtn);
             }
         });
         HBox box = new HBox(5, itemBtn, delBtn);
@@ -296,7 +298,7 @@ public class ManagerWindow extends Application {
         return box;
     }
 
-    private HBox createDeliveryItem(int dostawaId, DostawaDTO dostawaData) {
+    private HBox createDeliveryItem(int dostawaId, DostawaDTO dostawaData, Button refreshBtn) {
         String name = "ID dostawy: " + dostawaId;
         RequestController rq_helper = new RequestController("", 0);
 
@@ -324,6 +326,7 @@ public class ManagerWindow extends Application {
                 }
                 return false;
                 });
+                refreshAllData(refreshBtn);
             }
         });
         HBox box = new HBox(5, itemBtn, delBtn);
@@ -630,15 +633,15 @@ public class ManagerWindow extends Application {
         this.dostawy = updatedDostawy;
 
         paczki.forEach(paczka -> {
-            paczkiList.getChildren().add(createPackageItem(paczka.getIdPaczki(), paczka));
+            paczkiList.getChildren().add(createPackageItem(paczka.getIdPaczki(), paczka, refreshButton));
         });
 
         pojazdy.forEach(pojazd -> {
-            pojazdyList.getChildren().add(createVehicleItem(pojazd.getIdPojazdu(), pojazd));
+            pojazdyList.getChildren().add(createVehicleItem(pojazd.getIdPojazdu(), pojazd, refreshButton));
         });
 
         dostawy.forEach(dostawa -> {
-            dostawyList.getChildren().add(createDeliveryItem(dostawa.getIdDostawy(), dostawa));
+            dostawyList.getChildren().add(createDeliveryItem(dostawa.getIdDostawy(), dostawa, refreshButton));
         });
 
         this.paczkiList.setDisable(false);
