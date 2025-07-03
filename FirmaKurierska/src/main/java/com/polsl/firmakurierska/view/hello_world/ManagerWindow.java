@@ -1,6 +1,8 @@
 package com.polsl.firmakurierska.view.hello_world;
 
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -45,6 +47,10 @@ public class ManagerWindow extends Application {
     private VBox paczkiList;
     private VBox pojazdyList;
     private VBox dostawyList;
+
+    // Selection options for filtering deliveries: 
+    // 0 - all, 1 - completed, 2 - not completed, any other value - none
+    private int filterDeliveriesOption = 0; 
 
     public void open(int userId) {
         this.loggedUserId = userId;
@@ -101,6 +107,31 @@ public class ManagerWindow extends Application {
         VBox pojazdyCol = buildColumn("Pojazdy", pojazdyScroll, dodajPojazdBtn, "#eaeaea");
 
         // ===== KOL 3: DOSTAWY =====
+        ObservableList<String> options = 
+            FXCollections.observableArrayList(
+                "Wszystkie",
+                "Wykonane",
+                "Niewykonane"
+            );
+        final ComboBox<String> comboBox = new ComboBox<String>(options);
+
+        comboBox.setOnAction(event -> {
+            String selectedOption = new String(comboBox.getValue());
+
+            if (selectedOption.equals("Wszystkie")) {
+                this.filterDeliveriesOption = 0;
+            } else if (selectedOption.equals("Wykonane")) {
+                this.filterDeliveriesOption = 1;
+            } else if (selectedOption.equals("Niewykonane")) {
+                this.filterDeliveriesOption = 2;
+            } else {
+                this.filterDeliveriesOption = -1;
+            }
+
+            refreshAllData(refreshBtn);
+        });
+        comboBox.setValue("Wszystkie");
+
         dostawyList = new VBox(5);
         dostawyList.setPadding(new Insets(5));
         ScrollPane dostawyScroll = new ScrollPane(dostawyList);
@@ -118,7 +149,7 @@ public class ManagerWindow extends Application {
             new DeliveryFormWindow().show(this, refreshBtn, pojazdy, paczki);
         });
 
-        VBox dostawyCol = buildColumn("Dostawy", dostawyScroll, dodajDostaweBtn, "#f4f4f4");
+        VBox dostawyCol = buildColumn("Dostawy", dostawyScroll, dodajDostaweBtn, "#f4f4f4", comboBox);
 
         // ===== KOL 4: RAPORTY =====
         Label raportLabel = new Label("Raporty");
@@ -153,6 +184,25 @@ public class ManagerWindow extends Application {
         header.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
         header.setMaxWidth(Double.MAX_VALUE);
         HBox headerBox = new HBox(header);
+        headerBox.setAlignment(Pos.CENTER);
+        headerBox.setPadding(new Insets(10));
+
+        HBox addBox = new HBox(addButton);
+        addBox.setAlignment(Pos.CENTER);
+        addBox.setPadding(new Insets(5));
+
+        VBox col = new VBox(10, headerBox, content, addBox);
+        col.setPadding(new Insets(10));
+        col.setPrefWidth(200);
+        col.setStyle("-fx-background-color: " + bgColor + ";");
+        return col;
+    }
+
+    private VBox buildColumn(String title, ScrollPane content, Button addButton, String bgColor, ComboBox<String> comboBox) {
+        Label header = new Label(title);
+        header.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+        header.setMaxWidth(Double.MAX_VALUE);
+        HBox headerBox = new HBox(header, comboBox);
         headerBox.setAlignment(Pos.CENTER);
         headerBox.setPadding(new Insets(10));
 
@@ -303,7 +353,39 @@ public class ManagerWindow extends Application {
                 System.out.println(e.getMessage());
             }
         }       
-        return mojeDostawy;
+        // wyświetlanie przefiltrowanych dostaw 
+        List<DostawaDTO> wybraneDostawy = filterDeliveries(mojeDostawy, filterDeliveriesOption);
+
+        return wybraneDostawy;
+    }
+
+    private List<DostawaDTO> filterDeliveries(List<DostawaDTO> deliveries, int filterOption) {
+
+        final List<DostawaDTO> filteredDeliveries = new ArrayList<>();
+
+        switch (filterOption) {
+            case 0:
+                return deliveries;
+            case 1:
+                deliveries.forEach(delivery -> {
+                    if (delivery.getStatus().equals("ZREALIZOWANA")){
+                        filteredDeliveries.add(delivery);
+                    } 
+                });
+                break;
+            case 2:
+                deliveries.forEach(delivery -> {
+                    if (delivery.getStatus().equals("W_TRAKCIE")){
+                        filteredDeliveries.add(delivery);
+                    } 
+                });
+                break;
+        
+            default:
+                System.out.println("Incorrect filter option...");
+                break;
+        }
+        return filteredDeliveries;
     }
 
     private List<Pojazd> getPojazdy() {
