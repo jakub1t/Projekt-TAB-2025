@@ -88,6 +88,8 @@ INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_p
 VALUES (5,5, 1.1, 'Elektronika', 'Miernik', 'SN2323');
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
 VALUES (5,1, 4.5, 'Elektronika', 'Mikrofon', 'SN6969');
+INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
+VALUES (null,1, 0.2, 'Instrumenty', 'Flet', 'SN1221');
 
 
 --pracownik_prawojazdy

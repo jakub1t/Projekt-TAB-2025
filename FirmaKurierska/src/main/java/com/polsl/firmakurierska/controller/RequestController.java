@@ -92,6 +92,7 @@ public class RequestController {
                     }
                 //System.out.println("Response: " + response.toString());
                 responseString = response.toString();
+                System.out.println(responseString);
             }
             konnect.disconnect();
         }

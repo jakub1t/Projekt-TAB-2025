@@ -107,7 +107,7 @@ public class PaczkaController {
         // Zapisz paczkę
         Paczka saved = paczkaRepository.save(paczka);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(new PaczkaDTO(saved));
+        return new ResponseEntity<PaczkaDTO>(new PaczkaDTO(saved), HttpStatus.valueOf(200));
     }
  
     @PutMapping("/{id}")
