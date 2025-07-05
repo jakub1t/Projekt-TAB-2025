@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -90,9 +91,10 @@ public class PaczkaController {
             paczka.setDostawa(dostawa);
         }
 
+        List<Produkt> produkty = new ArrayList<>();
         // Produkty - pobierz po ID i ustaw do paczki
         if (dto.getProduktIds() != null && !dto.getProduktIds().isEmpty()) {
-            var produkty = dto.getProduktIds().stream()
+            produkty = dto.getProduktIds().stream()
                     .map(id -> produktRepository.findById(id)
                             .orElseThrow(() -> new BadRequestException("Produkt o ID " + id + " nie istnieje")))
                     .collect(Collectors.toList());
@@ -106,6 +108,8 @@ public class PaczkaController {
 
         // Zapisz paczkę
         Paczka saved = paczkaRepository.save(paczka);
+
+        produkty.forEach(pr -> produktRepository.save(pr));
 
         return new ResponseEntity<PaczkaDTO>(new PaczkaDTO(saved), HttpStatus.valueOf(200));
     }
