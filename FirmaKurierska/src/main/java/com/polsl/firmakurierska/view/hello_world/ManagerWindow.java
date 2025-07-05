@@ -15,8 +15,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.boot.configurationprocessor.json.JSONException;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.hateoas.Link;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -26,13 +24,11 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.dto.DostawaDTO;
 import com.polsl.firmakurierska.dto.PaczkaDTO;
-import com.polsl.firmakurierska.dto.ProduktDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Klient;
 import com.polsl.firmakurierska.model.Pojazd;
 import com.polsl.firmakurierska.model.Pracownik;
-import com.polsl.firmakurierska.model.Producent;
 
 public class ManagerWindow extends Application {
 
@@ -225,22 +221,8 @@ public class ManagerWindow extends Application {
         itemBtn.setOnAction(e -> {
             
             int klientId = paczkaData.getKlientId();
-            //List<Integer> procuktIds = paczkaData.getProduktIds();
-            //RequestController rq_helper = new RequestController("", 0);
 
             Klient client = getKlientById(klientId);
-            /*
-            procuktIds.forEach(id -> {
-                ProduktDTO tempProdukt = getProduktById(id);
-
-                Link producentLink = tempProdukt.getLink("producent").get();
-
-                String producentHref = producentLink.getHref();
-
-                String producentId = rq_helper.returnValueFromHref("producent", producentHref);
-
-                Producent producentData = getProducentById(Integer.parseInt(producentId));
-            }); */
 
             new PackageDescription().show(
                 paczkaData, client
@@ -491,73 +473,73 @@ public class ManagerWindow extends Application {
         return klient;
     }
 
-    private ProduktDTO getProduktById(int productId) {
-        ProduktDTO produkt = new ProduktDTO();
-        String response = "";
-        RequestController rq = new RequestController("/produkt/" + productId, 0);
+    // private ProduktDTO getProduktById(int productId) {
+    //     ProduktDTO produkt = new ProduktDTO();
+    //     String response = "";
+    //     RequestController rq = new RequestController("/produkt/" + productId, 0);
 
-        try {
-            response = rq.sendPathReq();
-        } catch (BadRequestException e) {
-            System.out.println(e.getMessage());
-        }
+    //     try {
+    //         response = rq.sendPathReq();
+    //     } catch (BadRequestException e) {
+    //         System.out.println(e.getMessage());
+    //     }
         
-        try {
-            // Object mapper doesnt work so this thing below is used instead...
+    //     try {
+    //         // Object mapper doesnt work so this thing below is used instead...
 
-            // Map response to JSON
-            JSONObject produktJSON = new JSONObject(response);
+    //         // Map response to JSON
+    //         JSONObject produktJSON = new JSONObject(response);
 
-            // Set produkt object fields that are easy to get
-            produkt.setIdProduktu(produktJSON.getInt("idProduktu"));
-            produkt.setNrSeryjny(produktJSON.getString("nrSeryjny"));
-            produkt.setKategoriaProd(produktJSON.getString("kategoriaProd"));
-            produkt.setNazwaProduktu(produktJSON.getString("nazwaProduktu"));
-            produkt.setWaga(produktJSON.getDouble("waga"));
+    //         // Set produkt object fields that are easy to get
+    //         produkt.setIdProduktu(produktJSON.getInt("idProduktu"));
+    //         produkt.setNrSeryjny(produktJSON.getString("nrSeryjny"));
+    //         produkt.setKategoriaProd(produktJSON.getString("kategoriaProd"));
+    //         produkt.setNazwaProduktu(produktJSON.getString("nazwaProduktu"));
+    //         produkt.setWaga(produktJSON.getDouble("waga"));
 
-            // The fun part of adding DTO hrefs to the produkt object
-            String temp = produktJSON.getString("_links");
-            JSONObject linksJ = new JSONObject(temp);
+    //         // The fun part of adding DTO hrefs to the produkt object
+    //         String temp = produktJSON.getString("_links");
+    //         JSONObject linksJ = new JSONObject(temp);
 
-            JSONObject hrefJ1 = new JSONObject(linksJ.getString("self"));
-            produkt.add(Link.of(hrefJ1.getString("href"), "self"));
+    //         JSONObject hrefJ1 = new JSONObject(linksJ.getString("self"));
+    //         produkt.add(Link.of(hrefJ1.getString("href"), "self"));
 
-            JSONObject hrefJ2 = new JSONObject(linksJ.getString("paczka"));
-            produkt.add(Link.of(hrefJ2.getString("href"), "paczka"));
+    //         JSONObject hrefJ2 = new JSONObject(linksJ.getString("paczka"));
+    //         produkt.add(Link.of(hrefJ2.getString("href"), "paczka"));
 
-            JSONObject hrefJ3 = new JSONObject(linksJ.getString("producent"));
-            produkt.add(Link.of(hrefJ3.getString("href"), "producent"));
+    //         JSONObject hrefJ3 = new JSONObject(linksJ.getString("producent"));
+    //         produkt.add(Link.of(hrefJ3.getString("href"), "producent"));
 
-        } catch (JSONException jex) {
-            System.out.println(jex.toString());
-            jex.printStackTrace();
-        }
+    //     } catch (JSONException jex) {
+    //         System.out.println(jex.toString());
+    //         jex.printStackTrace();
+    //     }
 
-        return produkt;
-    }
+    //     return produkt;
+    // }
 
-    private Producent getProducentById(int producentId) {
-        Producent producent = new Producent();
-        String response = "";
-        RequestController rq = new RequestController("/producent/" + producentId, 0);
+    // private Producent getProducentById(int producentId) {
+    //     Producent producent = new Producent();
+    //     String response = "";
+    //     RequestController rq = new RequestController("/producent/" + producentId, 0);
 
-        try {
-            response = rq.sendPathReq();
-        } catch (BadRequestException e) {
-            System.out.println(e.getMessage());
-        }
+    //     try {
+    //         response = rq.sendPathReq();
+    //     } catch (BadRequestException e) {
+    //         System.out.println(e.getMessage());
+    //     }
         
-        ObjectMapper mapper = new ObjectMapper().configure(
-                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.registerModule(new JavaTimeModule());
-        try {
-            producent = mapper.readValue(response, new TypeReference<Producent>(){});
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        }
+    //     ObjectMapper mapper = new ObjectMapper().configure(
+    //             DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    //     mapper.registerModule(new JavaTimeModule());
+    //     try {
+    //         producent = mapper.readValue(response, new TypeReference<Producent>(){});
+    //     } catch (IOException e) {
+    //         System.out.println(e.getMessage());
+    //     }
 
-        return producent;
-    }
+    //     return producent;
+    // }
 
     private boolean deleteDelivery(int delId) {
         RequestController rq = new RequestController("/dostawa/delete/" + Integer.toString(delId), 3);

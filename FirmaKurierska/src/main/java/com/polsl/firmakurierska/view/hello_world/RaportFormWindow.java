@@ -1,6 +1,5 @@
 package com.polsl.firmakurierska.view.hello_world;
 
-import java.io.File;  
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -19,7 +18,6 @@ import com.polsl.firmakurierska.dto.DostawaDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.model.Konto;
 import com.polsl.firmakurierska.model.Pojazd;
-import com.polsl.firmakurierska.model.Pracownik;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -185,10 +183,9 @@ public class RaportFormWindow {
     }
 
     private void writeToFile(String filePath, List<DostawaDTO> selectedDeliveries, List<Konto> accounts, List<Pojazd> vehicles){
-        File raportFile = new File(filePath+ "\\raport.txt");
         
-        try{
-        FileWriter writer = new FileWriter(filePath+ "\\raport.txt");
+        try {
+        FileWriter writer = new FileWriter(filePath + "\\raport.txt");
         //header
         writer.write("***************" + "\nSUPER RAPORT\n" +"***************\n\n\n");
 
@@ -311,33 +308,6 @@ public class RaportFormWindow {
         }
 
         return accounts;
-    }
-
-    private List<Pracownik> getAllWorkers(){
-        
-        List<Pracownik> pracownicy = new ArrayList<>();
-        RequestController rq = new RequestController("/pracownik", 0);
-        String response = "";
-        boolean goFurther = true;
-
-        try {
-            response = rq.sendPathReq();
-        } catch (BadRequestException e) {
-            System.out.println(e.getMessage());
-            goFurther = false;
-        }
-        if (goFurther) {
-            ObjectMapper mapper = new ObjectMapper().configure(
-                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            mapper.registerModule(new JavaTimeModule());
-            try {
-                pracownicy= mapper.readValue(response, new TypeReference<List<Pracownik>>(){});
-            } catch (IOException e) {
-                System.out.println(e.getMessage());
-            }
-        }      
-
-        return pracownicy;
     }
     
     private List<Pojazd> getAllVehicles(){

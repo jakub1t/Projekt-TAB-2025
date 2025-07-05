@@ -1,5 +1,6 @@
 package com.polsl.firmakurierska.controller;
 
+import com.polsl.firmakurierska.dto.DostawaCreateDTO;
 import com.polsl.firmakurierska.dto.DostawaDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
@@ -7,6 +8,9 @@ import com.polsl.firmakurierska.model.Dostawa;
 import com.polsl.firmakurierska.model.Paczka;
 import com.polsl.firmakurierska.repository.DostawaRepository;
 import com.polsl.firmakurierska.repository.PaczkaRepository;
+import com.polsl.firmakurierska.repository.PojazdRepository;
+import com.polsl.firmakurierska.repository.PracownikRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +34,12 @@ public class DostawaController {
     
     @Autowired
     PaczkaRepository  paczkaRepository;
+    
+    @Autowired
+    private PojazdRepository pojazdRepository;
+    
+    @Autowired
+    private PracownikRepository pracownikRepository;
 
     @GetMapping
     public @ResponseBody Iterable<DostawaDTO> getAllDostawy() {
@@ -66,23 +76,23 @@ public class DostawaController {
 
 
     @PostMapping("/add")
-    public ResponseEntity<Object> addDostawa(@RequestBody DostawaDTO dto) {
+    public ResponseEntity<Object> addDostawa(@RequestBody DostawaCreateDTO dto) {
         try {
             // Convert the Iterable to a List and then check if the delivery already exists
-            List<Dostawa> existingDostawy = new ArrayList<>();
-            dostawaRepository.findAll().forEach(existingDostawy::add);
+            // List<Dostawa> existingDostawy = new ArrayList<>();
+            // dostawaRepository.findAll().forEach(existingDostawy::add);
 
-            boolean exists = existingDostawy.stream().anyMatch(d ->
-                    dto.getPunktA().equals(d.getPunktA()) &&
-                    dto.getPunktB().equals(d.getPunktB()) &&
-                    dto.getDataWyruszenia().equals(d.getDataWyruszenia()) &&
-                    dto.getTermin().equals(d.getTermin())
-            );
+            // boolean exists = existingDostawy.stream().anyMatch(d ->
+            //         dto.getPunktA().equals(d.getPunktA()) &&
+            //         dto.getPunktB().equals(d.getPunktB()) &&
+            //         dto.getDataWyruszenia().equals(d.getDataWyruszenia()) &&
+            //         dto.getTermin().equals(d.getTermin())
+            // );
 
-            if (exists) {
-                // If the delivery already exists, return a BadRequestException
-                throw new BadRequestException("Taka dostawa już istnieje.");
-            }
+            // if (exists) {
+            //     // If the delivery already exists, return a BadRequestException
+            //     throw new BadRequestException("Taka dostawa już istnieje.");
+            // }
 
             // If no duplicate found, create the new delivery
             Dostawa dostawa = new Dostawa();
@@ -91,9 +101,40 @@ public class DostawaController {
             dostawa.setDataWyruszenia(dto.getDataWyruszenia());
             dostawa.setTermin(dto.getTermin());
             dostawa.setStatus("W_TRAKCIE"); // Add status here
+            
+            // Set vehicle if id present
+            if (dto.getIdPojazdu() != null) {
+                var pojazd = pojazdRepository.findById(dto.getIdPojazdu())
+                        .orElseThrow(() -> new BadRequestException("Pojazd o ID " + dto.getIdPojazdu() + " nie istnieje"));
+                dostawa.setPojazd(pojazd);;
+            }
+
+            // Add packages if present
+            List<Paczka> paczki = new ArrayList<>();
+            if (dto.getPaczki() != null && !dto.getPaczki().isEmpty()) {
+                paczki = dto.getPaczki().stream()
+                        .map(id -> paczkaRepository.findById(id)
+                                .orElseThrow(() -> new BadRequestException("Paczka o ID " + id + " nie istnieje")))
+                        .collect(Collectors.toList());
+
+                // ustaw listę produktów w paczce
+                dostawa.setPaczki(paczki);;
+
+                // ustaw paczkę w każdym produkcie (dwukierunkowo)
+                paczki.forEach(p -> p.setDostawa(dostawa));
+            }
+
+            // Add driver link if id present
+            if (dto.getDriverId() != null) {
+                var driver = pracownikRepository.findById(dto.getDriverId())
+                        .orElseThrow(() -> new BadRequestException("Kierowca o ID " + dto.getDriverId() + " nie istnieje"));
+                dostawa.setPracownik(driver);
+            }
 
             // Save the new delivery to the repository
             Dostawa savedDostawa = dostawaRepository.save(dostawa);
+            paczki.forEach(pkg -> paczkaRepository.save(pkg));
+
             return ResponseEntity.status(HttpStatus.CREATED).body(new DostawaDTO(savedDostawa));
 
         } catch (BadRequestException e) {

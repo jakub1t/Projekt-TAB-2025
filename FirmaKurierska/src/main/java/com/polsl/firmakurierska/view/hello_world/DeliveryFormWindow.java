@@ -158,13 +158,7 @@ public class DeliveryFormWindow {
         // Przycisk zapisu
         Button saveBtn = new Button("Zapisz dostawę");
         saveBtn.setOnMouseClicked(e -> {
-            // Zbieramy dane
-            
-            // pkgContainer.getChildren().forEach(node -> {
-            //     if (node instanceof CheckBox cb && cb.isSelected()) selectedPackagesIds.add(Integer.parseInt(cb.getText()));
-            // });
             System.out.println("Selected packages: " + selectedPackagesIds);
-            
             
             handleButton();
         });
@@ -278,8 +272,20 @@ public class DeliveryFormWindow {
         String startDay = startDatePicker.getValue().toString();
         String endDay = endDatePicker.getValue().toString();
 
-        String jason = String.format("{\"dataWyruszenia\": \"%s\", \"termin\": \"%s\", \"punktA\": \"%s\", \"punktB\": \"%s\", \"idPojazdu\": %d}",
-                 startDay, endDay, pointAField.getText(), pointBField.getText(), this.selectedVehicleId);
+        String jason = String.format("{\"dataWyruszenia\": \"%s\", \"termin\": \"%s\", \"punktA\": \"%s\", \"punktB\": \"%s\", \"idPojazdu\": %d, \"driverId\": %d, \"paczki\": [",
+                 startDay, endDay, pointAField.getText(), pointBField.getText(), this.selectedVehicleId, this.selectedDriverId);
+    
+        
+            int howManyPackages = this.selectedPackagesIds.size();
+
+        for (int a = 0; a < howManyPackages; ++a) {
+            jason += selectedPackagesIds.get(a).toString();
+            if (a < (howManyPackages - 1)) {
+                jason += ",";
+            }
+        }
+
+        jason += "]}";
 
         System.out.println(jason);
         if (addDostawa(jason)) {
