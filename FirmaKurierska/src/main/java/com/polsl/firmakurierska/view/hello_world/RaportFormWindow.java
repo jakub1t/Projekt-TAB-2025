@@ -23,11 +23,11 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.Control;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -37,49 +37,56 @@ import javafx.stage.Stage;
 
 public class RaportFormWindow {
 
+    final String RAPORT_TYPE_1 = "Stan";
+    final String RAPORT_TYPE_2 = "Trasy";
+
     /**
      * Otwiera okno formularza raportu z dwiema datami, miejscem zapisu i typem formularza.
      */
-    
-
-
     public void show() {
-        // Data początkowa
-        DatePicker startDatePicker = new DatePicker();
-        VBox startDateBox = createInputCard("Data od:", startDatePicker);
+        // Pole do wprowadzenia ścieżki
+        TextField pathField = new TextField();
+        pathField.setPromptText("Wprowadź ścieżkę");
+        VBox pathCard = createCard("Ścieżka:", pathField);
 
-        // Data końcowa
-        DatePicker endDatePicker = new DatePicker();
-        VBox endDateBox = createInputCard("Data do:", endDatePicker);
+        // Typ raportu (radiobuttons wzajemnie wykluczające)
+        ToggleGroup typeGroup = new ToggleGroup();
+        RadioButton stanRadio = new RadioButton(RAPORT_TYPE_1);
+        RadioButton trasyRadio = new RadioButton(RAPORT_TYPE_2);
+        stanRadio.setToggleGroup(typeGroup);
+        trasyRadio.setToggleGroup(typeGroup);
+        HBox radios = new HBox(10, stanRadio, trasyRadio);
+        radios.setAlignment(Pos.CENTER_LEFT);
+        VBox typeCard = createCard("Typ raportu:", radios);
 
-        // Miejsce zapisu
-        TextField saveLocationField = new TextField();
-        saveLocationField.setPromptText("np. /sciezka/do/raportu.txt");
-        VBox saveLocationBox = createInputCard("Miejsce zapisu:", saveLocationField);
+        // Kontener na daty (ukryty domyślnie)
+        DatePicker startDate = new DatePicker();
+        DatePicker endDate = new DatePicker();
+        HBox datesInputs = new HBox(10,
+            createCard("Data od:", startDate),
+            createCard("Data do:", endDate)
+        );
+        datesInputs.setAlignment(Pos.CENTER);
+        VBox datesContainer = new VBox(datesInputs);
+        datesContainer.setPadding(new Insets(5, 10, 5, 10));
+        datesContainer.setVisible(false);
 
-        // Typ formularza (jednokrotny wybór)
-        String[] formTypes = {"Wybrane daty", "Pełen"};
-        ToggleGroup formTypeGroup = new ToggleGroup();
-        VBox formTypeBox = createRadioInputCard("Typ raportu:", formTypes, formTypeGroup);
-
-        // Przycisk generuj
-        Button generateBtn = new Button("Generuj raport");
+        // Przycisk generuj (niewidoczny/wyłączony aż do wyboru typu raportu)
+        Button generateBtn = new Button("Generuj");
+        generateBtn.setDisable(true);
         generateBtn.setOnAction(e -> {
-            RadioButton selected = (RadioButton) formTypeGroup.getSelectedToggle();
-            String chosenType = selected != null ? selected.getText() : "";
-            
-            
-            System.out.println("Raport:");
-            System.out.println("Data od: " + startDatePicker.getValue());
-            LocalDate startDate = startDatePicker.getValue();
-            System.out.println("Data do: " + endDatePicker.getValue());
-            LocalDate endDate = endDatePicker.getValue();
-            System.out.println("Miejsce zapisu: " + saveLocationField.getText());
-            String fileLocation = saveLocationField.getText();
-            System.out.println("Typ formularza: " + chosenType);
+            String path = pathField.getText();
+            Toggle selected = typeGroup.getSelectedToggle();
+            String type = selected != null ? ((RadioButton) selected).getText() : "";
 
-            generateRaport(startDate, endDate, fileLocation, chosenType);
+            System.out.println("Ścieżka: " + path);
+            System.out.println("Typ: " + type);
+            if ("Trasy".equals(type)) {
+                System.out.println("Data od: " + startDate.getValue());
+                System.out.println("Data do: " + endDate.getValue());
+            }
 
+            generateRaport(startDate.getValue(), endDate.getValue(), path, type); // type should be "Stan" or "Trasy"
 
             ((Stage) generateBtn.getScene().getWindow()).close();
         });
@@ -87,16 +94,43 @@ public class RaportFormWindow {
         btnBox.setAlignment(Pos.CENTER);
         btnBox.setPadding(new Insets(10, 0, 0, 0));
 
-        // Kontener główny
-        VBox container = new VBox(12,
-            startDateBox,
-            endDateBox,
-            saveLocationBox,
-            formTypeBox,
-            btnBox
+        // Główny kontener składników (bez generuj)
+        VBox mainContent = new VBox(12,
+            pathCard,
+            typeCard
         );
+        mainContent.setAlignment(Pos.TOP_CENTER);
+
+        // Kontenery umieszczane dynamicznie
+        VBox container = new VBox();
         container.setPadding(new Insets(20));
         container.setAlignment(Pos.TOP_CENTER);
+        container.getChildren().addAll(mainContent);
+
+        // Listener na zmianę typu raportu:
+        typeGroup.selectedToggleProperty().addListener((obs, oldToggle, newToggle) -> {
+            generateBtn.setDisable(false);
+            // Usuń poprzednie elementy
+            container.getChildren().remove(datesContainer);
+            container.getChildren().remove(btnBox);
+            boolean isTrasy = newToggle == trasyRadio;
+
+            if (isTrasy) {
+                // Pokaż daty i przycisk na dole
+                datesContainer.setVisible(true);
+                container.getChildren().add(datesContainer);
+                container.getChildren().add(btnBox);
+            } else {
+                // Ukryj daty i pokaż przycisk pod typami
+                datesContainer.setVisible(false);
+                container.getChildren().add(btnBox);
+            }
+
+            // Dopasuj wysokość okna
+            Stage stage = (Stage) container.getScene().getWindow();
+            stage.setHeight(isTrasy ? 320 : 240);
+        });
+
 
         BorderPane root = new BorderPane(container);
         root.setStyle("-fx-background-color: #f8f8f8;");
@@ -108,12 +142,12 @@ public class RaportFormWindow {
     }
 
     /**
-     * Tworzy kartę z etykietą i polem wejściowym (tekst, data, itp.).
+     * Tworzy kartę z etykietą i dowolnym węzłem (pole, checkboxy, data itp.).
      */
-    private VBox createInputCard(String labelText, Control inputField) {
+    private VBox createCard(String labelText, javafx.scene.Node content) {
         Label label = new Label(labelText);
         label.setStyle("-fx-font-weight: bold;");
-        VBox box = new VBox(5, label, inputField);
+        VBox box = new VBox(5, label, content);
         box.setPadding(new Insets(10));
         box.setStyle(
             "-fx-background-color: white;" +
@@ -124,30 +158,6 @@ public class RaportFormWindow {
         );
         return box;
     }
-
-    /**
-     * Tworzy kartę z etykietą oraz grupą radio buttonów do wyboru jednej opcji.
-     */
-    private VBox createRadioInputCard(String labelText, String[] options, ToggleGroup group) {
-        Label label = new Label(labelText);
-        label.setStyle("-fx-font-weight: bold;");
-        VBox box = new VBox(5, label);
-        for (String opt : options) {
-            RadioButton rb = new RadioButton(opt);
-            rb.setToggleGroup(group);
-            box.getChildren().add(rb);
-        }
-        box.setPadding(new Insets(10));
-        box.setStyle(
-            "-fx-background-color: white;" +
-            "-fx-border-color: #dddddd;" +
-            "-fx-border-radius: 8;" +
-            "-fx-background-radius: 8;" +
-            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
-        );
-        return box;
-    }
-
 
     private void generateRaport(LocalDate startDate, LocalDate endDate, String fileLocation, String raportType){
         List<DostawaDTO> allDeliveries = getAllDeliveries();
@@ -164,7 +174,7 @@ public class RaportFormWindow {
         List<DostawaDTO> sortedDeliveries = new ArrayList<>();
         
         //sort deliveries
-        if (raportType == "Pełen")
+        if (raportType == RAPORT_TYPE_1)
         {
             sortedDeliveries = allDeliveries;
         }
