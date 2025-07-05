@@ -40,6 +40,10 @@ public class DeliveryFormWindow {
     private Stage myStage = null;
     private ManagerWindow myManager = null;
     private Button myRfsh = null;
+
+    private Integer selectedVehicleId = 1;
+    private Integer selectedDriverId = 1;
+    private List<Integer> selectedPackagesIds = new ArrayList<>();
     
     /**
      * Otwiera formularz dodawania nowej dostawy.
@@ -95,6 +99,10 @@ public class DeliveryFormWindow {
             for (PaczkaDTO pk : availablePackages) {    
                 CheckBox cb = new CheckBox(pk.getIdPaczki().toString() + "| Waga: " + pk.getWagaPaczki().toString());
                 cb.setPrefHeight(25);
+                cb.setOnMouseClicked(e -> {
+                    addOrRemovePackageId(cb.isSelected(), pk.getIdPaczki());
+                });
+
                 pkgContainer.getChildren().add(cb);
             }
         } 
@@ -115,6 +123,10 @@ public class DeliveryFormWindow {
             RadioButton rb = new RadioButton(vLabel);
             rb.setToggleGroup(vehGroup);
             rb.setPrefHeight(25);
+            rb.setOnMouseClicked(e -> {
+                this.selectedVehicleId = v.getIdPojazdu();
+                System.out.println("Selected vehicle: " + this.selectedVehicleId.toString());
+            });
             vehContainer.getChildren().add(rb);
         }
         ScrollPane vehScroll = new ScrollPane(vehContainer);
@@ -133,6 +145,10 @@ public class DeliveryFormWindow {
             RadioButton rb = new RadioButton(drLabel);
             rb.setToggleGroup(empGroup);
             rb.setPrefHeight(25);
+            rb.setOnMouseClicked(e -> {
+                this.selectedDriverId = dr.getIdOsoby();
+                System.out.println("Selected driver: " + this.selectedDriverId.toString());
+            });
             empContainer.getChildren().add(rb);
         }
         ScrollPane empScroll = new ScrollPane(empContainer);
@@ -144,10 +160,11 @@ public class DeliveryFormWindow {
         saveBtn.setOnMouseClicked(e -> {
             // Zbieramy dane
             
-            List<String> selectedPkgs = new ArrayList<>();
-            pkgContainer.getChildren().forEach(node -> {
-                if (node instanceof CheckBox cb && cb.isSelected()) selectedPkgs.add(cb.getText());
-            });
+            // pkgContainer.getChildren().forEach(node -> {
+            //     if (node instanceof CheckBox cb && cb.isSelected()) selectedPackagesIds.add(Integer.parseInt(cb.getText()));
+            // });
+            System.out.println("Selected packages: " + selectedPackagesIds);
+            
             
             handleButton();
         });
@@ -262,7 +279,7 @@ public class DeliveryFormWindow {
         String endDay = endDatePicker.getValue().toString();
 
         String jason = String.format("{\"dataWyruszenia\": \"%s\", \"termin\": \"%s\", \"punktA\": \"%s\", \"punktB\": \"%s\", \"idPojazdu\": %d}",
-                 startDay, endDay, pointAField.getText(), pointBField.getText());
+                 startDay, endDay, pointAField.getText(), pointBField.getText(), this.selectedVehicleId);
 
         System.out.println(jason);
         if (addDostawa(jason)) {
@@ -300,5 +317,13 @@ public class DeliveryFormWindow {
         }
 
         return roles;
+    }
+
+    private void addOrRemovePackageId(boolean isSelected, int packageId) {
+        if (isSelected) {
+            this.selectedPackagesIds.add(packageId);
+        } else {
+            this.selectedPackagesIds.remove(this.selectedPackagesIds.indexOf(packageId));
+        }
     }
 }
