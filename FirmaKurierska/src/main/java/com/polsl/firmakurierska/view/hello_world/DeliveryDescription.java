@@ -22,13 +22,13 @@ import com.polsl.firmakurierska.exception.BadRequestException;
 public class DeliveryDescription {
 
     private int idDostawy = 0;
-    private String pracImie = "Imie";
-    private String pracNazw = "Nazwisko";
+    private String pracImie = "";
+    private String pracNazw = "";
     private String dataStart = "0000-00-00";
     private String deadline = "9999-99-99";
-    private String punktA = "Punkt A";
-    private String punktB = "Punkt B";
-    private String vehicleModel = "Rolvo";
+    private String punktA = "";
+    private String punktB = "";
+    private String vehicleModel = ""; // "Rolvo" lmao
     private List<Integer> przypisanePaczki = new ArrayList<>();
 
     /**
@@ -132,11 +132,8 @@ public class DeliveryDescription {
     public void open(Integer delivID, String assignedUserName, String assignedUserSurname) {
         this.pracImie = assignedUserName;
         this.pracNazw = assignedUserSurname;
-        if (fetchDelivData(delivID)) {
-            this.show();
-        } else {
-            System.out.println("Failed to load delivery information!");
-        }
+        fetchDelivData(delivID);
+        this.show();
     }
 
     private boolean fetchDelivData(Integer dID) {
@@ -165,7 +162,7 @@ public class DeliveryDescription {
             vehId = jason.getInt("idPojazdu");
         } catch (JSONException ex) {
             System.out.println(ex.getMessage());
-            return false;
+            // return false;
         }
 
         if (packArray != null) {

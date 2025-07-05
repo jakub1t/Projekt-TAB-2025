@@ -549,7 +549,6 @@ public class ManagerWindow extends Application {
             resp = rq.sendPathReq();
 
             if (resp.equals("Dostawa o ID " + Integer.toString(delId) + " została usunięta.")) {
-                System.out.println("Usunięto dostawę");
                 return true;
             }
         } catch (BadRequestException bre) {
@@ -565,8 +564,6 @@ public class ManagerWindow extends Application {
 
         try {
             rq.sendPathReq();
-
-            System.out.println("Usunięto paczkę");
         } catch (ResourceNotFoundException rex) {
             System.out.println("deleteDelivery: " + rex.getMessage()); 
         } catch (BadRequestException bre) {
@@ -582,8 +579,6 @@ public class ManagerWindow extends Application {
 
         try {
             rq.sendPathReq();
-            
-            System.out.println("Usunięto pojazd");
         } catch (ResourceNotFoundException rex) {
             System.out.println("deleteVehicle: " + rex.getMessage());
         } catch (BadRequestException bre) {
