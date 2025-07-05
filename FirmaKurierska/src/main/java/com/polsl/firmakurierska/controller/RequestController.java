@@ -10,11 +10,14 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.boot.configurationprocessor.json.JSONArray;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
+import org.springframework.hateoas.Link;
 
+import com.polsl.firmakurierska.dto.ProduktDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 
 /**
@@ -254,6 +257,21 @@ public class RequestController {
         }
 
         return categoriesID;
+    }
+
+    /**
+     * Method that checks if product is assigned to any package
+     * @param produkt
+     * @return true if product is not assigned to any package, false if product is assigned.
+     */
+    public boolean checkIfProductAssignedToPackage(ProduktDTO produkt) {
+
+        Optional<Link> paczkaHrefWrapped = produkt.getLink("paczka");
+
+        if (paczkaHrefWrapped.isEmpty())
+            return true;
+        else
+            return false;
     }
 
     /**

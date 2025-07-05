@@ -75,20 +75,28 @@ public class PackageFormWindow {
         productsScroll.setFitToWidth(true);
         productsScroll.setPrefHeight(250);
 
-        for (int x = 0; x < produkty.size(); ++x) {
-            ProduktDTO pr = produkty.get(x);
-            CheckBox cb = new CheckBox();
+        RequestController rq_helper = new RequestController(null, 0);
 
-            cb.setOnMouseClicked(e -> {
-                calculateWeight(cb.isSelected(), pr.getWaga());
-                addOrRemoveProductId(cb.isSelected(), pr.getIdProduktu());
-            });
+        for (ProduktDTO pr : produkty) {
+            boolean packageless = false;
 
-            VBox pDetails = createProductCard(pr);
-            HBox prBox = new HBox(cb, pDetails);
-            prBox.setSpacing(5);
-            prBox.setAlignment(Pos.CENTER_LEFT);
-            productsList.getChildren().add(prBox);
+            // Get paczka id from ProduktDTO
+            packageless = rq_helper.checkIfProductAssignedToPackage(pr);
+
+            if (packageless) {
+                CheckBox cb = new CheckBox();
+
+                cb.setOnMouseClicked(e -> {
+                    calculateWeight(cb.isSelected(), pr.getWaga());
+                    addOrRemoveProductId(cb.isSelected(), pr.getIdProduktu());
+                });
+
+                VBox pDetails = createProductCard(pr);
+                HBox prBox = new HBox(cb, pDetails);
+                prBox.setSpacing(5);
+                prBox.setAlignment(Pos.CENTER_LEFT);
+                productsList.getChildren().add(prBox);
+            }
         }
 
         // --- Przycisk dodawania nowego produktu ---

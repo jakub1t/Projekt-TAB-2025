@@ -146,8 +146,6 @@ public class PackageDescription {
                 System.err.println("getPackageProducts: " + bre.getMessage());
             }
 
-            System.out.println(resp);
-
             ObjectMapper mapper = new ObjectMapper().configure(
                 DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             mapper.registerModule(new JavaTimeModule());
