@@ -6,18 +6,21 @@ package com.polsl.firmakurierska.view.hello_world;
 
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.view.UIBuilder;
 
-import io.github.palexdev.materialfx.controls.MFXButton;
 import io.github.palexdev.materialfx.controls.MFXPasswordField;
 import io.github.palexdev.materialfx.controls.MFXTextField;
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class Hello_world extends Application {
+    private final UIBuilder ui = new UIBuilder();
+
     @Override
     public void start(Stage stage) {
 
@@ -34,24 +37,24 @@ public class Hello_world extends Application {
         haslo.setPrefWidth(300);    // szerokość pola hasła
         haslo.setStyle("-fx-border-color: rgb(95, 211, 141)");
 
-        MFXButton loguj = new MFXButton("Loguj");
+        Button loguj = ui.createStylizedButton(false, 200, "Zaloguj");
         loguj.setOnAction(e -> {
-            System.out.println("Nick: " + nick.getText());
-            System.out.println("Hasło: " + haslo.getText());
             if (attemptLogin(nick.getText(), haslo.getText())) {
                 int accType = -1;
                 int accId = -1;
                 accId = findAccId(nick.getText());
                 accType = findAccType(accId);
 
+                loguj.setText("Zalogowano!");
+
                 if (accType == 1) new AdminPanel().open(accId);
                 else if (accType == 2) new ManagerWindow().open(accId);
                 else if (accType == 3) new DriverWindow().open(accId);
                 else System.out.println("Bad account type...");
-            };
+            } else {
+                loguj.setText("Niepoprawne dane");
+            }
         });
-        loguj.setPrefWidth(200);    // szerokość przycisku (opcjonalnie)
-
 
         VBox layout = new VBox(20, logo, nick, haslo, loguj);
         layout.setStyle("-fx-padding: 4; -fx-alignment: center;");
