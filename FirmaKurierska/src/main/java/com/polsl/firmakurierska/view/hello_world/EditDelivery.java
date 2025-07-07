@@ -3,10 +3,18 @@ package com.polsl.firmakurierska.view.hello_world;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Control;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -21,12 +29,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.polsl.firmakurierska.controller.RequestController;
+import com.polsl.firmakurierska.dto.DostawaDTO;
 import com.polsl.firmakurierska.dto.PaczkaDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.model.Pojazd;
 import com.polsl.firmakurierska.model.Pracownik;
 
-public class DeliveryFormWindow {
+public class EditDelivery {
 
     private List<PaczkaDTO> availablePackages = null;
     private List<Pojazd> availableVehicles = null;
@@ -48,21 +57,26 @@ public class DeliveryFormWindow {
     /**
      * Otwiera formularz dodawania nowej dostawy.
      */
-    public void show(ManagerWindow managerWindow, Button rfshBtn, List<Pojazd> pojazdy, List<PaczkaDTO> paczki) {
+    public void show(ManagerWindow managerWindow, Button rfshBtn, DostawaDTO dostawaData, List<Pojazd> pojazdy, 
+        List<PaczkaDTO> paczki, List<PaczkaDTO> packsInCurrentDelivery, int driverId) {
 
         myStage = new Stage();
         myManager = managerWindow;
         myRfsh = rfshBtn;
         availableVehicles = pojazdy;
         availablePackages = paczki;
-        availableDrivers = getDrivers();
+        availableDrivers = getDriversById();
+        selectedDriverId = driverId;
+        selectedVehicleId = dostawaData.getIdPojazdu();
 
         // Data startu
         startDatePicker = new DatePicker();
+        startDatePicker.setValue(dostawaData.getDataWyruszenia());
         VBox startDateBox = createInputCard("Data wyjazdu:", startDatePicker);
 
         // Termin
         endDatePicker = new DatePicker();
+        endDatePicker.setValue(dostawaData.getTermin());
         endDatePicker.setPromptText("Przewidywana data zakończenia dostawy");
         VBox endDateBox = createInputCard("Termin:", endDatePicker);
 
@@ -70,8 +84,8 @@ public class DeliveryFormWindow {
         datesRow.setAlignment(Pos.CENTER);
 
         // Punkty A i B
-        pointAField = new TextField();
-        pointBField = new TextField();
+        pointAField = new TextField(dostawaData.getPunktA());
+        pointBField = new TextField(dostawaData.getPunktB());
         VBox pointABox = createInputCard("Punkt A:", pointAField);
         VBox pointBBox = createInputCard("Punkt B:", pointBField);
 
@@ -93,19 +107,45 @@ public class DeliveryFormWindow {
         availablePackages = freePacks;
         
         if (availablePackages.size() == 0) {
-            Label emptyPkgAlert = new Label("Wszystkie paczki mają określoną dostawę");
+            Label emptyPkgAlert = new Label("Inne paczki mają określoną dostawę");
             pkgContainer.getChildren().add(emptyPkgAlert);
         } else {
             for (PaczkaDTO pk : availablePackages) {    
                 CheckBox cb = new CheckBox(pk.getIdPaczki().toString() + "| Waga: " + pk.getWagaPaczki().toString());
                 cb.setPrefHeight(25);
                 cb.setOnMouseClicked(e -> {
-                    addOrRemovePackageId(cb.isSelected(), pk.getIdPaczki());
+                    int pkId = pk.getIdPaczki();
+                    if (cb.isSelected()) {
+                        this.selectedPackagesIds.add(pkId);
+                    } else {
+                        this.selectedPackagesIds.remove(this.selectedPackagesIds.indexOf(pkId));
+                    }
                 });
 
                 pkgContainer.getChildren().add(cb);
             }
         } 
+        if (packsInCurrentDelivery.size() == 0) {
+            Label emptyPkgAlert = new Label("Dostawa nie ma paczek...");
+            pkgContainer.getChildren().add(emptyPkgAlert);
+        } else {
+            for (PaczkaDTO pk : packsInCurrentDelivery) {    
+                CheckBox cb = new CheckBox(pk.getIdPaczki().toString() + "| Waga: " + pk.getWagaPaczki().toString());
+                cb.setPrefHeight(25);
+                cb.setSelected(true);
+                this.selectedPackagesIds.add(pk.getIdPaczki());
+                cb.setOnMouseClicked(e -> {
+                    int pkId = pk.getIdPaczki();
+                    if (cb.isSelected()) {
+                        this.selectedPackagesIds.add(pkId);
+                    } else {
+                        this.selectedPackagesIds.remove(this.selectedPackagesIds.indexOf(pkId));
+                    }
+                });
+
+                pkgContainer.getChildren().add(cb);
+            }
+        }
 
         ScrollPane pkgScroll = new ScrollPane(pkgContainer);
         pkgScroll.setFitToWidth(true);
@@ -123,6 +163,9 @@ public class DeliveryFormWindow {
             RadioButton rb = new RadioButton(vLabel);
             rb.setToggleGroup(vehGroup);
             rb.setPrefHeight(25);
+            if (v.getIdPojazdu() == selectedVehicleId) {
+                rb.setSelected(true);
+            }
             rb.setOnMouseClicked(e -> {
                 this.selectedVehicleId = v.getIdPojazdu();
             });
@@ -144,6 +187,9 @@ public class DeliveryFormWindow {
             RadioButton rb = new RadioButton(drLabel);
             rb.setToggleGroup(empGroup);
             rb.setPrefHeight(25);
+            if (dr.getIdOsoby() == selectedDriverId) {
+                rb.setSelected(true);
+            }
             rb.setOnMouseClicked(e -> {
                 this.selectedDriverId = dr.getIdOsoby();
             });
@@ -156,7 +202,7 @@ public class DeliveryFormWindow {
         // Przycisk zapisu
         Button saveBtn = new Button("Zapisz dostawę");
         saveBtn.setOnMouseClicked(e -> {
-            handleButton();
+            handleButton(dostawaData.getIdDostawy(), dostawaData.getPaczki());
         });
         HBox btnBox = new HBox(saveBtn);
         btnBox.setAlignment(Pos.CENTER);
@@ -201,7 +247,7 @@ public class DeliveryFormWindow {
         return box;
     }
 
-    private List<Pracownik> getDrivers() {
+    private List<Pracownik> getDriversById() {
         List<Pracownik> theDrivers = new ArrayList<>();
         RequestController rq = new RequestController("/pracownik", 0);
 
@@ -250,8 +296,8 @@ public class DeliveryFormWindow {
      * @param jsonData - already formatted data
      * @return True when successful / False otherwise
      */
-    private boolean addDostawa(String jsonData) {
-        RequestController rq = new RequestController("/dostawa/add", 1);
+    private boolean editDostawa(int dostawaId, String jsonData) {
+        RequestController rq = new RequestController("/dostawa/update/" + dostawaId, 2);
 
         try {
             rq.sendJsonReq(jsonData);
@@ -264,7 +310,7 @@ public class DeliveryFormWindow {
         return true;
     }
 
-    private void handleButton() {
+    private void handleButton(int dostawaId, List<Integer> usedPackages) {
         String startDay = startDatePicker.getValue().toString();
         String endDay = endDatePicker.getValue().toString();
 
@@ -281,10 +327,20 @@ public class DeliveryFormWindow {
             }
         }
 
+        jason += "], \"usedPaczki\": [";
+
+        int howManyUsedPackages = usedPackages.size();
+
+        for (int a = 0; a < howManyUsedPackages; ++a) {
+            jason += usedPackages.get(a).toString();
+            if (a < (howManyUsedPackages - 1)) {
+                jason += ",";
+            }
+        }
+
         jason += "]}";
 
-        // System.out.println(jason);
-        if (addDostawa(jason)) {
+        if (editDostawa(dostawaId, jason)) {
             myManager.refreshAllData(myRfsh);
             myStage.close();
         }
@@ -319,13 +375,5 @@ public class DeliveryFormWindow {
         }
 
         return roles;
-    }
-
-    private void addOrRemovePackageId(boolean isSelected, int packageId) {
-        if (isSelected) {
-            this.selectedPackagesIds.add(packageId);
-        } else {
-            this.selectedPackagesIds.remove(this.selectedPackagesIds.indexOf(packageId));
-        }
     }
 }

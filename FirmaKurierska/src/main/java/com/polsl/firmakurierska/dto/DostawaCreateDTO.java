@@ -14,6 +14,7 @@ public class DostawaCreateDTO {
     private Integer idPojazdu;
     private Integer driverId;
     private List<Integer> paczki = new ArrayList<>();
+    private List<Integer> usedPaczki = new ArrayList<>();
 
     public LocalDate getDataWyruszenia() {
         return dataWyruszenia;
@@ -63,9 +64,10 @@ public class DostawaCreateDTO {
     public void setPaczki(List<Integer> paczki) {
         this.paczki = paczki;
     }
-
-
-    
-
-    
+    public List<Integer> getUsedPaczki() {
+        return usedPaczki;
+    }
+    public void setUsedPaczki(List<Integer> usedPaczki) {
+        this.usedPaczki = usedPaczki;
+    }
 }

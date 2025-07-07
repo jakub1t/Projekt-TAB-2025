@@ -93,7 +93,6 @@ public class RequestController {
                             response.append(line);
                         }
                     }
-                //System.out.println("Response: " + response.toString());
                 responseString = response.toString();
                 System.out.println(responseString);
             }
@@ -176,15 +175,6 @@ public class RequestController {
             JSONObject stanowiskoData = new JSONObject(stanowisko);
             String href = stanowiskoData.getString("href");
 
-            // String[] hrefTokens = href.split("/");
-            // boolean stupidFlag = false;
-            // for (String t : hrefTokens) {
-            //     if (stupidFlag == true) {
-            //         stanowiskoID = new String(t);
-            //         break;
-            //     }
-            //     if (t.equals("stanowisko")) stupidFlag = true;
-            // }
             stanowiskoID = returnValueFromHref("stanowisko", href);
 
         } catch (JSONException jex) {

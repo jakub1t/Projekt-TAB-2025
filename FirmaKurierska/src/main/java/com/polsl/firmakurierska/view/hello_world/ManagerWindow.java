@@ -17,9 +17,6 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.springframework.boot.configurationprocessor.json.JSONException;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.hateoas.Link;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -29,13 +26,11 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.dto.DostawaDTO;
 import com.polsl.firmakurierska.dto.PaczkaDTO;
-import com.polsl.firmakurierska.dto.ProduktDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Klient;
 import com.polsl.firmakurierska.model.Pojazd;
 import com.polsl.firmakurierska.model.Pracownik;
-import com.polsl.firmakurierska.model.Producent;
 import com.polsl.firmakurierska.view.UIBuilder;
 
 public class ManagerWindow extends Application {
@@ -106,7 +101,7 @@ public class ManagerWindow extends Application {
 
         Button dodajPaczkeBtn = ui.createStylizedButton(useDarkMode, 120, "Dodaj paczkę");
         dodajPaczkeBtn.setOnAction(e -> new PackageFormWindow().show(this, refreshBtn));
-        VBox paczkiCol = ui.createStylizedColumn(useDarkMode, "Paczki", 180, paczkiScroll, dodajPaczkeBtn);
+        VBox paczkiCol = ui.createStylizedColumn(useDarkMode, "Paczki", 200, paczkiScroll, dodajPaczkeBtn);
 
         // Nieco jasniejszy / ciemniejszy kolor
         if (useDarkMode) {
@@ -134,7 +129,7 @@ public class ManagerWindow extends Application {
 
         Button dodajPojazdBtn = ui.createStylizedButton(useDarkMode, 120, "Dodaj pojazd");
         dodajPojazdBtn.setOnAction(e -> new VehicleFormWindow().show(this, refreshBtn));
-        VBox pojazdyCol = ui.createStylizedColumn(useDarkMode, "Pojazdy", 180, pojazdyScroll, dodajPojazdBtn);
+        VBox pojazdyCol = ui.createStylizedColumn(useDarkMode, "Pojazdy", 200, pojazdyScroll, dodajPojazdBtn);
 
         // ===== KOL 4: DOSTAWY =====
         ObservableList<String> options = 
@@ -179,7 +174,7 @@ public class ManagerWindow extends Application {
             new DeliveryFormWindow().show(this, refreshBtn, pojazdy, paczki);
         });
 
-        VBox dostawyCol = ui.createStylizedColumn(useDarkMode, "Dostawy", 180, comboBox, dostawyScroll, dodajDostaweBtn);
+        VBox dostawyCol = ui.createStylizedColumn(useDarkMode, "Dostawy", 200, comboBox, dostawyScroll, dodajDostaweBtn);
         // Nieco jasniejszy / ciemniejszy kolor
         if (useDarkMode) {
             dostawyCol.setBackground(
@@ -216,7 +211,7 @@ public class ManagerWindow extends Application {
 
         Scene scene = new Scene(root, initWidth, initHeight);
         stage.setScene(scene);
-        stage.setTitle("Administrator Panel");
+        stage.setTitle("Manager Panel");
         stage.show();
     }
     /*
@@ -367,7 +362,28 @@ public class ManagerWindow extends Application {
                 refreshAllData(refreshBtn);
             }
         });
-        HBox box = new HBox(5, itemBtn, delBtn);
+
+        Button editBtn = ui.createStyledEditButton();
+        editBtn.setOnAction(e -> {
+
+            List<PaczkaDTO> packsInCurrentDelivery = new ArrayList<>();
+
+            for (PaczkaDTO pk : paczki) {
+                if (dostawaData.getPaczki().contains(pk.getIdPaczki())) {
+                    packsInCurrentDelivery.add(pk);
+                }
+            }
+
+            Link pracownikLink = dostawaData.getLink("pracownik").get();
+
+            String pracownikHref = pracownikLink.getHref();
+
+            String pracownikId = rq_helper.returnValueFromHref("pracownik", pracownikHref);
+
+            new EditDelivery().show(this, refreshBtn, dostawaData, pojazdy, paczki, packsInCurrentDelivery, Integer.parseInt(pracownikId));
+        });
+
+        HBox box = new HBox(5, itemBtn, editBtn, delBtn);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }

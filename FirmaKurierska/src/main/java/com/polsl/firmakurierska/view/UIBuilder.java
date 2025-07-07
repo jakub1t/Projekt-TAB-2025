@@ -92,6 +92,26 @@ public class UIBuilder {
     } 
 
     /**
+     * Creates 20px x 20px 'O' Button (this would be cool -> ✎ - 0x270E)
+     */
+    public Button createStyledEditButton() {
+        Button editer = new Button("O");
+
+        editer.setStyle(
+            "-fx-border-radius: 0; " +
+            "-fx-border-width: 1; " +
+            "-fx-cursor: hand; "
+        );
+        editer.setBackground(deleterBgInactive);
+        editer.setPrefSize(20, 20);
+
+        editer.setOnMouseEntered(e -> { editer.setBackground(deleterBgActive); });
+        editer.setOnMouseExited(e -> { editer.setBackground(deleterBgInactive); });
+
+        return editer;
+    } 
+
+    /**
      * Dedicated for Lists such as DeliveryList
      * @param text - Button text
      * @param width - preferred width

@@ -79,20 +79,20 @@ public class DostawaController {
     public ResponseEntity<Object> addDostawa(@RequestBody DostawaCreateDTO dto) {
         try {
             // Convert the Iterable to a List and then check if the delivery already exists
-            // List<Dostawa> existingDostawy = new ArrayList<>();
-            // dostawaRepository.findAll().forEach(existingDostawy::add);
+            List<Dostawa> existingDostawy = new ArrayList<>();
+            dostawaRepository.findAll().forEach(existingDostawy::add);
 
-            // boolean exists = existingDostawy.stream().anyMatch(d ->
-            //         dto.getPunktA().equals(d.getPunktA()) &&
-            //         dto.getPunktB().equals(d.getPunktB()) &&
-            //         dto.getDataWyruszenia().equals(d.getDataWyruszenia()) &&
-            //         dto.getTermin().equals(d.getTermin())
-            // );
+            boolean exists = existingDostawy.stream().anyMatch(d ->
+                    dto.getPunktA().equals(d.getPunktA()) &&
+                    dto.getPunktB().equals(d.getPunktB()) &&
+                    dto.getDataWyruszenia().equals(d.getDataWyruszenia()) &&
+                    dto.getTermin().equals(d.getTermin())
+            );
 
-            // if (exists) {
-            //     // If the delivery already exists, return a BadRequestException
-            //     throw new BadRequestException("Taka dostawa już istnieje.");
-            // }
+            if (exists) {
+                // If the delivery already exists, return a BadRequestException
+                throw new BadRequestException("Taka dostawa już istnieje.");
+            }
 
             // If no duplicate found, create the new delivery
             Dostawa dostawa = new Dostawa();
@@ -174,11 +174,11 @@ public class DostawaController {
 
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<String> updateDostawa(@PathVariable String id, @RequestBody DostawaDTO dto) {
+    public ResponseEntity<String> updateDostawa(@PathVariable String id, @RequestBody DostawaCreateDTO dto) {
         try {
             Integer did = Integer.parseInt(id);
             Dostawa dostawa = dostawaRepository.findById(did)
-            		.orElseThrow(() -> new ResourceNotFoundException("Dostawa o ID " + did + " nie istnieje."));	
+            		.orElseThrow(() -> new ResourceNotFoundException("Dostawa o ID " + did + " nie istnieje."));
 
             if (dto.getPunktA() != null) {
                 dostawa.setPunktA(dto.getPunktA());
@@ -195,8 +195,49 @@ public class DostawaController {
             if (dto.getStatus() != null) {
                 dostawa.setStatus(dto.getStatus());
             }
+            if (dto.getIdPojazdu() != null) {
+                var pojazd = pojazdRepository.findById(dto.getIdPojazdu())
+                        .orElseThrow(() -> new BadRequestException("Pojazd o ID " + dto.getIdPojazdu() + " nie istnieje"));
+                dostawa.setPojazd(pojazd);;
+            }
+
+            // Clear package assignment to delivery
+            List<Paczka> usedPaczki = new ArrayList<>();
+            if (dto.getUsedPaczki() != null && !dto.getUsedPaczki().isEmpty()) {
+                usedPaczki = dto.getUsedPaczki().stream()
+                        .map(pid -> paczkaRepository.findById(pid)
+                                .orElseThrow(() -> new BadRequestException("Paczka o ID " + pid + " nie istnieje")))
+                        .collect(Collectors.toList());
+
+                // ustaw paczkę w każdym produkcie (dwukierunkowo)
+                usedPaczki.forEach(p -> p.setDostawa(null));
+                usedPaczki.forEach(pkg -> paczkaRepository.save(pkg));
+            }
+
+            // Add packages if present
+            List<Paczka> paczki = new ArrayList<>();
+            if (dto.getPaczki() != null && !dto.getPaczki().isEmpty()) {
+                paczki = dto.getPaczki().stream()
+                        .map(pid -> paczkaRepository.findById(pid)
+                                .orElseThrow(() -> new BadRequestException("Paczka o ID " + pid + " nie istnieje")))
+                        .collect(Collectors.toList());
+
+                // ustaw listę produktów w paczce
+                dostawa.setPaczki(paczki);;
+
+                // ustaw paczkę w każdym produkcie (dwukierunkowo)
+                paczki.forEach(p -> p.setDostawa(dostawa));
+            }
+
+            // Add driver link if id present
+            if (dto.getDriverId() != null) {
+                var driver = pracownikRepository.findById(dto.getDriverId())
+                        .orElseThrow(() -> new BadRequestException("Kierowca o ID " + dto.getDriverId() + " nie istnieje"));
+                dostawa.setPracownik(driver);
+            }
 
             dostawaRepository.save(dostawa);
+            paczki.forEach(pkg -> paczkaRepository.save(pkg));
             return ResponseEntity.ok("Dostawa o ID " + did + " została zaktualizowana.");
         } catch (NumberFormatException e) {
             throw new BadRequestException("ID musi być liczbą całkowitą: " + id);
