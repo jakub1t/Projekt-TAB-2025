@@ -7,14 +7,19 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.boot.configurationprocessor.json.JSONException;
+import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.hateoas.Link;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -24,13 +29,22 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.dto.DostawaDTO;
 import com.polsl.firmakurierska.dto.PaczkaDTO;
+import com.polsl.firmakurierska.dto.ProduktDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Klient;
 import com.polsl.firmakurierska.model.Pojazd;
 import com.polsl.firmakurierska.model.Pracownik;
+import com.polsl.firmakurierska.model.Producent;
+import com.polsl.firmakurierska.view.UIBuilder;
 
 public class ManagerWindow extends Application {
+
+    private final UIBuilder ui = new UIBuilder();
+
+    private boolean useDarkMode = false;
+    private final int initHeight = 450;
+    private final int initWidth = 900;
 
     private int loggedUserId = 0;
     private String loggedUserName = "Imię";
@@ -57,18 +71,27 @@ public class ManagerWindow extends Application {
     @Override
     public void start(Stage stage) {
         Label welcomeLabel = new Label("Witaj " + loggedUserName + " " + loggedUserSurname + "!");
-        welcomeLabel.setStyle("-fx-font-size: 12px;");
-        Button refreshBtn = new Button("Odśwież Dane");
-        refreshBtn.setPrefWidth(200);
+        welcomeLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        
+        Button generujRaportBtn = ui.createStylizedButton(useDarkMode, 150, "Generuj raport");
+        generujRaportBtn.setOnAction(e -> new RaportFormWindow().show());
 
-        VBox welBox = new VBox(5, welcomeLabel, refreshBtn);
-        welBox.setAlignment(Pos.CENTER);
+        Button refreshBtn = ui.createStylizedButton(useDarkMode, 150, "Odśwież dane");
 
         refreshBtn.setOnAction(e -> {
             refreshAllData(refreshBtn);
         });
+
+        HBox welBox = new HBox(20, welcomeLabel, refreshBtn, generujRaportBtn);
+        welBox.setAlignment(Pos.CENTER);
+        welBox.setMinHeight(60);
+        welBox.setMaxHeight(60);
         
-        // ===== KOL 1: PACZKI =====
+        // ===== KOL 1: PRODUKTY =====
+
+
+
+        // ===== KOL 2: PACZKI =====
         paczkiList = new VBox(5);
         paczkiList.setPadding(new Insets(5));
         ScrollPane paczkiScroll = new ScrollPane(paczkiList);
@@ -81,11 +104,22 @@ public class ManagerWindow extends Application {
             paczkiList.getChildren().add(createPackageItem(paczka.getIdPaczki(), paczka, refreshBtn));
         });
 
-        Button dodajPaczkeBtn = new Button("Dodaj paczkę");
+        Button dodajPaczkeBtn = ui.createStylizedButton(useDarkMode, 120, "Dodaj paczkę");
         dodajPaczkeBtn.setOnAction(e -> new PackageFormWindow().show(this, refreshBtn));
-        VBox paczkiCol = buildColumn("Paczki", paczkiScroll, dodajPaczkeBtn, "#f4f4f4");
+        VBox paczkiCol = ui.createStylizedColumn(useDarkMode, "Paczki", 180, paczkiScroll, dodajPaczkeBtn);
 
-        // ===== KOL 2: POJAZDY =====
+        // Nieco jasniejszy / ciemniejszy kolor
+        if (useDarkMode) {
+            paczkiCol.setBackground(
+                new Background(new BackgroundFill(Color.web("#4B4B4B"), null, null))
+            );
+        } else {
+            paczkiCol.setBackground(
+                new Background(new BackgroundFill(Color.web("#E0E0E0"), null, null))
+            );
+        }
+
+        // ===== KOL 3: POJAZDY =====
         pojazdyList = new VBox(5);
         pojazdyList.setPadding(new Insets(5));
         ScrollPane pojazdyScroll = new ScrollPane(pojazdyList);
@@ -98,11 +132,11 @@ public class ManagerWindow extends Application {
             pojazdyList.getChildren().add(createVehicleItem(pojazd.getIdPojazdu(), pojazd, refreshBtn));
         });
 
-        Button dodajPojazdBtn = new Button("Dodaj pojazd");
+        Button dodajPojazdBtn = ui.createStylizedButton(useDarkMode, 120, "Dodaj pojazd");
         dodajPojazdBtn.setOnAction(e -> new VehicleFormWindow().show(this, refreshBtn));
-        VBox pojazdyCol = buildColumn("Pojazdy", pojazdyScroll, dodajPojazdBtn, "#eaeaea");
+        VBox pojazdyCol = ui.createStylizedColumn(useDarkMode, "Pojazdy", 180, pojazdyScroll, dodajPojazdBtn);
 
-        // ===== KOL 3: DOSTAWY =====
+        // ===== KOL 4: DOSTAWY =====
         ObservableList<String> options = 
             FXCollections.observableArrayList(
                 "Wszystkie",
@@ -140,41 +174,52 @@ public class ManagerWindow extends Application {
             dostawyList.getChildren().add(createDeliveryItem(dostawa.getIdDostawy(), dostawa, refreshBtn));
         });
 
-        Button dodajDostaweBtn = new Button("Dodaj dostawę");
+        Button dodajDostaweBtn = ui.createStylizedButton(useDarkMode, 120, "Dodaj dostawę");
         dodajDostaweBtn.setOnMouseClicked(e -> {
             new DeliveryFormWindow().show(this, refreshBtn, pojazdy, paczki);
         });
 
-        VBox dostawyCol = buildColumn("Dostawy", dostawyScroll, dodajDostaweBtn, "#f4f4f4", comboBox);
+        VBox dostawyCol = ui.createStylizedColumn(useDarkMode, "Dostawy", 180, comboBox, dostawyScroll, dodajDostaweBtn);
+        // Nieco jasniejszy / ciemniejszy kolor
+        if (useDarkMode) {
+            dostawyCol.setBackground(
+                new Background(new BackgroundFill(Color.web("#4B4B4B"), null, null))
+            );
+        } else {
+            dostawyCol.setBackground(
+                new Background(new BackgroundFill(Color.web("#E0E0E0"), null, null))
+            );
+        }
 
-        // ===== KOL 4: RAPORTY =====
-        Label raportLabel = new Label("Raporty");
-        raportLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-        raportLabel.setMaxWidth(Double.MAX_VALUE);
-        raportLabel.setAlignment(Pos.CENTER);
 
-        Button generujRaportBtn = new Button("Generuj raport");
-        generujRaportBtn.setOnAction(e -> new RaportFormWindow().show());
-        HBox raportBox = new HBox(generujRaportBtn);
-        raportBox.setAlignment(Pos.CENTER);
-        raportBox.setPadding(new Insets(10));
+        // ===== KOL 5: KLIENCI =====
+        
 
-        VBox raportCol = new VBox(10, raportLabel, raportBox);
-        raportCol.setPadding(new Insets(10));
-        raportCol.setPrefWidth(200);
-        raportCol.setStyle("-fx-background-color: #eaeaea;");
+
 
         // ===== GŁÓWNY UKŁAD =====
-        HBox dataBox = new HBox(10, paczkiCol, pojazdyCol, dostawyCol, raportCol);
-        VBox root = new VBox(10, welBox, dataBox);
-        root.setPadding(new Insets(10));
+        HBox dataBox = new HBox(0, paczkiCol, pojazdyCol, dostawyCol);
+        dataBox.setAlignment(Pos.CENTER);
+        dataBox.setStyle("-fx-background-color: #FFFFFF");
 
-        Scene scene = new Scene(root, 850, 450);
+        VBox root = new VBox(10, welBox, dataBox);
+        root.setAlignment(Pos.CENTER);
+        root.setSpacing(10);
+        
+        if (useDarkMode) {
+            welBox.setStyle("-fx-background-color: #4B4B4B");
+            root.setStyle("-fx-background-color: #BBBBBB");
+        } else {
+            welBox.setStyle("-fx-background-color: #FFFFFF");
+            root.setStyle("-fx-background-color: #CBCBCB");
+        }
+
+        Scene scene = new Scene(root, initWidth, initHeight);
         stage.setScene(scene);
         stage.setTitle("Administrator Panel");
         stage.show();
     }
-
+    /*
     private VBox buildColumn(String title, ScrollPane content, Button addButton, String bgColor) {
         Label header = new Label(title);
         header.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
@@ -189,7 +234,7 @@ public class ManagerWindow extends Application {
 
         VBox col = new VBox(10, headerBox, content, addBox);
         col.setPadding(new Insets(10));
-        col.setPrefWidth(200);
+        col.setFillWidth(true);
         col.setStyle("-fx-background-color: " + bgColor + ";");
         return col;
     }
@@ -208,27 +253,40 @@ public class ManagerWindow extends Application {
 
         VBox col = new VBox(10, headerBox, content, addBox);
         col.setPadding(new Insets(10));
-        col.setPrefWidth(200);
+        col.setFillWidth(true);
         col.setStyle("-fx-background-color: " + bgColor + ";");
         return col;
-    }
+    }  */
 
     private HBox createPackageItem(int paczkaId, PaczkaDTO paczkaData, Button refreshBtn) {
         String name = "ID paczki: " + paczkaId;
 
-        Button itemBtn = new Button(name);
-        itemBtn.setPrefWidth(140);
+        Button itemBtn = ui.createStyledListItem(name, 160);
         itemBtn.setOnAction(e -> {
             
             int klientId = paczkaData.getKlientId();
+            //List<Integer> procuktIds = paczkaData.getProduktIds();
+            //RequestController rq_helper = new RequestController("", 0);
 
             Klient client = getKlientById(klientId);
+            /*
+            procuktIds.forEach(id -> {
+                ProduktDTO tempProdukt = getProduktById(id);
+
+                Link producentLink = tempProdukt.getLink("producent").get();
+
+                String producentHref = producentLink.getHref();
+
+                String producentId = rq_helper.returnValueFromHref("producent", producentHref);
+
+                Producent producentData = getProducentById(Integer.parseInt(producentId));
+            }); */
 
             new PackageDescription().show(
                 paczkaData, client
             );
         });
-        Button delBtn = new Button("X");
+        Button delBtn = ui.createStyledDeleteButton();
         delBtn.setOnAction(e -> {
             if (deletePackage(paczkaId)) {
                 paczkiList.getChildren().removeIf(node -> {
@@ -249,8 +307,7 @@ public class ManagerWindow extends Application {
     private HBox createVehicleItem(int pojazdId, Pojazd pojazdData, Button refreshBtn) {
         String name = String.format("ID: %d | %s", pojazdId, pojazdData.getMarka());
 
-        Button itemBtn = new Button(name);
-        itemBtn.setPrefWidth(140);
+        Button itemBtn = ui.createStyledListItem(name, 160);
         itemBtn.setOnAction(e -> {
             new VehicleDescription()
                 .show(
@@ -262,7 +319,7 @@ public class ManagerWindow extends Application {
                     pojazdData.getNrRejestr()
                 );
         });
-        Button delBtn = new Button("X");
+        Button delBtn = ui.createStyledDeleteButton();
         delBtn.setOnAction(e ->{
             if (deleteVehicle(pojazdId)) {;    
                 pojazdyList.getChildren().removeIf(node -> {
@@ -285,8 +342,7 @@ public class ManagerWindow extends Application {
         RequestController rq_helper = new RequestController("", 0);
 
 
-        Button itemBtn = new Button(name);
-        itemBtn.setPrefWidth(140);
+        Button itemBtn = ui.createStyledListItem(name, 160);
         itemBtn.setOnAction(e -> {
             Link pracownikLink = dostawaData.getLink("pracownik").get();
 
@@ -298,7 +354,7 @@ public class ManagerWindow extends Application {
 
             new DeliveryDescription().open(dostawaId, pracownikData.getImie(), pracownikData.getNazwisko());
         });
-        Button delBtn = new Button("X");
+        Button delBtn = ui.createStyledDeleteButton();
         delBtn.setOnAction(e -> { 
             if (deleteDelivery(dostawaId)){
                 dostawyList.getChildren().removeIf(node -> {
@@ -473,74 +529,76 @@ public class ManagerWindow extends Application {
         return klient;
     }
 
-    // private ProduktDTO getProduktById(int productId) {
-    //     ProduktDTO produkt = new ProduktDTO();
-    //     String response = "";
-    //     RequestController rq = new RequestController("/produkt/" + productId, 0);
+    /*
+    private ProduktDTO getProduktById(int productId) {
+        ProduktDTO produkt = new ProduktDTO();
+        String response = "";
+        RequestController rq = new RequestController("/produkt/" + productId, 0);
 
-    //     try {
-    //         response = rq.sendPathReq();
-    //     } catch (BadRequestException e) {
-    //         System.out.println(e.getMessage());
-    //     }
+        try {
+            response = rq.sendPathReq();
+        } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+        }
         
-    //     try {
-    //         // Object mapper doesnt work so this thing below is used instead...
+        try {
+            // Object mapper doesnt work so this thing below is used instead...
 
-    //         // Map response to JSON
-    //         JSONObject produktJSON = new JSONObject(response);
+            // Map response to JSON
+            JSONObject produktJSON = new JSONObject(response);
 
-    //         // Set produkt object fields that are easy to get
-    //         produkt.setIdProduktu(produktJSON.getInt("idProduktu"));
-    //         produkt.setNrSeryjny(produktJSON.getString("nrSeryjny"));
-    //         produkt.setKategoriaProd(produktJSON.getString("kategoriaProd"));
-    //         produkt.setNazwaProduktu(produktJSON.getString("nazwaProduktu"));
-    //         produkt.setWaga(produktJSON.getDouble("waga"));
+            // Set produkt object fields that are easy to get
+            produkt.setIdProduktu(produktJSON.getInt("idProduktu"));
+            produkt.setNrSeryjny(produktJSON.getString("nrSeryjny"));
+            produkt.setKategoriaProd(produktJSON.getString("kategoriaProd"));
+            produkt.setNazwaProduktu(produktJSON.getString("nazwaProduktu"));
+            produkt.setWaga(produktJSON.getDouble("waga"));
 
-    //         // The fun part of adding DTO hrefs to the produkt object
-    //         String temp = produktJSON.getString("_links");
-    //         JSONObject linksJ = new JSONObject(temp);
+            // The fun part of adding DTO hrefs to the produkt object
+            String temp = produktJSON.getString("_links");
+            JSONObject linksJ = new JSONObject(temp);
 
-    //         JSONObject hrefJ1 = new JSONObject(linksJ.getString("self"));
-    //         produkt.add(Link.of(hrefJ1.getString("href"), "self"));
+            JSONObject hrefJ1 = new JSONObject(linksJ.getString("self"));
+            produkt.add(Link.of(hrefJ1.getString("href"), "self"));
 
-    //         JSONObject hrefJ2 = new JSONObject(linksJ.getString("paczka"));
-    //         produkt.add(Link.of(hrefJ2.getString("href"), "paczka"));
+            JSONObject hrefJ2 = new JSONObject(linksJ.getString("paczka"));
+            produkt.add(Link.of(hrefJ2.getString("href"), "paczka"));
 
-    //         JSONObject hrefJ3 = new JSONObject(linksJ.getString("producent"));
-    //         produkt.add(Link.of(hrefJ3.getString("href"), "producent"));
+            JSONObject hrefJ3 = new JSONObject(linksJ.getString("producent"));
+            produkt.add(Link.of(hrefJ3.getString("href"), "producent"));
 
-    //     } catch (JSONException jex) {
-    //         System.out.println(jex.toString());
-    //         jex.printStackTrace();
-    //     }
+        } catch (JSONException jex) {
+            System.out.println(jex.toString());
+            jex.printStackTrace();
+        }
 
-    //     return produkt;
-    // }
+        return produkt;
+    }
 
-    // private Producent getProducentById(int producentId) {
-    //     Producent producent = new Producent();
-    //     String response = "";
-    //     RequestController rq = new RequestController("/producent/" + producentId, 0);
+    private Producent getProducentById(int producentId) {
+        Producent producent = new Producent();
+        String response = "";
+        RequestController rq = new RequestController("/producent/" + producentId, 0);
 
-    //     try {
-    //         response = rq.sendPathReq();
-    //     } catch (BadRequestException e) {
-    //         System.out.println(e.getMessage());
-    //     }
+        try {
+            response = rq.sendPathReq();
+        } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+        }
         
-    //     ObjectMapper mapper = new ObjectMapper().configure(
-    //             DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    //     mapper.registerModule(new JavaTimeModule());
-    //     try {
-    //         producent = mapper.readValue(response, new TypeReference<Producent>(){});
-    //     } catch (IOException e) {
-    //         System.out.println(e.getMessage());
-    //     }
+        ObjectMapper mapper = new ObjectMapper().configure(
+                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.registerModule(new JavaTimeModule());
+        try {
+            producent = mapper.readValue(response, new TypeReference<Producent>(){});
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
 
-    //     return producent;
-    // }
-
+        return producent;
+    }
+    */
+    
     private boolean deleteDelivery(int delId) {
         RequestController rq = new RequestController("/dostawa/delete/" + Integer.toString(delId), 3);
         String resp = "";
@@ -549,6 +607,7 @@ public class ManagerWindow extends Application {
             resp = rq.sendPathReq();
 
             if (resp.equals("Dostawa o ID " + Integer.toString(delId) + " została usunięta.")) {
+                System.out.println("Usunięto dostawę");
                 return true;
             }
         } catch (BadRequestException bre) {
@@ -564,6 +623,8 @@ public class ManagerWindow extends Application {
 
         try {
             rq.sendPathReq();
+
+            System.out.println("Usunięto paczkę");
         } catch (ResourceNotFoundException rex) {
             System.out.println("deleteDelivery: " + rex.getMessage()); 
         } catch (BadRequestException bre) {
@@ -579,6 +640,8 @@ public class ManagerWindow extends Application {
 
         try {
             rq.sendPathReq();
+            
+            System.out.println("Usunięto pojazd");
         } catch (ResourceNotFoundException rex) {
             System.out.println("deleteVehicle: " + rex.getMessage());
         } catch (BadRequestException bre) {
