@@ -26,6 +26,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.dto.DostawaDTO;
 import com.polsl.firmakurierska.dto.PaczkaDTO;
+import com.polsl.firmakurierska.dto.ProduktDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Klient;
@@ -45,6 +46,7 @@ public class ManagerWindow extends Application {
     private String loggedUserName = "Imię";
     private String loggedUserSurname = "Nazwisko";
 
+    private List<ProduktDTO> produkty = null;
     private List<PaczkaDTO> paczki = null;
     private List<Pojazd> pojazdy = null;
     private List<DostawaDTO> dostawy = null;
@@ -94,6 +96,7 @@ public class ManagerWindow extends Application {
         paczkiScroll.setPrefHeight(300);
         
         paczki = getPaczki();
+        produkty = getProdukty();
 
         paczki.forEach(paczka -> {
             paczkiList.getChildren().add(createPackageItem(paczka.getIdPaczki(), paczka, refreshBtn));
@@ -214,44 +217,6 @@ public class ManagerWindow extends Application {
         stage.setTitle("Manager Panel");
         stage.show();
     }
-    /*
-    private VBox buildColumn(String title, ScrollPane content, Button addButton, String bgColor) {
-        Label header = new Label(title);
-        header.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-        header.setMaxWidth(Double.MAX_VALUE);
-        HBox headerBox = new HBox(header);
-        headerBox.setAlignment(Pos.CENTER);
-        headerBox.setPadding(new Insets(10));
-
-        HBox addBox = new HBox(addButton);
-        addBox.setAlignment(Pos.CENTER);
-        addBox.setPadding(new Insets(5));
-
-        VBox col = new VBox(10, headerBox, content, addBox);
-        col.setPadding(new Insets(10));
-        col.setFillWidth(true);
-        col.setStyle("-fx-background-color: " + bgColor + ";");
-        return col;
-    }
-
-    private VBox buildColumn(String title, ScrollPane content, Button addButton, String bgColor, ComboBox<String> comboBox) {
-        Label header = new Label(title);
-        header.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-        header.setMaxWidth(Double.MAX_VALUE);
-        HBox headerBox = new HBox(header, comboBox);
-        headerBox.setAlignment(Pos.CENTER);
-        headerBox.setPadding(new Insets(10));
-
-        HBox addBox = new HBox(addButton);
-        addBox.setAlignment(Pos.CENTER);
-        addBox.setPadding(new Insets(5));
-
-        VBox col = new VBox(10, headerBox, content, addBox);
-        col.setPadding(new Insets(10));
-        col.setFillWidth(true);
-        col.setStyle("-fx-background-color: " + bgColor + ";");
-        return col;
-    }  */
 
     private HBox createPackageItem(int paczkaId, PaczkaDTO paczkaData, Button refreshBtn) {
         String name = "ID paczki: " + paczkaId;
@@ -294,7 +259,21 @@ public class ManagerWindow extends Application {
                 refreshAllData(refreshBtn);
             }
         });
-        HBox box = new HBox(5, itemBtn, delBtn);
+
+        Button editBtn = ui.createStyledEditButton();
+        editBtn.setOnAction(e -> {
+            List<ProduktDTO> productsInCurrentPackage = new ArrayList<>();
+
+            for (ProduktDTO pr : produkty) {
+                if (paczkaData.getProduktIds().contains(pr.getIdProduktu())) {
+                    productsInCurrentPackage.add(pr);
+                }
+            }
+
+            new EditPackages().show(this, refreshBtn, paczkaData, productsInCurrentPackage);
+        });
+
+        HBox box = new HBox(5, itemBtn, editBtn, delBtn);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }
@@ -503,6 +482,35 @@ public class ManagerWindow extends Application {
             }
         }       
         return mojePaczki;
+    }
+
+    private List<ProduktDTO> getProdukty() {
+        List<ProduktDTO> mojeProdukty = new ArrayList<>();
+        RequestController rq = new RequestController("/produkt", 0);
+        String response = "";
+        boolean goFurther = true;
+
+        try {
+            response = rq.sendPathReq();
+
+        } catch (ResourceNotFoundException rex) {
+            System.out.println(rex.getMessage());
+            goFurther = false;
+        } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+            goFurther = false;
+        }
+        if (goFurther) {
+            ObjectMapper mapper = new ObjectMapper().configure(
+                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            mapper.registerModule(new JavaTimeModule());
+            try {
+                mojeProdukty = mapper.readValue(response, new TypeReference<List<ProduktDTO>>(){});
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
+        }       
+        return mojeProdukty;
     }
 
     private Pracownik getPracownikById(int workerId) {

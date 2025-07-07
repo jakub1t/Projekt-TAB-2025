@@ -114,15 +114,54 @@ public class PaczkaController {
         return new ResponseEntity<PaczkaDTO>(new PaczkaDTO(saved), HttpStatus.valueOf(200));
     }
  
-    @PutMapping("/{id}")
-    public Paczka updatePaczka(@PathVariable Integer id, @RequestBody Paczka paczkaDetails) {
+    @PutMapping("/update/{id}")
+    public ResponseEntity<PaczkaDTO> updatePaczka(@PathVariable Integer id, @RequestBody PaczkaCreateDTO dto) {
         Paczka paczka = paczkaRepository.findById(id)
         		.orElseThrow(() -> new ResourceNotFoundException("Paczka o ID " + id + " nie istnieje"));
-        if (paczkaDetails.getWagaPaczki() <= 0) {
+        
+        if (dto.getKlientId() != null) {
+            var klient = klientRepository.findById(dto.getKlientId())
+                        .orElseThrow(() -> new BadRequestException("Klient o ID " + dto.getKlientId() + " nie istnieje"));
+            paczka.setKlient(klient);
+        }
+
+        if (dto.getWagaPaczki() != null && dto.getWagaPaczki() > 0) {
+            paczka.setWagaPaczki(dto.getWagaPaczki());
+        } else {
             throw new BadRequestException("Waga paczki musi być większa niż 0.");
         }
-        paczka.setWagaPaczki(paczkaDetails.getWagaPaczki());
-        return paczkaRepository.save(paczka);
+
+        List<Produkt> usedProdukty = new ArrayList<>();
+        // Clear products assignment to package
+        if (dto.getUsedProduktIds() != null && !dto.getUsedProduktIds().isEmpty()) {
+            usedProdukty = dto.getUsedProduktIds().stream()
+                    .map(prId -> produktRepository.findById(prId)
+                            .orElseThrow(() -> new BadRequestException("Użyty produkt o ID " + prId + " nie istnieje")))
+                    .collect(Collectors.toList());
+
+            usedProdukty.forEach(p -> p.setPaczka(null));
+            usedProdukty.forEach(prd -> produktRepository.save(prd));
+        }
+
+        List<Produkt> produkty = new ArrayList<>();
+        // Add updated products to package
+        if (dto.getProduktIds() != null && !dto.getProduktIds().isEmpty()) {
+            produkty = dto.getProduktIds().stream()
+                    .map(prId -> produktRepository.findById(prId)
+                            .orElseThrow(() -> new BadRequestException("Produkt o ID " + prId + " nie istnieje")))
+                    .collect(Collectors.toList());
+
+            // ustaw listę produktów w paczce
+            paczka.setProdukt(produkty);
+
+            // ustaw paczkę w każdym produkcie (dwukierunkowo)
+            produkty.forEach(p -> p.setPaczka(paczka));
+        }
+        
+        paczkaRepository.save(paczka);
+        produkty.forEach(prd -> produktRepository.save(prd));
+
+        return ResponseEntity.ok(new PaczkaDTO(paczka));
     }
 
     @DeleteMapping("/delete/{id}")

@@ -16,6 +16,8 @@ public class PaczkaCreateDTO {
 
     // Lista ID produktów które mają być przypisane do paczki
     private List<Integer> produktIds;
+    
+    private List<Integer> usedProduktIds;
 
     // Gettery i settery
     public Double getWagaPaczki() {
@@ -49,4 +51,13 @@ public class PaczkaCreateDTO {
     public void setProduktIds(List<Integer> produktIds) {
         this.produktIds = produktIds;
     }
+
+    public List<Integer> getUsedProduktIds() {
+        return usedProduktIds;
+    }
+
+    public void setUsedProduktIds(List<Integer> usedProduktIds) {
+        this.usedProduktIds = usedProduktIds;
+    }
+    
 }
