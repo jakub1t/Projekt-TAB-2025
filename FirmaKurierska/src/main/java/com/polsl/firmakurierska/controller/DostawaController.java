@@ -209,7 +209,6 @@ public class DostawaController {
                                 .orElseThrow(() -> new BadRequestException("Paczka o ID " + pid + " nie istnieje")))
                         .collect(Collectors.toList());
 
-                // ustaw paczkę w każdym produkcie (dwukierunkowo)
                 usedPaczki.forEach(p -> p.setDostawa(null));
                 usedPaczki.forEach(pkg -> paczkaRepository.save(pkg));
             }

@@ -327,7 +327,13 @@ public class ManagerWindow extends Application {
                 refreshAllData(refreshBtn);
             }
         });
-        HBox box = new HBox(5, itemBtn, delBtn);
+
+        Button editBtn = ui.createStyledEditButton();
+        editBtn.setOnAction(e -> {
+            new EditVehicle().show(this, refreshBtn, pojazdData);
+        });
+
+        HBox box = new HBox(5, itemBtn, editBtn, delBtn);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }
