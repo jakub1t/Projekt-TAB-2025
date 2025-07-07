@@ -50,12 +50,17 @@ public class DeliveryFormWindow {
      */
     public void show(ManagerWindow managerWindow, Button rfshBtn, List<Pojazd> pojazdy, List<PaczkaDTO> paczki) {
 
+        boolean noDrivers = false;
         myStage = new Stage();
         myManager = managerWindow;
         myRfsh = rfshBtn;
         availableVehicles = pojazdy;
         availablePackages = paczki;
         availableDrivers = getDrivers();
+        if (availableDrivers.isEmpty()){
+            System.out.println("Nie ma dostępnych kierowców!!!");
+            noDrivers = true;
+        }
 
         // Data startu
         startDatePicker = new DatePicker();
@@ -183,7 +188,7 @@ public class DeliveryFormWindow {
 
         myStage.setTitle("Formularz dostawy");
         myStage.setScene(new Scene(root, 400, 500));
-        myStage.show();
+        if (noDrivers == false) myStage.show();
     }
 
     private VBox createInputCard(String labelText, Control inputField) {

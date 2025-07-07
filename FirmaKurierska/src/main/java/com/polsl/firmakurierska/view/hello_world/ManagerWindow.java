@@ -17,6 +17,8 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.hateoas.Link;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -324,15 +326,21 @@ public class ManagerWindow extends Application {
 
         Button itemBtn = ui.createStyledListItem(name, 160);
         itemBtn.setOnAction(e -> {
-            Link pracownikLink = dostawaData.getLink("pracownik").get();
+            Optional<Link> pracownikWrappedLink = dostawaData.getLink("pracownik");
 
-            String pracownikHref = pracownikLink.getHref();
+            if (pracownikWrappedLink.isPresent()) {
+                Link pracownikLink = pracownikWrappedLink.get();
 
-            String pracownikId = rq_helper.returnValueFromHref("pracownik", pracownikHref);
+                String pracownikHref = pracownikLink.getHref();
 
-            Pracownik pracownikData = getPracownikById(Integer.parseInt(pracownikId));
+                String pracownikId = rq_helper.returnValueFromHref("pracownik", pracownikHref);
 
-            new DeliveryDescription().open(dostawaId, pracownikData.getImie(), pracownikData.getNazwisko());
+                Pracownik pracownikData = getPracownikById(Integer.parseInt(pracownikId));
+
+                new DeliveryDescription().open(dostawaId, pracownikData.getImie(), pracownikData.getNazwisko());
+            } else {
+                new DeliveryDescription().open(dostawaId, "Nie przypisano", "Nie przypisano");
+            }
         });
         Button delBtn = ui.createStyledDeleteButton();
         delBtn.setOnAction(e -> { 
@@ -359,13 +367,20 @@ public class ManagerWindow extends Application {
                 }
             }
 
-            Link pracownikLink = dostawaData.getLink("pracownik").get();
+            Optional<Link> pracownikWrappedLink = dostawaData.getLink("pracownik");
 
-            String pracownikHref = pracownikLink.getHref();
+            if (pracownikWrappedLink.isPresent())
+            {
+                Link pracownikLink = pracownikWrappedLink.get();
 
-            String pracownikId = rq_helper.returnValueFromHref("pracownik", pracownikHref);
+                String pracownikHref = pracownikLink.getHref();
 
-            new EditDelivery().show(this, refreshBtn, dostawaData, pojazdy, paczki, packsInCurrentDelivery, Integer.parseInt(pracownikId));
+                String pracownikId = rq_helper.returnValueFromHref("pracownik", pracownikHref);
+
+                new EditDelivery().show(this, refreshBtn, dostawaData, pojazdy, paczki, packsInCurrentDelivery, Integer.parseInt(pracownikId));
+            } else {
+                new EditDelivery().show(this, refreshBtn, dostawaData, pojazdy, paczki, packsInCurrentDelivery, -1);
+            }
         });
 
         HBox box = new HBox(5, itemBtn, editBtn, delBtn);

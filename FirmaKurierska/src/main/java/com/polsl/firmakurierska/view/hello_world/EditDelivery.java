@@ -60,14 +60,23 @@ public class EditDelivery {
     public void show(ManagerWindow managerWindow, Button rfshBtn, DostawaDTO dostawaData, List<Pojazd> pojazdy, 
         List<PaczkaDTO> paczki, List<PaczkaDTO> packsInCurrentDelivery, int driverId) {
 
+        boolean noDrivers = false;
         myStage = new Stage();
         myManager = managerWindow;
         myRfsh = rfshBtn;
         availableVehicles = pojazdy;
         availablePackages = paczki;
-        availableDrivers = getDriversById();
-        selectedDriverId = driverId;
+        availableDrivers = getAllDrivers();
         selectedVehicleId = dostawaData.getIdPojazdu();
+        if (driverId > 0)
+            selectedDriverId = driverId;
+        else if (!availableDrivers.isEmpty()){
+            Pracownik temp = availableDrivers.getFirst();
+            selectedDriverId = temp.getIdOsoby();
+        } else {
+            System.out.println("Nie ma dostępnych kierowców!!!");
+            noDrivers = true;
+        }
 
         // Data startu
         startDatePicker = new DatePicker();
@@ -229,7 +238,7 @@ public class EditDelivery {
 
         myStage.setTitle("Formularz dostawy");
         myStage.setScene(new Scene(root, 400, 500));
-        myStage.show();
+        if (noDrivers == false) myStage.show();
     }
 
     private VBox createInputCard(String labelText, Control inputField) {
@@ -247,7 +256,7 @@ public class EditDelivery {
         return box;
     }
 
-    private List<Pracownik> getDriversById() {
+    private List<Pracownik> getAllDrivers() {
         List<Pracownik> theDrivers = new ArrayList<>();
         RequestController rq = new RequestController("/pracownik", 0);
 

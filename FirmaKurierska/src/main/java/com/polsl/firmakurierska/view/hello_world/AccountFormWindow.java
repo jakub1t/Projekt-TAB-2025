@@ -27,6 +27,8 @@ import javafx.stage.Stage;
 
 public class AccountFormWindow {
 
+    private Stage myStage = null;
+
     public void show(VBox accountContainer, Button rfshBtn, AdminPanel parent) {
         // Pola do wpisywania danych
         TextField imieField        = new TextField();
@@ -111,6 +113,7 @@ public class AccountFormWindow {
             
             
             parent.refreshAllData(accountContainer, rfshBtn);
+            myStage.close();
             
         });
 
@@ -128,10 +131,10 @@ public class AccountFormWindow {
 
         Scene scene = new Scene(root, 400, 750);
 
-        Stage stage = new Stage();
-        stage.setTitle("Dodawanie konta");
-        stage.setScene(scene);
-        stage.show();
+        myStage = new Stage();
+        myStage.setTitle("Dodawanie konta");
+        myStage.setScene(scene);
+        myStage.show();
     }
 
     // Tworzy kartę z etykietą i polem wejściowym
