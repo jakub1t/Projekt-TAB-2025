@@ -3,7 +3,6 @@ package com.polsl.firmakurierska.view.hello_world;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -17,7 +16,6 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.hateoas.Link;
 
@@ -35,12 +33,14 @@ import com.polsl.firmakurierska.model.Klient;
 import com.polsl.firmakurierska.model.Pojazd;
 import com.polsl.firmakurierska.model.Pracownik;
 import com.polsl.firmakurierska.view.UIBuilder;
+import com.polsl.firmakurierska.view.UIThemeManager;
 
 public class ManagerWindow extends Application {
 
     private final UIBuilder ui = new UIBuilder();
+    private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
+    private Stage myStage = null;
 
-    private boolean useDarkMode = false;
     private final int initHeight = 450;
     private final int initWidth = 900;
 
@@ -52,10 +52,13 @@ public class ManagerWindow extends Application {
     private List<PaczkaDTO> paczki = null;
     private List<Pojazd> pojazdy = null;
     private List<DostawaDTO> dostawy = null;
+    private List<Klient> klienci = null;
 
+    private VBox produktyList;
     private VBox paczkiList;
     private VBox pojazdyList;
     private VBox dostawyList;
+    private VBox klienciList;
 
     // Selection options for filtering deliveries: 
     // 0 - all, 1 - completed, 2 - not completed, any other value - none
@@ -64,7 +67,12 @@ public class ManagerWindow extends Application {
     public void open(int userId) {
         this.loggedUserId = userId;
         getMyName();
-        this.start(new Stage());
+
+        if (myStage == null) {
+            myStage = new Stage();
+        }
+
+        this.start(myStage);
     }
 
     @Override
@@ -72,56 +80,60 @@ public class ManagerWindow extends Application {
         Label welcomeLabel = new Label("Witaj " + loggedUserName + " " + loggedUserSurname + "!");
         welcomeLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
         
-        Button generujRaportBtn = ui.createStylizedButton(useDarkMode, 150, "Generuj raport");
+        Button generujRaportBtn = ui.createStylizedButton(theme.getThemeMode(), 150, "Generuj raport");
         generujRaportBtn.setOnAction(e -> new RaportFormWindow().show());
 
-        Button refreshBtn = ui.createStylizedButton(useDarkMode, 150, "Odśwież dane");
+        Button refreshBtn = ui.createStylizedButton(theme.getThemeMode(), 150, "Odśwież dane");
 
         refreshBtn.setOnAction(e -> {
             refreshAllData(refreshBtn);
         });
 
-        HBox welBox = new HBox(20, welcomeLabel, refreshBtn, generujRaportBtn);
+        Button themeSwitch = ui.createStylizedButton(theme.getThemeMode(), 70, "Motyw");
+        themeSwitch.setOnAction(e -> {
+            theme.setThemeMode(!theme.getThemeMode());
+            this.start(myStage);
+        });
+
+        HBox welBox = new HBox(20, welcomeLabel, refreshBtn, generujRaportBtn, themeSwitch);
         welBox.setAlignment(Pos.CENTER);
         welBox.setMinHeight(60);
         welBox.setMaxHeight(60);
         
         // ===== KOL 1: PRODUKTY =====
 
+        produktyList = ui.createListContainer(theme.getThemeMode());
+        ScrollPane produktyScroll = new ScrollPane(produktyList);
+        produktyScroll.setContent(produktyList);
+        produktyScroll.setFitToWidth(true);
+        produktyScroll.setPrefHeight(300);
 
+        produkty = getProdukty();
+
+        produkty.forEach(produkt -> {
+            produktyList.getChildren().add(createProduktItem(produkt, refreshBtn));
+        });
+
+        VBox produktyCol = ui.createStylizedColumn(theme.getThemeMode(), "Produkty", Integer.MAX_VALUE, produktyScroll);
 
         // ===== KOL 2: PACZKI =====
-        paczkiList = new VBox(5);
-        paczkiList.setPadding(new Insets(5));
+        paczkiList = ui.createListContainer(theme.getThemeMode());
         ScrollPane paczkiScroll = new ScrollPane(paczkiList);
         paczkiScroll.setFitToWidth(true);
         paczkiScroll.setPrefHeight(300);
         
         paczki = getPaczki();
-        produkty = getProdukty();
 
         paczki.forEach(paczka -> {
             paczkiList.getChildren().add(createPackageItem(paczka.getIdPaczki(), paczka, refreshBtn));
         });
 
-        Button dodajPaczkeBtn = ui.createStylizedButton(useDarkMode, 120, "Dodaj paczkę");
+        Button dodajPaczkeBtn = ui.createStylizedButton(theme.getThemeMode(), 120, "Dodaj paczkę");
         dodajPaczkeBtn.setOnAction(e -> new PackageFormWindow().show(this, refreshBtn));
-        VBox paczkiCol = ui.createStylizedColumn(useDarkMode, "Paczki", 200, paczkiScroll, dodajPaczkeBtn);
-
-        // Nieco jasniejszy / ciemniejszy kolor
-        if (useDarkMode) {
-            paczkiCol.setBackground(
-                new Background(new BackgroundFill(Color.web("#4B4B4B"), null, null))
-            );
-        } else {
-            paczkiCol.setBackground(
-                new Background(new BackgroundFill(Color.web("#E0E0E0"), null, null))
-            );
-        }
+        VBox paczkiCol = ui.createStylizedColumn(theme.getThemeMode(), "Paczki", Integer.MAX_VALUE, paczkiScroll, dodajPaczkeBtn);
 
         // ===== KOL 3: POJAZDY =====
-        pojazdyList = new VBox(5);
-        pojazdyList.setPadding(new Insets(5));
+        pojazdyList = ui.createListContainer(theme.getThemeMode());
         ScrollPane pojazdyScroll = new ScrollPane(pojazdyList);
         pojazdyScroll.setFitToWidth(true);
         pojazdyScroll.setPrefHeight(300);
@@ -132,9 +144,9 @@ public class ManagerWindow extends Application {
             pojazdyList.getChildren().add(createVehicleItem(pojazd.getIdPojazdu(), pojazd, refreshBtn));
         });
 
-        Button dodajPojazdBtn = ui.createStylizedButton(useDarkMode, 120, "Dodaj pojazd");
+        Button dodajPojazdBtn = ui.createStylizedButton(theme.getThemeMode(), 120, "Dodaj pojazd");
         dodajPojazdBtn.setOnAction(e -> new VehicleFormWindow().show(this, refreshBtn));
-        VBox pojazdyCol = ui.createStylizedColumn(useDarkMode, "Pojazdy", 200, pojazdyScroll, dodajPojazdBtn);
+        VBox pojazdyCol = ui.createStylizedColumn(theme.getThemeMode(), "Pojazdy", Integer.MAX_VALUE, pojazdyScroll, dodajPojazdBtn);
 
         // ===== KOL 4: DOSTAWY =====
         ObservableList<String> options = 
@@ -162,8 +174,7 @@ public class ManagerWindow extends Application {
         });
         comboBox.setValue("Wszystkie");
 
-        dostawyList = new VBox(5);
-        dostawyList.setPadding(new Insets(5));
+        dostawyList = ui.createListContainer(theme.getThemeMode());
         ScrollPane dostawyScroll = new ScrollPane(dostawyList);
         dostawyScroll.setFitToWidth(true);
         dostawyScroll.setPrefHeight(300);
@@ -174,31 +185,48 @@ public class ManagerWindow extends Application {
             dostawyList.getChildren().add(createDeliveryItem(dostawa.getIdDostawy(), dostawa, refreshBtn));
         });
 
-        Button dodajDostaweBtn = ui.createStylizedButton(useDarkMode, 120, "Dodaj dostawę");
-        dodajDostaweBtn.setOnMouseClicked(e -> {
+        Button dodajDostaweBtn = ui.createStylizedButton(theme.getThemeMode(), 120, "Dodaj dostawę");
+        dodajDostaweBtn.setOnAction(e -> {
             new DeliveryFormWindow().show(this, refreshBtn, pojazdy, paczki);
         });
 
-        VBox dostawyCol = ui.createStylizedColumn(useDarkMode, "Dostawy", 200, comboBox, dostawyScroll, dodajDostaweBtn);
+        VBox dostawyCol = ui.createStylizedColumn(theme.getThemeMode(), "Dostawy", Integer.MAX_VALUE, comboBox, dostawyScroll, dodajDostaweBtn);
+
+        // ===== KOL 5: KLIENCI =====
+
+        klienciList = ui.createListContainer(theme.getThemeMode());
+        ScrollPane klienciScroll = new ScrollPane(klienciList);
+        klienciScroll.setFitToWidth(true);
+        klienciScroll.setPrefHeight(300);
+
+        klienci = getKlienci();
+
+        klienci.forEach(klient -> {
+            klienciList.getChildren().add(createKlientItem(klient, refreshBtn));
+        });
+        
+        VBox klienciCol = ui.createStylizedColumn(theme.getThemeMode(), "Klienci", Integer.MAX_VALUE, klienciScroll);
+
+        // ===== GŁÓWNY UKŁAD =====
+
         // Nieco jasniejszy / ciemniejszy kolor
-        if (useDarkMode) {
+        if (theme.getThemeMode()) {
+            paczkiCol.setBackground(
+                new Background(new BackgroundFill(Color.web("#3A3A3A"), null, null))
+            );
             dostawyCol.setBackground(
-                new Background(new BackgroundFill(Color.web("#4B4B4B"), null, null))
+                new Background(new BackgroundFill(Color.web("#3A3A3A"), null, null))
             );
         } else {
+            paczkiCol.setBackground(
+                new Background(new BackgroundFill(Color.web("#F4F4F4"), null, null))
+            );
             dostawyCol.setBackground(
-                new Background(new BackgroundFill(Color.web("#E0E0E0"), null, null))
+                new Background(new BackgroundFill(Color.web("#F4F4F4"), null, null))
             );
         }
 
-
-        // ===== KOL 5: KLIENCI =====
-        
-
-
-
-        // ===== GŁÓWNY UKŁAD =====
-        HBox dataBox = new HBox(0, paczkiCol, pojazdyCol, dostawyCol);
+        HBox dataBox = new HBox(0, produktyCol, paczkiCol, pojazdyCol, dostawyCol, klienciCol);
         dataBox.setAlignment(Pos.CENTER);
         dataBox.setStyle("-fx-background-color: #FFFFFF");
 
@@ -206,24 +234,81 @@ public class ManagerWindow extends Application {
         root.setAlignment(Pos.CENTER);
         root.setSpacing(10);
         
-        if (useDarkMode) {
-            welBox.setStyle("-fx-background-color: #4B4B4B");
+        if (theme.getThemeMode()) {
+            welBox.setStyle("-fx-background-color: #2F2F2F");
             root.setStyle("-fx-background-color: #BBBBBB");
+            welcomeLabel.setTextFill(Color.web("#BBBBBB"));
         } else {
             welBox.setStyle("-fx-background-color: #FFFFFF");
-            root.setStyle("-fx-background-color: #CBCBCB");
+            root.setStyle("-fx-background-color: #C4C4C4");
         }
 
         Scene scene = new Scene(root, initWidth, initHeight);
         stage.setScene(scene);
-        stage.setTitle("Manager Panel");
+        stage.setTitle("Administrator Panel");
         stage.show();
+    }
+    /*
+    private VBox buildColumn(String title, ScrollPane content, Button addButton, String bgColor) {
+        Label header = new Label(title);
+        header.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+        header.setMaxWidth(Double.MAX_VALUE);
+        HBox headerBox = new HBox(header);
+        headerBox.setAlignment(Pos.CENTER);
+        headerBox.setPadding(new Insets(10));
+
+        HBox addBox = new HBox(addButton);
+        addBox.setAlignment(Pos.CENTER);
+        addBox.setPadding(new Insets(5));
+
+        VBox col = new VBox(10, headerBox, content, addBox);
+        col.setPadding(new Insets(10));
+        col.setFillWidth(true);
+        col.setStyle("-fx-background-color: " + bgColor + ";");
+        return col;
+    }
+
+    private VBox buildColumn(String title, ScrollPane content, Button addButton, String bgColor, ComboBox<String> comboBox) {
+        Label header = new Label(title);
+        header.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+        header.setMaxWidth(Double.MAX_VALUE);
+        HBox headerBox = new HBox(header, comboBox);
+        headerBox.setAlignment(Pos.CENTER);
+        headerBox.setPadding(new Insets(10));
+
+        HBox addBox = new HBox(addButton);
+        addBox.setAlignment(Pos.CENTER);
+        addBox.setPadding(new Insets(5));
+
+        VBox col = new VBox(10, headerBox, content, addBox);
+        col.setPadding(new Insets(10));
+        col.setFillWidth(true);
+        col.setStyle("-fx-background-color: " + bgColor + ";");
+        return col;
+    }  */
+
+    private HBox createProduktItem(ProduktDTO produktData, Button refreshBtn) {
+        String name = String.format("ID: %d | %s", produktData.getIdProduktu(), produktData.getNazwaProduktu());
+
+        Button itemBtn = ui.createStyledListItem(name, Integer.MAX_VALUE);
+        itemBtn.setOnAction(e -> {
+            System.out.println("Ayy");
+        });
+
+        Button delBtn = ui.createStyledDeleteButton();
+        delBtn.setOnAction(e -> {
+            System.out.println("Lmao");
+        });
+
+        HBox box = new HBox(5, itemBtn, delBtn);
+        box.setAlignment(Pos.CENTER_LEFT);
+        return box;
     }
 
     private HBox createPackageItem(int paczkaId, PaczkaDTO paczkaData, Button refreshBtn) {
         String name = "ID paczki: " + paczkaId;
 
-        Button itemBtn = ui.createStyledListItem(name, 160);
+        Button itemBtn = ui.createStyledListItem(name, Integer.MAX_VALUE);
         itemBtn.setOnAction(e -> {
             
             int klientId = paczkaData.getKlientId();
@@ -261,21 +346,7 @@ public class ManagerWindow extends Application {
                 refreshAllData(refreshBtn);
             }
         });
-
-        Button editBtn = ui.createStyledEditButton();
-        editBtn.setOnAction(e -> {
-            List<ProduktDTO> productsInCurrentPackage = new ArrayList<>();
-
-            for (ProduktDTO pr : produkty) {
-                if (paczkaData.getProduktIds().contains(pr.getIdProduktu())) {
-                    productsInCurrentPackage.add(pr);
-                }
-            }
-
-            new EditPackages().show(this, refreshBtn, paczkaData, productsInCurrentPackage);
-        });
-
-        HBox box = new HBox(5, itemBtn, editBtn, delBtn);
+        HBox box = new HBox(5, itemBtn, delBtn);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }
@@ -283,7 +354,7 @@ public class ManagerWindow extends Application {
     private HBox createVehicleItem(int pojazdId, Pojazd pojazdData, Button refreshBtn) {
         String name = String.format("ID: %d | %s", pojazdId, pojazdData.getMarka());
 
-        Button itemBtn = ui.createStyledListItem(name, 160);
+        Button itemBtn = ui.createStyledListItem(name, Integer.MAX_VALUE);
         itemBtn.setOnAction(e -> {
             new VehicleDescription()
                 .show(
@@ -308,13 +379,7 @@ public class ManagerWindow extends Application {
                 refreshAllData(refreshBtn);
             }
         });
-
-        Button editBtn = ui.createStyledEditButton();
-        editBtn.setOnAction(e -> {
-            new EditVehicle().show(this, refreshBtn, pojazdData);
-        });
-
-        HBox box = new HBox(5, itemBtn, editBtn, delBtn);
+        HBox box = new HBox(5, itemBtn, delBtn);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }
@@ -324,23 +389,17 @@ public class ManagerWindow extends Application {
         RequestController rq_helper = new RequestController("", 0);
 
 
-        Button itemBtn = ui.createStyledListItem(name, 160);
+        Button itemBtn = ui.createStyledListItem(name, Integer.MAX_VALUE);
         itemBtn.setOnAction(e -> {
-            Optional<Link> pracownikWrappedLink = dostawaData.getLink("pracownik");
+            Link pracownikLink = dostawaData.getLink("pracownik").get();
 
-            if (pracownikWrappedLink.isPresent()) {
-                Link pracownikLink = pracownikWrappedLink.get();
+            String pracownikHref = pracownikLink.getHref();
 
-                String pracownikHref = pracownikLink.getHref();
+            String pracownikId = rq_helper.returnValueFromHref("pracownik", pracownikHref);
 
-                String pracownikId = rq_helper.returnValueFromHref("pracownik", pracownikHref);
+            Pracownik pracownikData = getPracownikById(Integer.parseInt(pracownikId));
 
-                Pracownik pracownikData = getPracownikById(Integer.parseInt(pracownikId));
-
-                new DeliveryDescription().open(dostawaId, pracownikData.getImie(), pracownikData.getNazwisko());
-            } else {
-                new DeliveryDescription().open(dostawaId, "Nie przypisano", "Nie przypisano");
-            }
+            new DeliveryDescription().open(dostawaId, pracownikData.getImie(), pracownikData.getNazwisko());
         });
         Button delBtn = ui.createStyledDeleteButton();
         delBtn.setOnAction(e -> { 
@@ -356,34 +415,31 @@ public class ManagerWindow extends Application {
             }
         });
 
-        Button editBtn = ui.createStyledEditButton();
-        editBtn.setOnAction(e -> {
+        if (dostawaData.getStatus().equals("ZREALIZOWANA")) {
+            itemBtn.setBackground(ui.buttonCompletedDeliveryInactive);
+            itemBtn.setOnMouseEntered(e-> { itemBtn.setBackground(ui.buttonCompletedDeliveryActive);});
+            itemBtn.setOnMouseExited(e-> { itemBtn.setBackground(ui.buttonCompletedDeliveryInactive);});
+        }
 
-            List<PaczkaDTO> packsInCurrentDelivery = new ArrayList<>();
+        HBox box = new HBox(5, itemBtn, delBtn);
+        box.setAlignment(Pos.CENTER_LEFT);
+        return box;
+    }
 
-            for (PaczkaDTO pk : paczki) {
-                if (dostawaData.getPaczki().contains(pk.getIdPaczki())) {
-                    packsInCurrentDelivery.add(pk);
-                }
-            }
+    private HBox createKlientItem(Klient klientData, Button refreshBtn) {
+        String name = String.format("ID: %d | %s %s", klientData.getIdKlienta(), klientData.getImieK(), klientData.getNazwiskoK());
 
-            Optional<Link> pracownikWrappedLink = dostawaData.getLink("pracownik");
-
-            if (pracownikWrappedLink.isPresent())
-            {
-                Link pracownikLink = pracownikWrappedLink.get();
-
-                String pracownikHref = pracownikLink.getHref();
-
-                String pracownikId = rq_helper.returnValueFromHref("pracownik", pracownikHref);
-
-                new EditDelivery().show(this, refreshBtn, dostawaData, pojazdy, paczki, packsInCurrentDelivery, Integer.parseInt(pracownikId));
-            } else {
-                new EditDelivery().show(this, refreshBtn, dostawaData, pojazdy, paczki, packsInCurrentDelivery, -1);
-            }
+        Button itemBtn = ui.createStyledListItem(name, Integer.MAX_VALUE);
+        itemBtn.setOnAction(e -> {
+            System.out.println("Ayy");
         });
 
-        HBox box = new HBox(5, itemBtn, editBtn, delBtn);
+        Button delBtn = ui.createStyledDeleteButton();
+        delBtn.setOnAction(e -> {
+            System.out.println("Lmao");
+        });
+
+        HBox box = new HBox(5, itemBtn, delBtn);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }
@@ -499,35 +555,6 @@ public class ManagerWindow extends Application {
         return mojePaczki;
     }
 
-    private List<ProduktDTO> getProdukty() {
-        List<ProduktDTO> mojeProdukty = new ArrayList<>();
-        RequestController rq = new RequestController("/produkt", 0);
-        String response = "";
-        boolean goFurther = true;
-
-        try {
-            response = rq.sendPathReq();
-
-        } catch (ResourceNotFoundException rex) {
-            System.out.println(rex.getMessage());
-            goFurther = false;
-        } catch (BadRequestException e) {
-            System.out.println(e.getMessage());
-            goFurther = false;
-        }
-        if (goFurther) {
-            ObjectMapper mapper = new ObjectMapper().configure(
-                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            mapper.registerModule(new JavaTimeModule());
-            try {
-                mojeProdukty = mapper.readValue(response, new TypeReference<List<ProduktDTO>>(){});
-            } catch (IOException e) {
-                System.out.println(e.getMessage());
-            }
-        }       
-        return mojeProdukty;
-    }
-
     private Pracownik getPracownikById(int workerId) {
         Pracownik pracownik = new Pracownik();
         String response = "";
@@ -572,6 +599,66 @@ public class ManagerWindow extends Application {
         }
 
         return klient;
+    }
+
+    private List<Klient> getKlienci() {
+        List<Klient> moiKlienci = new ArrayList<>();
+        RequestController rq = new RequestController("/klient", 0);
+
+        String response = "";
+        boolean goFurther = true;
+
+        try {
+            response = rq.sendPathReq();
+
+        } catch (ResourceNotFoundException rex) {
+            System.out.println(rex.getMessage());
+            goFurther = false;
+        } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+            goFurther = false;
+        }
+        if (goFurther) {
+            ObjectMapper mapper = new ObjectMapper().configure(
+                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            mapper.registerModule(new JavaTimeModule());
+            try {
+                moiKlienci = mapper.readValue(response, new TypeReference<List<Klient>>(){});
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
+        }       
+        return moiKlienci;
+    }
+
+    private List<ProduktDTO> getProdukty() {
+        List<ProduktDTO> mojeProdukty = new ArrayList<>();
+        RequestController rq = new RequestController("/produkt", 0);
+
+        String response = "";
+        boolean goFurther = true;
+
+        try {
+            response = rq.sendPathReq();
+
+        } catch (ResourceNotFoundException rex) {
+            System.out.println(rex.getMessage());
+            goFurther = false;
+        } catch (BadRequestException e) {
+            System.out.println(e.getMessage());
+            goFurther = false;
+        }
+        if (goFurther) {
+            ObjectMapper mapper = new ObjectMapper().configure(
+                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            mapper.registerModule(new JavaTimeModule());
+            try {
+                mojeProdukty = mapper.readValue(response, new TypeReference<List<ProduktDTO>>(){});
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
+        }       
+        return mojeProdukty;
     }
 
     /*
@@ -701,21 +788,33 @@ public class ManagerWindow extends Application {
 
         refreshButton.setDisable(true);
 
+        this.produktyList.setDisable(true);
         this.paczkiList.setDisable(true);
         this.pojazdyList.setDisable(true);
         this.dostawyList.setDisable(true);
+        this.klienciList.setDisable(true);
 
+        this.produktyList.getChildren().clear();
         this.paczkiList.getChildren().clear();
         this.pojazdyList.getChildren().clear();
         this.dostawyList.getChildren().clear();
+        this.klienciList.getChildren().clear();
 
+        List<ProduktDTO> updatedProdukty = getProdukty();
         List<PaczkaDTO> updatedPaczki = getPaczki();
         List<Pojazd> updatedPojazdy = getPojazdy();
         List<DostawaDTO> updatedDostawy = getDostawy();
+        List<Klient> updatedKlienci = getKlienci();
 
+        this.produkty = updatedProdukty;
         this.paczki = updatedPaczki;
         this.pojazdy = updatedPojazdy;
         this.dostawy = updatedDostawy;
+        this.klienci = updatedKlienci;
+
+        produkty.forEach(produkt -> {
+            produktyList.getChildren().add(createProduktItem(produkt, refreshButton));
+        });
 
         paczki.forEach(paczka -> {
             paczkiList.getChildren().add(createPackageItem(paczka.getIdPaczki(), paczka, refreshButton));
@@ -729,9 +828,15 @@ public class ManagerWindow extends Application {
             dostawyList.getChildren().add(createDeliveryItem(dostawa.getIdDostawy(), dostawa, refreshButton));
         });
 
+        klienci.forEach(klient -> {
+            klienciList.getChildren().add(createKlientItem(klient, refreshButton));
+        });
+
+        this.produktyList.setDisable(false);
         this.paczkiList.setDisable(false);
         this.pojazdyList.setDisable(false);
         this.dostawyList.setDisable(false);
+        this.klienciList.setDisable(false);
 
         refreshButton.setDisable(false);
     }

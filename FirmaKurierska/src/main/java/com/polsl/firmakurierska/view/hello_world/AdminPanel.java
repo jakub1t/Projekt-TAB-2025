@@ -15,6 +15,8 @@ import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Konto;
 import com.polsl.firmakurierska.model.Pracownik;
+import com.polsl.firmakurierska.view.UIBuilder;
+import com.polsl.firmakurierska.view.UIThemeManager;
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -26,9 +28,14 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 public class AdminPanel extends Application {
+
+    private final UIBuilder ui = new UIBuilder();
+    private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
+    private Stage myStage = null;
 
     private int loggedUserId = 0;
     private String loggedUserName = "Imię";
@@ -38,7 +45,11 @@ public class AdminPanel extends Application {
     public void open(int userId) {
         this.loggedUserId = userId;
         getMyName();
-        this.start(new Stage());
+        if (myStage == null) {
+            myStage = new Stage();
+        }
+
+        this.start(myStage);
     }
 
     @Override
@@ -46,12 +57,18 @@ public class AdminPanel extends Application {
         // ================= LEWY PANEL (KONTA) =================
 
         Label welcomeLabel = new Label("Witaj " + loggedUserName + " " + loggedUserSurname + "!");
-        welcomeLabel.setStyle("-fx-font-size: 12px;");
-        Button refreshBtn = new Button("Odśwież Dane");
-        refreshBtn.setPrefWidth(200);
+        welcomeLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        Button refreshBtn = ui.createStylizedButton(theme.getThemeMode(), 150, "Odśwież dane");
+        
+        Button themeSwitch = ui.createStylizedButton(theme.getThemeMode(), 70, "Motyw");
+        themeSwitch.setOnAction(e -> {
+            theme.setThemeMode(!theme.getThemeMode());
+            this.start(myStage);
+        });
 
-        VBox welBox = new VBox(5, welcomeLabel, refreshBtn);
+        VBox welBox = new VBox(5, welcomeLabel, themeSwitch, refreshBtn);
         welBox.setAlignment(Pos.CENTER);
+        welBox.setSpacing(10);
 
         kontaList = new VBox(5);
         kontaList.setPadding(new Insets(5));
@@ -70,12 +87,11 @@ public class AdminPanel extends Application {
 
             kontaList.getChildren().add(createKontoItem(account.getIdKonta(), listData));
         });
-        //workerData.forEach(data -> {kontaList.getChildren().add(createKontoItem(data));});
 
         // Pasek wyszukiwania
         TextField searchField = new TextField();
         searchField.setPromptText("Wyszukaj konto");
-        Button searchButton = new Button("Szukaj");
+        Button searchButton = ui.createStylizedButton(theme.getThemeMode(), 80, "Szukaj");
         searchButton.setOnAction(e -> {
             String query = searchField.getText().toLowerCase();
             kontaList.getChildren().clear();
@@ -88,41 +104,40 @@ public class AdminPanel extends Application {
             });
         });
         HBox searchBox = new HBox(5, searchField, searchButton);
-        searchBox.setAlignment(Pos.CENTER_LEFT);
+        searchBox.setAlignment(Pos.CENTER);
         searchBox.setPadding(new Insets(0, 0, 10, 0));
 
         ScrollPane kontaScroll = new ScrollPane(kontaList);
         kontaScroll.setFitToWidth(true);
         kontaScroll.setPrefHeight(300);
 
-        Button dodajKontoButton = new Button("Dodaj konto");
+        Button dodajKontoButton = ui.createStylizedButton(theme.getThemeMode(), 150, "Dodaj Konto");
         dodajKontoButton.setOnAction(e -> {
             new AccountFormWindow().show(kontaList, refreshBtn, this);
         });
 
-        HBox kontaLabel = new HBox(new Label("Konta"));
-        kontaLabel.setAlignment(Pos.CENTER);
-        kontaLabel.setPadding(new Insets(10));
-        kontaLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-
         HBox dodajKontoBox = new HBox(dodajKontoButton);
         dodajKontoBox.setAlignment(Pos.CENTER);
 
-        VBox mainPanel = new VBox(10,
-            kontaLabel,
+        VBox mainPanel = ui.createStylizedColumn(theme.getThemeMode(), "Konta", 260,
             searchBox,
             kontaScroll,
             dodajKontoBox
         );
-        mainPanel.setPadding(new Insets(10));
-        mainPanel.setPrefWidth(350);
-        mainPanel.setStyle("-fx-background-color: #f4f4f4;");
 
         // ================= GŁÓWNY UKŁAD =================
         VBox root = new VBox(welBox, mainPanel);
         root.setPadding(new Insets(10));
+        root.setSpacing(10);
+        
+        if (theme.getThemeMode()) {
+            root.setStyle("-fx-background-color: #202020");
+            welcomeLabel.setTextFill(Color.web("BBBBBB"));
+        } else {
+            root.setStyle("-fx-background-color: #F0F0F0");
+        }
 
-        Scene scene = new Scene(root, 260, 450);
+        Scene scene = new Scene(root, 260, 520);
         stage.setScene(scene);
         stage.setTitle("Admin Panel - Konta");
         stage.show();
@@ -132,8 +147,7 @@ public class AdminPanel extends Application {
         String kontoName = data.getFirst();
         Integer kontoId = acId;
 
-        Button kontoButton = new Button(acId.toString() + ": " + kontoName);
-        kontoButton.setPrefWidth(200);
+        Button kontoButton = ui.createStyledListItem(acId.toString() + ": " + kontoName, Integer.MAX_VALUE);
         kontoButton.setOnAction(e -> {
             System.out.println("Naciśnięto " + kontoName);
             new AccountDescription().show(
@@ -141,7 +155,7 @@ public class AdminPanel extends Application {
             );
         });
 
-        Button deleteButton = new Button("X");
+        Button deleteButton = ui.createStyledDeleteButton();
 
         if (acId != loggedUserId) {
             deleteButton.setDisable(false);

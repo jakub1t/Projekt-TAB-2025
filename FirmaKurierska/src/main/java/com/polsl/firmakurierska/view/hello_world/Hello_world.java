@@ -83,8 +83,7 @@ public class Hello_world extends Application {
 
         if (response.equals("Zalogowano pomyślnie")) { isSuccess = true; }
         else { isSuccess = false; } 
-        System.out.println(response);
-
+        
         return isSuccess;
     }
 

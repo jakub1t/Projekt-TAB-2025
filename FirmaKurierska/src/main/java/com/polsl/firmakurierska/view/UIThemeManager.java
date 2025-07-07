@@ -22,6 +22,10 @@ public class UIThemeManager {
         themeMode = isDarkMode;
     }
 
+    /**
+     * 
+     * @return True when dark mode is used, false otherwise
+     */
     public boolean getThemeMode() {
         return themeMode;
     }

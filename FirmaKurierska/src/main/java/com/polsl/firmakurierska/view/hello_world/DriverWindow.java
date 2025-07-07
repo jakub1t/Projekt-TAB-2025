@@ -13,6 +13,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -27,11 +28,17 @@ import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.dto.DostawaDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.model.Pracownik;
+import com.polsl.firmakurierska.view.UIBuilder;
+import com.polsl.firmakurierska.view.UIThemeManager;
 
 /**
  * Panel for Delivery Drivers
  */
 public class DriverWindow extends Application {
+
+    private final UIBuilder ui = new UIBuilder();
+    private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
+    private Stage myStage = null;
 
     private int loggedUserId = 0;
     private String loggedUserName = "Imię";
@@ -44,7 +51,10 @@ public class DriverWindow extends Application {
     public void open(int userId) {
         this.loggedUserId = userId;
         getMyName();
-        this.start(new Stage());
+        if (myStage == null) {
+            myStage = new Stage();
+        }
+        this.start(myStage);
     }
 
     /**
@@ -54,9 +64,14 @@ public class DriverWindow extends Application {
     public void start(Stage stage) {
         // ===== DOSTAWY =====
         Label welcomeLabel = new Label("Witaj " + loggedUserName + " " + loggedUserSurname + "!");
-        welcomeLabel.setStyle("-fx-font-size: 12px;");
-        Button refreshBtn = new Button("Odśwież Dane");
-        refreshBtn.setPrefWidth(200);
+        welcomeLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        Button refreshBtn = ui.createStylizedButton(theme.getThemeMode(), 150, "Odśwież dane");
+
+        Button themeSwitch = ui.createStylizedButton(theme.getThemeMode(), 70, "Motyw");
+        themeSwitch.setOnAction(e -> {
+            theme.setThemeMode(!theme.getThemeMode());
+            this.start(myStage);
+        });
 
         ObservableList<String> options = 
             FXCollections.observableArrayList(
@@ -66,14 +81,14 @@ public class DriverWindow extends Application {
             );
         final ComboBox<String> comboBox = new ComboBox<String>(options);
 
-        Label delLabel = new Label("Moje dostawy:");
-        delLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 16px;");
         List<DostawaDTO> dostawy = getDeliveries();
 
         VBox delContainer = new VBox(5);
 
-        VBox welBox = new VBox(5, welcomeLabel, refreshBtn, comboBox);
+        VBox welBox = new VBox(10, welcomeLabel, themeSwitch, refreshBtn);
         welBox.setAlignment(Pos.CENTER);
+        welBox.setPadding(new Insets(10));
+        welBox.setSpacing(10);
         
         comboBox.setOnAction(event -> {
             String selectedOption = new String(comboBox.getValue());
@@ -98,15 +113,22 @@ public class DriverWindow extends Application {
         delScroll.setFitToWidth(true);
         delScroll.setPrefHeight(400);
 
-        VBox colDel = new VBox(10, welBox, delLabel, delScroll);
-        colDel.setPadding(new Insets(10));
-        colDel.setStyle("-fx-background-color: #eaeaea;");
-        colDel.setPrefWidth(400);
+        VBox colDel = ui.createStylizedColumn(theme.getThemeMode(), "Moje dostawy", 400, comboBox, delScroll);
 
-        HBox root = new HBox(colDel);
+        VBox root = new VBox(welBox, colDel);
         root.setPadding(new Insets(15));
+        root.setAlignment(Pos.CENTER);
 
-        Scene scene = new Scene(root, 270, 300);
+        if (theme.getThemeMode()) {
+            welBox.setStyle("-fx-background-color: #2F2F2F");
+            root.setStyle("-fx-background-color: #202020");
+            welcomeLabel.setTextFill(Color.web("#BBBBBB"));
+        } else {
+            welBox.setStyle("-fx-background-color: #FFFFFF");
+            root.setStyle("-fx-background-color: #C4C4C4");
+        }
+
+        Scene scene = new Scene(root, 270, 400);
         stage.setTitle("Worker Panel - Dostawy");
         stage.setScene(scene);
         stage.show();
@@ -218,21 +240,26 @@ public class DriverWindow extends Application {
 
         for (DostawaDTO dv : deliveries) {
             CheckBox cb = new CheckBox();
-            cb.setSelected(dv.getStatus().contains("ZREALIZOWANA") ? true : false);
+            cb.setSelected(dv.getStatus().equals("ZREALIZOWANA") ? true : false);
             cb.setOnAction(e -> {
                 updateDeliveryStatus(cb.isSelected(), dv.getIdDostawy());
             });
 
-            Button dvBtn = new Button(
+            Button dvBtn = ui.createStyledListItem(
                 Integer.toString(dv.getIdDostawy()) 
                 + ": " + dv.getPunktA() 
-                + " do " + dv.getPunktB());
-
-            dvBtn.setPrefWidth(200);
+                + " do " + dv.getPunktB(), 
+                Integer.MAX_VALUE);
 
             dvBtn.setOnAction(e -> new DeliveryDescription().open(
                 dv.getIdDostawy(), loggedUserName, loggedUserSurname
             ));
+
+            if (dv.getStatus().equals("ZREALIZOWANA")) {
+                dvBtn.setBackground(ui.buttonCompletedDeliveryInactive);
+                dvBtn.setOnMouseEntered(e-> { dvBtn.setBackground(ui.buttonCompletedDeliveryActive);});
+                dvBtn.setOnMouseExited(e-> { dvBtn.setBackground(ui.buttonCompletedDeliveryInactive);});
+            }
 
             HBox h = new HBox(10, dvBtn, cb);
             h.setAlignment(Pos.CENTER_LEFT);

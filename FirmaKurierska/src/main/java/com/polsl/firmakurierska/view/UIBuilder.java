@@ -25,6 +25,13 @@ public class UIBuilder {
     
     private static final Background listItemBgInactive = new Background(new BackgroundFill(Color.web("#E0E0E0"), null, null));
     private static final Background listItemBgActive = new Background(new BackgroundFill(Color.web("#F0F0F0"), null, null));
+
+    private static final Background columnBgDark = new Background(new BackgroundFill(Color.web("#2F2F2F"), null, null));
+    private static final Background columnBgLight = new Background(new BackgroundFill(Color.web("#FFFFFF"), null, null));
+
+    public final Background buttonCompletedDeliveryInactive = new Background(new BackgroundFill(Color.web("#8FDAB9"), null, null));
+    public final Background buttonCompletedDeliveryActive = new Background(new BackgroundFill(Color.web("#5FD38D"), null, null));
+    
     /**
      * Creates a new button
      * @param useDarkMode - True = Dark Mode / False = Light Mode
@@ -92,26 +99,6 @@ public class UIBuilder {
     } 
 
     /**
-     * Creates 20px x 20px 'O' Button (this would be cool -> ✎ - 0x270E)
-     */
-    public Button createStyledEditButton() {
-        Button editer = new Button("O");
-
-        editer.setStyle(
-            "-fx-border-radius: 0; " +
-            "-fx-border-width: 1; " +
-            "-fx-cursor: hand; "
-        );
-        editer.setBackground(deleterBgInactive);
-        editer.setPrefSize(20, 20);
-
-        editer.setOnMouseEntered(e -> { editer.setBackground(deleterBgActive); });
-        editer.setOnMouseExited(e -> { editer.setBackground(deleterBgInactive); });
-
-        return editer;
-    } 
-
-    /**
      * Dedicated for Lists such as DeliveryList
      * @param text - Button text
      * @param width - preferred width
@@ -153,9 +140,10 @@ public class UIBuilder {
         }
 
         if (useDarkMode) {
-            col.setStyle("-fx-background-color: #2F2F2F; ");
+            col.setBackground(columnBgDark);
+            header.setTextFill(Color.web("#BBBBBB"));
         } else {
-            col.setStyle("-fx-background-color: #FFFFFF; ");
+            col.setBackground(columnBgLight);
         }
 
         col.setMaxWidth(Integer.MAX_VALUE);
@@ -167,4 +155,16 @@ public class UIBuilder {
         return col;
     }
 
+    public VBox createListContainer(boolean useDarkMode) {
+        VBox listContainer = new VBox(5);
+        listContainer.setPadding(new Insets(5));
+
+        if (useDarkMode) {
+            listContainer.setBackground(new Background(new BackgroundFill(Color.web("#696969"), null, null)));
+        } else {
+            listContainer.setBackground(new Background(new BackgroundFill(Color.web("#D5D5D5"), null, null)));
+        }
+
+        return listContainer;
+    }
 }
