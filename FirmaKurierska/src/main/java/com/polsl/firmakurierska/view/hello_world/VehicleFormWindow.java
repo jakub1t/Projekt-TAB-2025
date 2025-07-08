@@ -4,6 +4,8 @@ import java.util.IllegalFormatException;
 
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.view.UIBuilder;
+import com.polsl.firmakurierska.view.UIThemeManager;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -13,6 +15,9 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 public class VehicleFormWindow {
+
+    private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
+    private final UIBuilder ui = UIBuilder.getUIBuilder();
 
     private TextField typField = null;
     private TextField markaField = null;
@@ -35,14 +40,14 @@ public class VehicleFormWindow {
         numerRejField  = new TextField();
 
         // Karty wejściowe
-        VBox typBox       = createInputCard("Typ pojazdu:", typField);
-        VBox markaBox     = createInputCard("Marka:", markaField);
-        VBox modelBox     = createInputCard("Model:", modelField);
-        VBox pojemnoscBox = createInputCard("Pojemność:", pojemnoscField);
-        VBox numerBox     = createInputCard("Numer rejestracyjny:", numerRejField);
+        VBox typBox       = ui.createFormInputCard(theme.getThemeMode(), "Typ pojazdu:", typField);
+        VBox markaBox     = ui.createFormInputCard(theme.getThemeMode(), "Marka:", markaField);
+        VBox modelBox     = ui.createFormInputCard(theme.getThemeMode(), "Model:", modelField);
+        VBox pojemnoscBox = ui.createFormInputCard(theme.getThemeMode(), "Pojemność:", pojemnoscField);
+        VBox numerBox     = ui.createFormInputCard(theme.getThemeMode(), "Numer rejestracyjny:", numerRejField);
 
         // Przycisk zapisu
-        Button saveBtn = new Button("Zapisz pojazd");
+        Button saveBtn = ui.createStylizedButton(theme.getThemeMode(), 150, "Zapisz pojazd");
         saveBtn.setOnMouseClicked(e -> {
             handleButton();
             managerWindow.refreshAllData(rfshBtn);
@@ -55,35 +60,22 @@ public class VehicleFormWindow {
             typBox, markaBox, modelBox, pojemnoscBox, numerBox,
             btnBox
         );
-        container.setPadding(new Insets(20));
+        container.setPadding(new Insets(10));
         container.setAlignment(Pos.CENTER);
 
         BorderPane root = new BorderPane(container);
-        root.setStyle("-fx-background-color: #f8f8f8;");
+        
+        if (theme.getThemeMode()) {
+            root.setBackground(ui.unifiedRootBgDark);
+        } else {
+            root.setBackground(ui.unifiedRootBgLight);
+        }
 
         myStage = new Stage();
         myStage.setTitle("Formularz pojazdu");
         // Zwiększona wysokość, by pomieścić dodatkowe pole
         myStage.setScene(new Scene(root, 400, 560));
         myStage.show();
-    }
-
-    /**
-     * Tworzy kartę wejściową z etykietą i polem
-     */
-    private VBox createInputCard(String labelText, Control inputField) {
-        Label label = new Label(labelText);
-        label.setStyle("-fx-font-weight: bold;");
-        VBox box = new VBox(5, label, inputField);
-        box.setPadding(new Insets(10));
-        box.setStyle("""
-            -fx-background-color: white;
-            -fx-border-color: #dddddd;
-            -fx-border-radius: 8;
-            -fx-background-radius: 8;
-            -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);
-        """);
-        return box;
     }
 
     /**
