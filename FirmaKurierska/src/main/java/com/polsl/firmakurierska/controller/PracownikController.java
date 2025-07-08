@@ -127,7 +127,60 @@ public class PracownikController {
 
         return new ResponseEntity<>(new PracownikDTO(pracownik), HttpStatus.CREATED);
     }
+    
+    @PutMapping("/update/{id}")
+    @Transactional
+    public ResponseEntity<PracownikDTO> updatePracownik(@PathVariable Integer id, @RequestBody PracownikCreateDTO dto) {
+        if (dto == null) {
+            throw new BadRequestException("Dane pracownika nie mogą być puste.");
+        }
 
+        // Find account by id and change its attributes
+        Konto konto = kontoRepository.findById(id).orElseThrow(
+        () -> new RuntimeException("Konto z id " + id + " nie istnieje"));
+        if (dto.getKonto().getLogin() != null)
+            konto.setLogin(dto.getKonto().getLogin());
+        if (dto.getKonto().getHaslo() != null)
+            konto.setHaslo(dto.getKonto().getHaslo());
+        // Save account
+        konto = kontoRepository.save(konto);
+
+        // Szukamy stanowiska
+        Stanowisko stanowisko = null;
+        if (dto.getStanowiskoId() != null) {
+        stanowisko = stanowiskoRepository.findById(dto.getStanowiskoId())
+                .orElseThrow(() -> new BadRequestException("Stanowisko o ID " + dto.getStanowiskoId() + " nie istnieje"));
+        }
+
+        // Szukamy praw jazdy
+        Set<PrawoJazdy> prawaJazdy = null;
+        if (dto.getPrawaJazdyIds() != null && !dto.getPrawaJazdyIds().isEmpty()) {
+            prawaJazdy = dto.getPrawaJazdyIds().stream()
+                    .map(pid -> prawoJazdyRepository.findById(pid)
+                            .orElseThrow(() -> new BadRequestException("Prawo jazdy o ID " + pid + " nie istnieje")))
+                    .collect(Collectors.toSet());
+        }
+        
+        Pracownik pracownik = pracownikRepository.findById(id).orElseThrow(
+        () -> new RuntimeException("Pracownik z id " + id + " nie istnieje"));
+
+        if (dto.getImie() != null)
+            pracownik.setImie(dto.getImie());
+        if (dto.getNazwisko() != null)
+            pracownik.setNazwisko(dto.getNazwisko());
+        if (dto.getPesel() != null)
+            pracownik.setPesel(dto.getPesel());
+        if (konto != null)
+            pracownik.setKonto(konto);
+        if (stanowisko != null)
+            pracownik.setStanowisko(stanowisko);
+        if (prawaJazdy != null)
+            pracownik.setPrawoJazdy(prawaJazdy);
+
+        pracownik = pracownikRepository.save(pracownik);
+
+        return new ResponseEntity<>(new PracownikDTO(pracownik), HttpStatus.OK);
+    }
 
     @Transactional
     @DeleteMapping("/{pesel}")
@@ -214,20 +267,6 @@ public class PracownikController {
         } else {
             return ResponseEntity.notFound().build();
         }
-    }
-    
-    @PutMapping("/{id}")
-    public Pracownik updatePracownik(@PathVariable Integer id, @RequestBody Pracownik pracownikDetails) {
-        Pracownik pracownik = pracownikRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pracownik z id " + id + " nie istnieje"));
-
-        // Aktualizujemy tylko podstawowe dane
-        pracownik.setImie(pracownikDetails.getImie());
-        pracownik.setNazwisko(pracownikDetails.getNazwisko());
-        pracownik.setPesel(pracownikDetails.getPesel());
-
-        // NIE dotykamy: stanowisko, konto, prawoJazdy
-        return pracownikRepository.save(pracownik); 
     }
 
 

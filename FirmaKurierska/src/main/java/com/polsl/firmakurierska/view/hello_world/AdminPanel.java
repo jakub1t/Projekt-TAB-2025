@@ -85,7 +85,7 @@ public class AdminPanel extends Application {
             List<String> listData = getWorkerData(account.getIdKonta());
             workerNames.add(listData.getFirst());
 
-            kontaList.getChildren().add(createKontoItem(account.getIdKonta(), listData));
+            kontaList.getChildren().add(createKontoItem(account, listData, refreshBtn));
         });
 
         // Pasek wyszukiwania
@@ -99,7 +99,7 @@ public class AdminPanel extends Application {
             accounts.forEach(account -> {
                 List<String> listData = getWorkerData(account.getIdKonta());
                 if (workerNames.get(accounts.indexOf(account)).toLowerCase().contains(query)) {
-                    kontaList.getChildren().add(createKontoItem(account.getIdKonta(), listData));
+                    kontaList.getChildren().add(createKontoItem(account, listData, refreshBtn));
                 }
             });
         });
@@ -143,9 +143,9 @@ public class AdminPanel extends Application {
         stage.show();
     }
 
-    private HBox createKontoItem(Integer acId, List<String> data) {
+    private HBox createKontoItem(Konto account, List<String> data, Button rfshBtn) {
         String kontoName = data.getFirst();
-        Integer kontoId = acId;
+        Integer acId = account.getIdKonta();
 
         Button kontoButton = ui.createStyledListItem(acId.toString() + ": " + kontoName, Integer.MAX_VALUE);
         kontoButton.setOnAction(e -> {
@@ -160,7 +160,7 @@ public class AdminPanel extends Application {
         if (acId != loggedUserId) {
             deleteButton.setDisable(false);
             deleteButton.setOnAction(e -> {
-                if (deleteAcc(kontoId)) {
+                if (deleteAcc(acId)) {
                     kontaList.getChildren().removeIf(acc -> {
                         if (acc instanceof HBox hbox) {
                             Button btn = (Button) hbox.getChildren().get(0);
@@ -174,7 +174,13 @@ public class AdminPanel extends Application {
             deleteButton.setDisable(true);
         }
 
-        HBox hbox = new HBox(10, kontoButton, deleteButton);
+        Button editButton = ui.createStyledEditButton();
+        editButton.setOnMouseClicked(e -> {
+            System.out.println(data);
+            new EditAccount().show(this, rfshBtn, kontaList, account, data);
+        });;
+
+        HBox hbox = new HBox(10, kontoButton, editButton, deleteButton);
         hbox.setAlignment(Pos.CENTER_LEFT);
         return hbox;
     }
@@ -208,6 +214,11 @@ public class AdminPanel extends Application {
         return accounts;
     }
 
+    /**
+     * Gets worker data for specified account ID as a list of strings.
+     * @param accountID account ID
+     * @return list of strings, data order: imie, nazwisko, pesel, stanowisko, kategoria prawa jazdy
+     */
     private List<String> getWorkerData(Integer accountID) {
         List<String> workerData = new ArrayList<>();
         String response = "";
@@ -306,7 +317,7 @@ public class AdminPanel extends Application {
             List<String> listData = getWorkerData(account.getIdKonta());
             workerNames.add(listData.getFirst());
 
-            targetContainer.getChildren().add(createKontoItem(account.getIdKonta(), listData));
+            targetContainer.getChildren().add(createKontoItem(account, listData, refreshBtn));
         });
 
 
