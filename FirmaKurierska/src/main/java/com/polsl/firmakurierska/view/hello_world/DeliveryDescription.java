@@ -26,7 +26,7 @@ import com.polsl.firmakurierska.view.UIThemeManager;
 public class DeliveryDescription {
 
     private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
-    private final UIBuilder ui = new UIBuilder();
+    private final UIBuilder ui = UIBuilder.getUIBuilder();
 
     private int idDostawy = 0;
     private String pracImie = "";
