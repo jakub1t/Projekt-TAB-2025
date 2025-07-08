@@ -1,5 +1,8 @@
 package com.polsl.firmakurierska.view.hello_world;
 
+import com.polsl.firmakurierska.model.Klient;
+import com.polsl.firmakurierska.view.UIThemeManager;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -8,20 +11,15 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
-import com.polsl.firmakurierska.dto.ProduktDTO;
-import com.polsl.firmakurierska.view.UIThemeManager;
-
-public class ProductDescription {
+public class ClientDescription {
     private UIThemeManager theme = UIThemeManager.getUIThemeManager();
 
 
-    public void show(ProduktDTO produktData) {
+    public void show(Klient klient) {
 
         VBox box = new VBox(8,
-            new Label("Nazwa: " + produktData.getNazwaProduktu()),
-            new Label("Waga: " + produktData.getWaga()),
-            new Label("Kategoria: " + produktData.getKategoriaProd()),
-            new Label("Nr seryjny: " + produktData.getNrSeryjny())
+            new Label("Imie: " + klient.getImieK()),
+            new Label("Nazwisko: " + klient.getNazwiskoK())
         );
         box.setPadding(new Insets(10));
         
@@ -47,7 +45,7 @@ public class ProductDescription {
 
         Scene scene = new Scene(root, 400, 160);
         Stage stage = new Stage();
-        stage.setTitle("Szczegóły produktu");
+        stage.setTitle("Szczegóły klienta");
         stage.setScene(scene);
         stage.show();
     }
