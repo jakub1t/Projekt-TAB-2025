@@ -29,7 +29,7 @@ import com.polsl.firmakurierska.view.UIThemeManager;
 public class PackageDescription {
 
     private UIThemeManager theme = UIThemeManager.getUIThemeManager();
-    private UIBuilder ui = new UIBuilder();
+    private UIBuilder ui = UIBuilder.getUIBuilder();
 
     private String imieKlienta = "Imie";
     private String nazwiskoKlienta = "Nazwisko";

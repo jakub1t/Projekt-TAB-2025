@@ -4,18 +4,19 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import lombok.NoArgsConstructor;
 
-@NoArgsConstructor
 public class UIBuilder {
 
     //rgb (95, 211, 141) = # 5FD38D
+
+    private static UIBuilder oneAndOnlyBuilder = null;
 
     private static final Background buttonBgInactiveDark = new Background(new BackgroundFill(Color.web("#4B4B4B"), null, null));
     private static final Background buttonBgActiveDark = new Background(new BackgroundFill(Color.web("#616161"), null, null));
@@ -34,9 +35,22 @@ public class UIBuilder {
     private static final Background columnBgDark = new Background(new BackgroundFill(Color.web("#2F2F2F"), null, null));
     private static final Background columnBgLight = new Background(new BackgroundFill(Color.web("#FFFFFF"), null, null));
 
+    private static final Background inputCardBgLight = new Background(new BackgroundFill(Color.web("#F4F4F4"), null, null));
+    private static final Background inputCardBgDark = new Background(new BackgroundFill(Color.web("#707070"), null, null));
+
     public final Background buttonCompletedDeliveryInactive = new Background(new BackgroundFill(Color.web("#8FDAB9"), null, null));
     public final Background buttonCompletedDeliveryActive = new Background(new BackgroundFill(Color.web("#5FD38D"), null, null));
     
+    private UIBuilder() {};
+
+    public static synchronized UIBuilder getUIBuilder() {
+        if (oneAndOnlyBuilder == null) {
+            oneAndOnlyBuilder = new UIBuilder();
+        }
+
+        return oneAndOnlyBuilder;
+    }
+
     /**
      * Creates a new button
      * @param useDarkMode - True = Dark Mode / False = Light Mode
@@ -233,4 +247,21 @@ public class UIBuilder {
         return listContainer;
     }
 
+    public VBox createFormCard(boolean useDarkMode, String labelText, Control inputField) {
+        Label label = new Label(labelText);
+        label.setStyle("-fx-font-weight: bold;");
+        VBox box = new VBox(5, label, inputField);
+        box.setPadding(new Insets(10));
+        box.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-border-color: #dddddd;" +
+            "-fx-border-radius: 8;" +
+            "-fx-background-radius: 8;" +
+            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
+        );
+        if (useDarkMode) {
+
+        }
+        return box;
+    }
 }

@@ -36,7 +36,7 @@ import com.polsl.firmakurierska.view.UIThemeManager;
  */
 public class DriverWindow extends Application {
 
-    private final UIBuilder ui = new UIBuilder();
+    private final UIBuilder ui = UIBuilder.getUIBuilder();
     private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
     private Stage myStage = null;
 

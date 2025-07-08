@@ -19,7 +19,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class Hello_world extends Application {
-    private final UIBuilder ui = new UIBuilder();
+    private final UIBuilder ui = UIBuilder.getUIBuilder();
 
     @Override
     public void start(Stage stage) {

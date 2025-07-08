@@ -14,7 +14,7 @@ import javafx.stage.Stage;
 public class VehicleDescription {
     
     private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
-    private final UIBuilder ui = new UIBuilder();
+    private final UIBuilder ui = UIBuilder.getUIBuilder();
 
     /**
      * Pokazuje okno ze szczegółami pojazdu:
