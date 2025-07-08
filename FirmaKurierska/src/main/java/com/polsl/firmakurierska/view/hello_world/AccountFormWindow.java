@@ -20,11 +20,14 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 public class AccountFormWindow {
@@ -32,6 +35,8 @@ public class AccountFormWindow {
     private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
     private final UIBuilder ui = UIBuilder.getUIBuilder();
     private Stage myStage = null;
+
+    private String selectedPosition = "";
 
     public void show(VBox accountContainer, Button rfshBtn, AdminPanel parent) {
         // Pola do wpisywania danych
@@ -56,7 +61,7 @@ public class AccountFormWindow {
         List<String> positionsNames = new ArrayList<>();
         positionsNames = getAllPositionsNames(positionsIDs);
 
-        VBox stanowiskoBox = createCheckboxInputCard("Stanowisko:", positionsNames.toArray(new String[0]));
+        VBox stanowiskoBox = createRadioInputCard("Stanowisko:", positionsNames.toArray(new String[0]));
 
         VBox imieBox       = ui.createFormInputCard(theme.getThemeMode(), "Imię:", imieField);
         VBox nazwiskoBox   = ui.createFormInputCard(theme.getThemeMode(), "Nazwisko:", nazwiskoField);
@@ -74,8 +79,6 @@ public class AccountFormWindow {
                 }
             }
         
-            String selectedPosition = "";
-            
             for (Node node : stanowiskoBox.getChildren()) {
                 
                 if (node instanceof CheckBox cb && cb.isSelected()) {
@@ -163,13 +166,44 @@ public class AccountFormWindow {
         }
 
         box.setPadding(new Insets(10));
-        box.setStyle(
-            "-fx-background-color: white;" +
-            "-fx-border-color: #dddddd;" +
+        
+        if (theme.getThemeMode()) {
+            label.setTextFill(Color.web("#BBBBBB"));
+            box.setStyle(
+            "-fx-background-color: #424242;" +
             "-fx-border-radius: 8;" +
             "-fx-background-radius: 8;" +
             "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
         );
+        } else {
+            box.setStyle(
+            "-fx-background-color: #f4f4f4;" +
+            "-fx-border-radius: 8;" +
+            "-fx-background-radius: 8;" +
+            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
+            );
+        }
+        return box;
+    }
+
+    private VBox createRadioInputCard(String labelText, String[] options) {
+        Label label = new Label(labelText);
+        label.setStyle("-fx-font-weight: bold;");
+        VBox box = ui.createListContainer(theme.getThemeMode());
+        box.getChildren().add(label);
+        ToggleGroup sGroup = new ToggleGroup();
+
+        for (String option : options) {
+            RadioButton rb = ui.createFancyRadioButton(theme.getThemeMode(), option);
+            rb.setToggleGroup(sGroup);
+            rb.setPrefHeight(25);
+            rb.setOnMouseClicked(e -> {
+                this.selectedPosition = rb.getText();
+                System.out.println("Selected position: " + this.selectedPosition);
+            });
+            box.getChildren().add(rb);
+        }
+
         return box;
     }
 

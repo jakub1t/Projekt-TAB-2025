@@ -28,6 +28,7 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 public class EditAccount {
@@ -180,13 +181,22 @@ public class EditAccount {
         }
 
         box.setPadding(new Insets(10));
-        box.setStyle(
-            "-fx-background-color: white;" +
-            "-fx-border-color: #dddddd;" +
+        if (theme.getThemeMode()) {
+            label.setTextFill(Color.web("#BBBBBB"));
+            box.setStyle(
+            "-fx-background-color: #424242;" +
             "-fx-border-radius: 8;" +
             "-fx-background-radius: 8;" +
             "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
         );
+        } else {
+            box.setStyle(
+            "-fx-background-color: #f4f4f4;" +
+            "-fx-border-radius: 8;" +
+            "-fx-background-radius: 8;" +
+            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
+            );
+        }
         return box;
     }
 
