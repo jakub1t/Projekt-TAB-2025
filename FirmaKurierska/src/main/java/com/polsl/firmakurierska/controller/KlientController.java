@@ -3,7 +3,10 @@ package com.polsl.firmakurierska.controller;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Klient;
+import com.polsl.firmakurierska.model.Paczka;
 import com.polsl.firmakurierska.repository.KlientRepository;
+import com.polsl.firmakurierska.repository.PaczkaRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,6 +19,9 @@ public class KlientController {
 
 	@Autowired
 	KlientRepository klientRepository;
+	
+	@Autowired
+	PaczkaRepository paczkaRepository;
 	
 	@GetMapping("/{id}")
     public Klient getKlientById(@PathVariable Integer id) {
@@ -38,9 +44,16 @@ public class KlientController {
 	
 	@DeleteMapping("/{id}")
 	public void deleteKlient (@PathVariable Integer id) {
-		if(!klientRepository.existsById(id)) {
-			throw new ResourceNotFoundException("Klient o ID " + id + " nie istnieje");
+		Klient klient = klientRepository.findById(id)
+			.orElseThrow(() -> new ResourceNotFoundException("Klient o ID " + id + " nie istnieje"));
+
+		if (klient.getPaczki() != null) {
+			for (Paczka p : klient.getPaczki()) {
+				p.setKlient(null);
+				paczkaRepository.save(p);
+			}
 		}
+
 		klientRepository.deleteById(id);
 	}
 	

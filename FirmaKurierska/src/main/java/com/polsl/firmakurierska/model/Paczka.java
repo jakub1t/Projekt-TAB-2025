@@ -22,7 +22,7 @@ public class Paczka {
 	private double wagaPaczki;
 	
 	@ManyToOne
-	@JoinColumn(name = "fk_klient_id")
+	@JoinColumn(name = "fk_klient_id", nullable = true)
 	private Klient klient;
 
 	

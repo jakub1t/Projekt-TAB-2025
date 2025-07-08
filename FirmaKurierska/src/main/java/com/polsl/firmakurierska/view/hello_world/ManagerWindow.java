@@ -474,7 +474,16 @@ public class ManagerWindow extends Application {
 
         Button delBtn = ui.createStyledDeleteButton();
         delBtn.setOnAction(e -> {
-            System.out.println("Lmao");
+            if (deleteClient(klientData.getIdKlienta())){
+                dostawyList.getChildren().removeIf(node -> {
+                if (node instanceof HBox hbox) {
+                    Button b = (Button) hbox.getChildren().get(0);
+                    return b.getText().equals(name);
+                }
+                return false;
+                });
+                refreshAllData(refreshBtn);
+            }
         });
 
         HBox box = new HBox(5, itemBtn, delBtn);
@@ -719,6 +728,22 @@ public class ManagerWindow extends Application {
 
     private boolean deletePackage(int packId) {
         RequestController rq = new RequestController("/paczka/delete/" + packId, 3);
+
+        try {
+            rq.sendPathReq();
+
+        } catch (ResourceNotFoundException rex) {
+            System.out.println("deleteDelivery: " + rex.getMessage()); 
+        } catch (BadRequestException bre) {
+            System.out.println("deleteDelivery: " + bre.getMessage());
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean deleteClient(int clientId) {
+        RequestController rq = new RequestController("/klient/" + clientId, 3);
 
         try {
             rq.sendPathReq();
