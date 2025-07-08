@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.hateoas.Link;
+import java.util.Optional;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -346,7 +347,20 @@ public class ManagerWindow extends Application {
                 refreshAllData(refreshBtn);
             }
         });
-        HBox box = new HBox(5, itemBtn, delBtn);
+        Button editBtn = ui.createStyledEditButton();
+        editBtn.setOnAction(e -> {
+            List<ProduktDTO> productsInCurrentPackage = new ArrayList<>();
+
+            for (ProduktDTO pr : produkty) {
+                if (paczkaData.getProduktIds().contains(pr.getIdProduktu())) {
+                    productsInCurrentPackage.add(pr);
+                }
+            }
+
+            new EditPackages().show(this, refreshBtn, paczkaData, productsInCurrentPackage);
+        });
+
+        HBox box = new HBox(5, itemBtn, editBtn, delBtn);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }
@@ -379,7 +393,12 @@ public class ManagerWindow extends Application {
                 refreshAllData(refreshBtn);
             }
         });
-        HBox box = new HBox(5, itemBtn, delBtn);
+        Button editBtn = ui.createStyledEditButton();
+        editBtn.setOnAction(e -> {
+            new EditVehicle().show(this, refreshBtn, pojazdData);
+        });
+
+        HBox box = new HBox(5, itemBtn, editBtn, delBtn);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }
@@ -391,15 +410,21 @@ public class ManagerWindow extends Application {
 
         Button itemBtn = ui.createStyledListItem(name, Integer.MAX_VALUE);
         itemBtn.setOnAction(e -> {
-            Link pracownikLink = dostawaData.getLink("pracownik").get();
+            Optional<Link> pracownikWrappedLink = dostawaData.getLink("pracownik");
 
-            String pracownikHref = pracownikLink.getHref();
+            if (pracownikWrappedLink.isPresent()) {
+                Link pracownikLink = pracownikWrappedLink.get();
 
-            String pracownikId = rq_helper.returnValueFromHref("pracownik", pracownikHref);
+                String pracownikHref = pracownikLink.getHref();
 
-            Pracownik pracownikData = getPracownikById(Integer.parseInt(pracownikId));
+                String pracownikId = rq_helper.returnValueFromHref("pracownik", pracownikHref);
 
-            new DeliveryDescription().open(dostawaId, pracownikData.getImie(), pracownikData.getNazwisko());
+                Pracownik pracownikData = getPracownikById(Integer.parseInt(pracownikId));
+
+                new DeliveryDescription().open(dostawaId, pracownikData.getImie(), pracownikData.getNazwisko());
+            } else {
+                new DeliveryDescription().open(dostawaId, "Nie przypisano", "Nie przypisano");
+            }
         });
         Button delBtn = ui.createStyledDeleteButton();
         delBtn.setOnAction(e -> { 
@@ -415,13 +440,47 @@ public class ManagerWindow extends Application {
             }
         });
 
+        Button editBtn = ui.createStyledEditButton();
+        editBtn.setOnAction(e -> {
+
+            List<PaczkaDTO> packsInCurrentDelivery = new ArrayList<>();
+
+            for (PaczkaDTO pk : paczki) {
+                if (dostawaData.getPaczki().contains(pk.getIdPaczki())) {
+                    packsInCurrentDelivery.add(pk);
+                }
+            }
+
+            Optional<Link> pracownikWrappedLink = dostawaData.getLink("pracownik");
+
+            if (pracownikWrappedLink.isPresent())
+            {
+                Link pracownikLink = pracownikWrappedLink.get();
+
+                String pracownikHref = pracownikLink.getHref();
+
+                String pracownikId = rq_helper.returnValueFromHref("pracownik", pracownikHref);
+
+                new EditDelivery().show(this, refreshBtn, dostawaData, pojazdy, paczki, packsInCurrentDelivery, Integer.parseInt(pracownikId));
+            } else {
+                new EditDelivery().show(this, refreshBtn, dostawaData, pojazdy, paczki, packsInCurrentDelivery, -1);
+            }
+        });
+
         if (dostawaData.getStatus().equals("ZREALIZOWANA")) {
             itemBtn.setBackground(ui.buttonCompletedDeliveryInactive);
             itemBtn.setOnMouseEntered(e-> { itemBtn.setBackground(ui.buttonCompletedDeliveryActive);});
             itemBtn.setOnMouseExited(e-> { itemBtn.setBackground(ui.buttonCompletedDeliveryInactive);});
+            editBtn.setBackground(ui.buttonCompletedDeliveryInactive);
+            editBtn.setDisable(true);
+            delBtn.setBackground(ui.buttonCompletedDeliveryInactive);
+            delBtn.setDisable(true);
+        } else {
+            editBtn.setDisable(false);
+            delBtn.setDisable(false);
         }
 
-        HBox box = new HBox(5, itemBtn, delBtn);
+        HBox box = new HBox(5, itemBtn, editBtn, delBtn);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }

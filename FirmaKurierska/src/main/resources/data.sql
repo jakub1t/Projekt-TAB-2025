@@ -47,19 +47,19 @@ VALUES (1, 3, 'Jan', 'Kowalski', '12345678901');  -- Kierowca
 INSERT INTO pracownik (konto_id, stanowisko_id, imie, nazwisko, pesel) 
 VALUES (2, 3, 'Anna', 'Nowak', '98765432109');  -- Kierowca
 INSERT INTO pracownik (konto_id, stanowisko_id, imie, nazwisko, pesel) 
-VALUES (3, 3, 'Marek', 'Wiśniewski', '45612378901');  -- Kierowca
+VALUES (3, 3, 'Marek', 'Wisniewski', '45612378901');  -- Kierowca
 INSERT INTO pracownik (konto_id, stanowisko_id, imie, nazwisko, pesel) 
-VALUES (4, 1, 'Katarzyna', 'Zielińska', '32165498701');  -- Administrator
+VALUES (4, 1, 'Katarzyna', 'Zielinska', '32165498701');  -- Administrator
 INSERT INTO pracownik (konto_id, stanowisko_id, imie, nazwisko, pesel) 
-VALUES (5, 2, 'Piotr', 'Wójcik', '65498732109');  -- Manager
+VALUES (5, 2, 'Piotr', 'Wojcik', '65498732109');  -- Manager
 
 -- Dostawa
 INSERT INTO dostawa (data_wyruszenia, pojazd_id, pracownik_id, termin, punkta, punktb, status)
 VALUES ('2025-04-10', 1, 1, '2025-04-11', 'Katowice', 'Warszawa', 'W_TRAKCIE'),
-('2025-04-09', 2, 2, '2025-04-10', 'Kraków', 'Wrocław', 'ZREALIZOWANA'),
-('2025-04-15', 1, 1, '2025-04-16', 'Gliwice', 'Poznań', 'W_TRAKCIE'),
-('2025-04-14', 2, 2, '2025-04-15', 'Warszawa', 'Łódź', 'W_TRAKCIE'),
-('2025-04-16', 1, 1, '2025-04-17', 'Zabrze', 'Gdańsk', 'ZREALIZOWANA');
+('2025-04-09', 2, 2, '2025-04-10', 'Krakow', 'Wroclaw', 'ZREALIZOWANA'),
+('2025-04-15', 1, 1, '2025-04-16', 'Gliwice', 'Poznan', 'W_TRAKCIE'),
+('2025-04-14', 2, 2, '2025-04-15', 'Warszawa', 'Łodz', 'W_TRAKCIE'),
+('2025-04-16', 1, 1, '2025-04-17', 'Zabrze', 'Gdansk', 'ZREALIZOWANA');
 
 --Paczka
 INSERT INTO paczka (waga_paczki, fk_dostawa_id, fk_klient_id) VALUES (5.2, 1, 1);
@@ -71,11 +71,11 @@ INSERT INTO paczka (waga_paczki, fk_dostawa_id, fk_klient_id) VALUES (7.8, 1, 3)
 
 --Produkty
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
-VALUES (1,2, 2.5, 'Elektronika', 'Słuchawki bezprzewodowe', 'SN12345');
+VALUES (1,2, 2.5, 'Elektronika', 'Sluchawki bezprzewodowe', 'SN12345');
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
-VALUES (2,3, 1.2, 'Książki', 'Harry Potter', 'SN67890');
+VALUES (2,3, 1.2, 'Ksiazki', 'Harry Potter', 'SN67890');
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
-VALUES (3,4, 0.5, 'Kosmetyki', 'Krem do rąk', 'SN54321');
+VALUES (3,4, 0.5, 'Kosmetyki', 'Krem do rak', 'SN54321');
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
 VALUES (4,1, 5.0, 'Jedzenie', 'Czekolada', 'Wawel');
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
@@ -83,7 +83,7 @@ VALUES (1,5, 3, 'Zabawka', 'Pluszak', 'Toys');
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
 VALUES (5,3, 10, 'Zabawka', 'Lalka', 'Other');
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
-VALUES (6,4, 1, 'Książki', 'Wiosna', 'SN6666');
+VALUES (6,4, 1, 'Ksiazki', 'Wiosna', 'SN6666');
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
 VALUES (5,5, 1.1, 'Elektronika', 'Miernik', 'SN2323');
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
