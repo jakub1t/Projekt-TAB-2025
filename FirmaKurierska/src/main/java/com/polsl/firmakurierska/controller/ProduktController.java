@@ -3,8 +3,13 @@ package com.polsl.firmakurierska.controller;
 import com.polsl.firmakurierska.dto.ProduktDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.exception.ResourceNotFoundException;
+import com.polsl.firmakurierska.model.Paczka;
 import com.polsl.firmakurierska.model.Produkt;
+import com.polsl.firmakurierska.repository.PaczkaRepository;
 import com.polsl.firmakurierska.repository.ProduktRepository;
+
+import jakarta.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,8 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 @RestController
@@ -24,6 +27,9 @@ public class ProduktController {
 
     @Autowired
     private ProduktRepository produktRepository;
+    
+    @Autowired
+    private PaczkaRepository paczkaRepository;
 
     @GetMapping
     public @ResponseBody Iterable<ProduktDTO> getAllProdukty() {
@@ -92,6 +98,24 @@ public class ProduktController {
         }
         produktRepository.deleteByNrSeryjny(nrSeryjny);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Produkt o numerze seryjnym " + nrSeryjny + " został usunięty.");
+    }
+
+    @Transactional
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteProduktById(@PathVariable Integer id) {
+
+        Produkt produkt = produktRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Produkt o ID " + id + " nie istnieje."));
+
+        if (produkt.getPaczka() != null) {
+            Paczka paczka = produkt.getPaczka();
+            paczka.setProdukt(null);
+            paczkaRepository.save(paczka);
+        }
+
+        produktRepository.delete(produkt);
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body("Produkt o ID " + id + " został usunięty.");
     }
 
     @GetMapping("/filter")

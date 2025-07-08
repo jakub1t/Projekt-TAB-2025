@@ -301,7 +301,16 @@ public class ManagerWindow extends Application {
 
         Button delBtn = ui.createStyledDeleteButton();
         delBtn.setOnAction(e -> {
-            System.out.println("Lmao");
+            if (deleteProduct(produktData.getIdProduktu())) {
+                produktyList.getChildren().removeIf(node -> {
+                if (node instanceof HBox hbox) {
+                    Button b = (Button) hbox.getChildren().get(0);
+                    return b.getText().equals(name);
+                }
+                return false;
+                });
+                refreshAllData(refreshBtn);
+            }
         });
 
         HBox box = new HBox(5, itemBtn, delBtn);
@@ -722,76 +731,6 @@ public class ManagerWindow extends Application {
         }       
         return mojeProdukty;
     }
-
-    /*
-    private ProduktDTO getProduktById(int productId) {
-        ProduktDTO produkt = new ProduktDTO();
-        String response = "";
-        RequestController rq = new RequestController("/produkt/" + productId, 0);
-
-        try {
-            response = rq.sendPathReq();
-        } catch (BadRequestException e) {
-            System.out.println(e.getMessage());
-        }
-        
-        try {
-            // Object mapper doesnt work so this thing below is used instead...
-
-            // Map response to JSON
-            JSONObject produktJSON = new JSONObject(response);
-
-            // Set produkt object fields that are easy to get
-            produkt.setIdProduktu(produktJSON.getInt("idProduktu"));
-            produkt.setNrSeryjny(produktJSON.getString("nrSeryjny"));
-            produkt.setKategoriaProd(produktJSON.getString("kategoriaProd"));
-            produkt.setNazwaProduktu(produktJSON.getString("nazwaProduktu"));
-            produkt.setWaga(produktJSON.getDouble("waga"));
-
-            // The fun part of adding DTO hrefs to the produkt object
-            String temp = produktJSON.getString("_links");
-            JSONObject linksJ = new JSONObject(temp);
-
-            JSONObject hrefJ1 = new JSONObject(linksJ.getString("self"));
-            produkt.add(Link.of(hrefJ1.getString("href"), "self"));
-
-            JSONObject hrefJ2 = new JSONObject(linksJ.getString("paczka"));
-            produkt.add(Link.of(hrefJ2.getString("href"), "paczka"));
-
-            JSONObject hrefJ3 = new JSONObject(linksJ.getString("producent"));
-            produkt.add(Link.of(hrefJ3.getString("href"), "producent"));
-
-        } catch (JSONException jex) {
-            System.out.println(jex.toString());
-            jex.printStackTrace();
-        }
-
-        return produkt;
-    }
-
-    private Producent getProducentById(int producentId) {
-        Producent producent = new Producent();
-        String response = "";
-        RequestController rq = new RequestController("/producent/" + producentId, 0);
-
-        try {
-            response = rq.sendPathReq();
-        } catch (BadRequestException e) {
-            System.out.println(e.getMessage());
-        }
-        
-        ObjectMapper mapper = new ObjectMapper().configure(
-                DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.registerModule(new JavaTimeModule());
-        try {
-            producent = mapper.readValue(response, new TypeReference<Producent>(){});
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        }
-
-        return producent;
-    }
-    */
     
     private boolean deleteDelivery(int delId) {
         RequestController rq = new RequestController("/dostawa/delete/" + Integer.toString(delId), 3);
@@ -801,7 +740,6 @@ public class ManagerWindow extends Application {
             resp = rq.sendPathReq();
 
             if (resp.equals("Dostawa o ID " + Integer.toString(delId) + " została usunięta.")) {
-                System.out.println("Usunięto dostawę");
                 return true;
             }
         } catch (BadRequestException bre) {
@@ -818,7 +756,22 @@ public class ManagerWindow extends Application {
         try {
             rq.sendPathReq();
 
-            System.out.println("Usunięto paczkę");
+        } catch (ResourceNotFoundException rex) {
+            System.out.println("deleteDelivery: " + rex.getMessage()); 
+        } catch (BadRequestException bre) {
+            System.out.println("deleteDelivery: " + bre.getMessage());
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean deleteProduct(int prdId) {
+        RequestController rq = new RequestController("/produkt/" + prdId, 3);
+
+        try {
+            rq.sendPathReq();
+
         } catch (ResourceNotFoundException rex) {
             System.out.println("deleteDelivery: " + rex.getMessage()); 
         } catch (BadRequestException bre) {
@@ -835,7 +788,6 @@ public class ManagerWindow extends Application {
         try {
             rq.sendPathReq();
             
-            System.out.println("Usunięto pojazd");
         } catch (ResourceNotFoundException rex) {
             System.out.println("deleteVehicle: " + rex.getMessage());
         } catch (BadRequestException bre) {
