@@ -249,51 +249,13 @@ public class ManagerWindow extends Application {
         stage.setTitle("Administrator Panel");
         stage.show();
     }
-    /*
-    private VBox buildColumn(String title, ScrollPane content, Button addButton, String bgColor) {
-        Label header = new Label(title);
-        header.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-        header.setMaxWidth(Double.MAX_VALUE);
-        HBox headerBox = new HBox(header);
-        headerBox.setAlignment(Pos.CENTER);
-        headerBox.setPadding(new Insets(10));
-
-        HBox addBox = new HBox(addButton);
-        addBox.setAlignment(Pos.CENTER);
-        addBox.setPadding(new Insets(5));
-
-        VBox col = new VBox(10, headerBox, content, addBox);
-        col.setPadding(new Insets(10));
-        col.setFillWidth(true);
-        col.setStyle("-fx-background-color: " + bgColor + ";");
-        return col;
-    }
-
-    private VBox buildColumn(String title, ScrollPane content, Button addButton, String bgColor, ComboBox<String> comboBox) {
-        Label header = new Label(title);
-        header.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
-        header.setMaxWidth(Double.MAX_VALUE);
-        HBox headerBox = new HBox(header, comboBox);
-        headerBox.setAlignment(Pos.CENTER);
-        headerBox.setPadding(new Insets(10));
-
-        HBox addBox = new HBox(addButton);
-        addBox.setAlignment(Pos.CENTER);
-        addBox.setPadding(new Insets(5));
-
-        VBox col = new VBox(10, headerBox, content, addBox);
-        col.setPadding(new Insets(10));
-        col.setFillWidth(true);
-        col.setStyle("-fx-background-color: " + bgColor + ";");
-        return col;
-    }  */
 
     private HBox createProduktItem(ProduktDTO produktData, Button refreshBtn) {
         String name = String.format("ID: %d | %s", produktData.getIdProduktu(), produktData.getNazwaProduktu());
 
         Button itemBtn = ui.createStyledListItem(name, Integer.MAX_VALUE);
         itemBtn.setOnAction(e -> {
-            System.out.println("Ayy");
+            new ProductDescription().show(produktData);
         });
 
         Button delBtn = ui.createStyledDeleteButton();
