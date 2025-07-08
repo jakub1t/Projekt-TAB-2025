@@ -6,6 +6,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
@@ -25,8 +26,13 @@ import com.polsl.firmakurierska.dto.PaczkaDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.model.Pojazd;
 import com.polsl.firmakurierska.model.Pracownik;
+import com.polsl.firmakurierska.view.UIBuilder;
+import com.polsl.firmakurierska.view.UIThemeManager;
 
 public class DeliveryFormWindow {
+
+    private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
+    private final UIBuilder ui = UIBuilder.getUIBuilder();
 
     private List<PaczkaDTO> availablePackages = null;
     private List<Pojazd> availableVehicles = null;
@@ -64,30 +70,31 @@ public class DeliveryFormWindow {
 
         // Data startu
         startDatePicker = new DatePicker();
-        VBox startDateBox = createInputCard("Data wyjazdu:", startDatePicker);
+        VBox startDateBox = ui.createFormInputCard(theme.getThemeMode(),"Data wyjazdu:", startDatePicker);
 
         // Termin
         endDatePicker = new DatePicker();
         endDatePicker.setPromptText("Przewidywana data zakończenia dostawy");
-        VBox endDateBox = createInputCard("Termin:", endDatePicker);
+        VBox endDateBox = ui.createFormInputCard(theme.getThemeMode(), "Termin:", endDatePicker);
 
         HBox datesRow = new HBox(startDateBox, endDateBox);
         datesRow.setAlignment(Pos.CENTER);
+        datesRow.setSpacing(10);
 
         // Punkty A i B
         pointAField = new TextField();
         pointBField = new TextField();
-        VBox pointABox = createInputCard("Punkt A:", pointAField);
-        VBox pointBBox = createInputCard("Punkt B:", pointBField);
+        VBox pointABox = ui.createFormInputCard(theme.getThemeMode(),"Punkt A:", pointAField);
+        VBox pointBBox = ui.createFormInputCard(theme.getThemeMode(),"Punkt B:", pointBField);
 
         HBox pointsRow = new HBox(pointABox, pointBBox);
         pointsRow.setAlignment(Pos.CENTER);
+        pointsRow.setSpacing(10);
 
         // Checkboxy paczek (wielokrotny wybór)
         Label pkgLabel = new Label("Wybierz paczki do dostawy:");
         pkgLabel.setStyle("-fx-font-weight: bold;");
-        VBox pkgContainer = new VBox(5);
-        pkgContainer.setStyle("-fx-background-color: white;");
+        VBox pkgContainer = ui.createListContainer(theme.getThemeMode());
 
         List<PaczkaDTO> freePacks = new ArrayList<>();
         for (PaczkaDTO pk : availablePackages) {
@@ -100,11 +107,14 @@ public class DeliveryFormWindow {
         if (availablePackages.size() == 0) {
             Label emptyPkgAlert = new Label("Wszystkie paczki mają określoną dostawę");
             pkgContainer.getChildren().add(emptyPkgAlert);
+            if (theme.getThemeMode()) {
+                emptyPkgAlert.setTextFill(Color.web("#5FD38D"));
+            }
         } else {
             for (PaczkaDTO pk : availablePackages) {    
-                CheckBox cb = new CheckBox(pk.getIdPaczki().toString() + "| Waga: " + pk.getWagaPaczki().toString());
+                CheckBox cb = ui.createFancyCheckBox(theme.getThemeMode(), pk.getIdPaczki().toString() + "| Waga: " + pk.getWagaPaczki().toString());
                 cb.setPrefHeight(25);
-                cb.setOnMouseClicked(e -> {
+                cb.setOnAction(e -> {
                     addOrRemovePackageId(cb.isSelected(), pk.getIdPaczki());
                 });
 
@@ -120,15 +130,14 @@ public class DeliveryFormWindow {
         Label vehLabel = new Label("Wybierz pojazd:");
         vehLabel.setStyle("-fx-font-weight: bold;");
         ToggleGroup vehGroup = new ToggleGroup();
-        VBox vehContainer = new VBox(5);
-        vehContainer.setStyle("-fx-background-color: white;");
+        VBox vehContainer = ui.createListContainer(theme.getThemeMode());
 
         for (Pojazd v : availableVehicles) {
             String vLabel = v.getIdPojazdu().toString() + ' ' + v.getMarka();
-            RadioButton rb = new RadioButton(vLabel);
+            RadioButton rb = ui.createFancyRadioButton(theme.getThemeMode(), vLabel);
             rb.setToggleGroup(vehGroup);
             rb.setPrefHeight(25);
-            rb.setOnMouseClicked(e -> {
+            rb.setOnAction(e -> {
                 this.selectedVehicleId = v.getIdPojazdu();
             });
             vehContainer.getChildren().add(rb);
@@ -141,15 +150,14 @@ public class DeliveryFormWindow {
         Label empLabel = new Label("Wybierz kierowcę:");
         empLabel.setStyle("-fx-font-weight: bold;");
         ToggleGroup empGroup = new ToggleGroup();
-        VBox empContainer = new VBox(5);
-        empContainer.setStyle("-fx-background-color: white;");
+        VBox empContainer = ui.createListContainer(theme.getThemeMode());
 
         for (Pracownik dr : availableDrivers) {
             String drLabel = dr.getIdOsoby().toString() + ' ' + dr.getNazwisko();
-            RadioButton rb = new RadioButton(drLabel);
+            RadioButton rb = ui.createFancyRadioButton(theme.getThemeMode(), drLabel);
             rb.setToggleGroup(empGroup);
             rb.setPrefHeight(25);
-            rb.setOnMouseClicked(e -> {
+            rb.setOnAction(e -> {
                 this.selectedDriverId = dr.getIdOsoby();
             });
             empContainer.getChildren().add(rb);
@@ -159,8 +167,8 @@ public class DeliveryFormWindow {
         empScroll.setPrefHeight(60);
 
         // Przycisk zapisu
-        Button saveBtn = new Button("Zapisz dostawę");
-        saveBtn.setOnMouseClicked(e -> {
+        Button saveBtn = ui.createStylizedButton(theme.getThemeMode(), 150, "Zapisz dostawe");
+        saveBtn.setOnAction(e -> {
             handleButton();
         });
         HBox btnBox = new HBox(saveBtn);
@@ -184,26 +192,19 @@ public class DeliveryFormWindow {
         VBox mainContainer = new VBox(formContainer, mainScroll);
 
         BorderPane root = new BorderPane(mainContainer);
-        root.setStyle("-fx-background-color: #f8f8f8;");
+
+        if (theme.getThemeMode()) {
+            formContainer.setBackground(ui.unifiedRootBgDark);
+            empLabel.setTextFill(Color.web("#5FD38D"));
+            pkgLabel.setTextFill(Color.web("#5FD38D"));
+            vehLabel.setTextFill(Color.web("#5FD38D"));
+        } else {
+            formContainer.setBackground(ui.unifiedRootBgLight);
+        }
 
         myStage.setTitle("Formularz dostawy");
         myStage.setScene(new Scene(root, 400, 500));
         if (noDrivers == false) myStage.show();
-    }
-
-    private VBox createInputCard(String labelText, Control inputField) {
-        Label label = new Label(labelText);
-        label.setStyle("-fx-font-weight: bold;");
-        VBox box = new VBox(5, label, inputField);
-        box.setPadding(new Insets(10));
-        box.setStyle(
-            "-fx-background-color: white;" +
-            "-fx-border-color: #dddddd;" +
-            "-fx-border-radius: 8;" +
-            "-fx-background-radius: 8;" +
-            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
-        );
-        return box;
     }
 
     private List<Pracownik> getDrivers() {

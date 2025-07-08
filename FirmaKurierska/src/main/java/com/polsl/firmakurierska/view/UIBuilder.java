@@ -4,8 +4,10 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
+import javafx.scene.control.RadioButton;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.HBox;
@@ -35,11 +37,14 @@ public class UIBuilder {
     private static final Background columnBgDark = new Background(new BackgroundFill(Color.web("#2F2F2F"), null, null));
     private static final Background columnBgLight = new Background(new BackgroundFill(Color.web("#FFFFFF"), null, null));
 
-    private static final Background inputCardBgLight = new Background(new BackgroundFill(Color.web("#F4F4F4"), null, null));
-    private static final Background inputCardBgDark = new Background(new BackgroundFill(Color.web("#707070"), null, null));
+    private static final Background inputCardBgDark = new Background(new BackgroundFill(Color.web("#616161"), null, null));
+    private static final Background inputCardBgLight = new Background(new BackgroundFill(Color.web("#F8F8F8"), null, null));
 
     public final Background buttonCompletedDeliveryInactive = new Background(new BackgroundFill(Color.web("#8FDAB9"), null, null));
     public final Background buttonCompletedDeliveryActive = new Background(new BackgroundFill(Color.web("#5FD38D"), null, null));
+
+    public final Background unifiedRootBgDark = new Background(new BackgroundFill(Color.web("#202020"), null, null));
+    public final Background unifiedRootBgLight = new Background(new BackgroundFill(Color.web("#C4C4C4"), null, null));
     
     private UIBuilder() {};
 
@@ -247,21 +252,49 @@ public class UIBuilder {
         return listContainer;
     }
 
-    public VBox createFormCard(boolean useDarkMode, String labelText, Control inputField) {
+    public VBox createFormInputCard(boolean useDarkMode, String labelText, Control inputField) {
         Label label = new Label(labelText);
         label.setStyle("-fx-font-weight: bold;");
         VBox box = new VBox(5, label, inputField);
         box.setPadding(new Insets(10));
-        box.setStyle(
-            "-fx-background-color: white;" +
-            "-fx-border-color: #dddddd;" +
-            "-fx-border-radius: 8;" +
-            "-fx-background-radius: 8;" +
-            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
-        );
+        
         if (useDarkMode) {
-
+            box.setBackground(inputCardBgDark);
+            box.setStyle(
+                "-fx-border-color: #5FD38D;" +
+                "-fx-border-radius: 2;"
+            );
+            
+            label.setTextFill(Color.WHITE);
+        
+        } else {
+            box.setBackground(inputCardBgLight);
+            box.setStyle(
+                "-fx-border-color: #5FD38D; " +
+                "-fx-border-radius: 2; " +
+                "-fx-border-width: 3; " +
+                "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
+            );
         }
         return box;
+    }
+
+    public RadioButton createFancyRadioButton(boolean useDarkMode, String text) {
+        RadioButton rb = new RadioButton(text);
+
+        if (useDarkMode) {
+            rb.setTextFill(Color.WHITE);
+        }
+
+        return rb;
+    }
+
+    public CheckBox createFancyCheckBox(boolean useDarkMode, String text) {
+        CheckBox cb = new CheckBox(text);
+
+        if (useDarkMode) {
+            cb.setTextFill(Color.WHITE);
+        }
+        return cb;
     }
 }
