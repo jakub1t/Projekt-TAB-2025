@@ -10,6 +10,8 @@ import org.springframework.boot.configurationprocessor.json.JSONObject;
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.model.Konto;
+import com.polsl.firmakurierska.view.UIBuilder;
+import com.polsl.firmakurierska.view.UIThemeManager;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -17,10 +19,10 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.RadioButton;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
@@ -29,8 +31,11 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class EditAccount {
-
+    
+    private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
+    private final UIBuilder ui = UIBuilder.getUIBuilder();
     private Stage myStage = null;
+
     private Integer accId = null;
     private String selectedPositionId = null;
     private String selectedPosition = "";
@@ -64,14 +69,13 @@ public class EditAccount {
 
         VBox stanowiskoBox = createRadioInputCard("Stanowisko:", positionsNames.toArray(new String[0]), data);
 
+        VBox imieBox       = ui.createFormInputCard(theme.getThemeMode(), "Imię:", imieField);
+        VBox nazwiskoBox   = ui.createFormInputCard(theme.getThemeMode(), "Nazwisko:", nazwiskoField);
+        VBox peselBox      = ui.createFormInputCard(theme.getThemeMode(), "PESEL:", peselField);
+        VBox loginBox      = ui.createFormInputCard(theme.getThemeMode(), "Login:", loginField);
+        VBox hasloBox      = ui.createFormInputCard(theme.getThemeMode(), "Hasło:", hasloField);
 
-        VBox imieBox       = createInputCard("Imię:", imieField);
-        VBox nazwiskoBox   = createInputCard("Nazwisko:", nazwiskoField);
-        VBox peselBox      = createInputCard("PESEL:", peselField);
-        VBox loginBox      = createInputCard("Login:", loginField);
-        VBox hasloBox      = createInputCard("Hasło:", hasloField);
-
-        Button editButton = new Button("Zapisz konto");
+        Button editButton = ui.createStylizedButton(theme.getThemeMode(), 160, "Zapisz konto");
         editButton.setOnAction(e -> {
             // Zbieranie wybranych typów prawa jazdy
             List<String> selectedLicenses = new ArrayList<>();
@@ -131,33 +135,28 @@ public class EditAccount {
         allFields.setPadding(new Insets(20));
         allFields.setAlignment(Pos.CENTER);
 
-        BorderPane root = new BorderPane(allFields);
-        root.setStyle("-fx-background-color: #f8f8f8;");
-        BorderPane.setAlignment(allFields, Pos.CENTER);
+        ScrollPane mainScroll = new ScrollPane(allFields);
+        mainScroll.setFitToWidth(true);
+        VBox mainContainer = new VBox(allFields, mainScroll);
 
-        Scene scene = new Scene(root, 400, 750);
+        BorderPane root = new BorderPane(mainContainer);
+        root.setStyle("-fx-background-color: #f8f8f8;");
+        BorderPane.setAlignment(mainContainer, Pos.CENTER);
+
+        Scene scene = new Scene(root, 400, 550);
+
+        if (theme.getThemeMode()) {
+            allFields.setBackground(ui.unifiedRootBgDark);
+            root.setBackground(ui.unifiedRootBgDark);
+        } else {
+            allFields.setBackground(ui.unifiedRootBgLight);
+            root.setBackground(ui.unifiedRootBgLight);
+        }
 
         myStage = new Stage();
         myStage.setTitle("Dodawanie konta");
         myStage.setScene(scene);
         myStage.show();
-    }
-
-    // Tworzy kartę z etykietą i polem wejściowym
-    private VBox createInputCard(String labelText, Control inputField) {
-        Label label = new Label(labelText);
-        label.setStyle("-fx-font-weight: bold;");
-
-        VBox box = new VBox(5, label, inputField);
-        box.setPadding(new Insets(10));
-        box.setStyle(
-            "-fx-background-color: white;" +
-            "-fx-border-color: #dddddd;" +
-            "-fx-border-radius: 8;" +
-            "-fx-background-radius: 8;" +
-            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
-        );
-        return box;
     }
 
     // Tworzy kartę z etykietą oraz wielokrotną listą checkboxów
@@ -175,7 +174,7 @@ public class EditAccount {
         }
 
         for (String opt : options) {
-            CheckBox cb = new CheckBox(opt);
+            CheckBox cb = ui.createFancyCheckBox(theme.getThemeMode(), opt);
             box.getChildren().add(cb);
             if (ownedCathegories.contains(opt)) cb.setSelected(true);
         }
@@ -194,12 +193,12 @@ public class EditAccount {
     private VBox createRadioInputCard(String labelText, String[] options, List<String> data) {
         Label label = new Label(labelText);
         label.setStyle("-fx-font-weight: bold;");
-        VBox box = new VBox();
+        VBox box = ui.createListContainer(theme.getThemeMode());
         box.getChildren().add(label);
         ToggleGroup sGroup = new ToggleGroup();
 
         for (String option : options) {
-            RadioButton rb = new RadioButton(option);
+            RadioButton rb = ui.createFancyRadioButton(theme.getThemeMode(), option);
             rb.setToggleGroup(sGroup);
             rb.setPrefHeight(25);
             if (option.equals(selectedPosition)) {

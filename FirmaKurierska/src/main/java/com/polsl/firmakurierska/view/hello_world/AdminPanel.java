@@ -70,8 +70,7 @@ public class AdminPanel extends Application {
         welBox.setAlignment(Pos.CENTER);
         welBox.setSpacing(10);
 
-        kontaList = new VBox(5);
-        kontaList.setPadding(new Insets(5));
+        kontaList = ui.createListContainer(theme.getThemeMode());
         
         refreshBtn.setOnAction(e -> {
             refreshAllData(kontaList, refreshBtn);
@@ -131,9 +130,11 @@ public class AdminPanel extends Application {
         root.setSpacing(10);
         
         if (theme.getThemeMode()) {
+            welBox.setStyle("-fx-background-color: #2F2F2F");
             root.setStyle("-fx-background-color: #202020");
             welcomeLabel.setTextFill(Color.web("BBBBBB"));
         } else {
+            welBox.setStyle("-fx-background-color: #FFFFFF");
             root.setStyle("-fx-background-color: #F0F0F0");
         }
 
@@ -149,7 +150,6 @@ public class AdminPanel extends Application {
 
         Button kontoButton = ui.createStyledListItem(acId.toString() + ": " + kontoName, Integer.MAX_VALUE);
         kontoButton.setOnAction(e -> {
-            System.out.println("Naciśnięto " + kontoName);
             new AccountDescription().show(
                 data
             );

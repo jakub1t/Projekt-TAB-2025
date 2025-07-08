@@ -9,6 +9,8 @@ import org.springframework.boot.configurationprocessor.json.JSONObject;
 
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.view.UIBuilder;
+import com.polsl.firmakurierska.view.UIThemeManager;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -16,9 +18,9 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -27,6 +29,8 @@ import javafx.stage.Stage;
 
 public class AccountFormWindow {
 
+    private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
+    private final UIBuilder ui = UIBuilder.getUIBuilder();
     private Stage myStage = null;
 
     public void show(VBox accountContainer, Button rfshBtn, AdminPanel parent) {
@@ -54,15 +58,13 @@ public class AccountFormWindow {
 
         VBox stanowiskoBox = createCheckboxInputCard("Stanowisko:", positionsNames.toArray(new String[0]));
 
+        VBox imieBox       = ui.createFormInputCard(theme.getThemeMode(), "Imię:", imieField);
+        VBox nazwiskoBox   = ui.createFormInputCard(theme.getThemeMode(), "Nazwisko:", nazwiskoField);
+        VBox peselBox      = ui.createFormInputCard(theme.getThemeMode(), "PESEL:", peselField);
+        VBox loginBox      = ui.createFormInputCard(theme.getThemeMode(), "Login:", loginField);
+        VBox hasloBox      = ui.createFormInputCard(theme.getThemeMode(), "Hasło:", hasloField);
 
-        VBox imieBox       = createInputCard("Imię:", imieField);
-        VBox nazwiskoBox   = createInputCard("Nazwisko:", nazwiskoField);
-        VBox peselBox      = createInputCard("PESEL:", peselField);
-        //VBox stanowiskoBox = createInputCard("Stanowisko:", stanowiskoField);
-        VBox loginBox      = createInputCard("Login:", loginField);
-        VBox hasloBox      = createInputCard("Hasło:", hasloField);
-
-        Button dodajButton = new Button("Dodaj");
+        Button dodajButton = ui.createStylizedButton(theme.getThemeMode(), 160, "Dodaj konto");
         dodajButton.setOnAction(e -> {
             // Zbieranie wybranych typów prawa jazdy
             List<String> selectedLicenses = new ArrayList<>();
@@ -85,7 +87,6 @@ public class AccountFormWindow {
             String imie = imieField.getText();
             String nazwisko = nazwiskoField.getText();
             String pesel = peselField.getText();
-            //String stanowisko = stanowiskoField.getText();
             String login = loginField.getText();
             String haslo = hasloField.getText();
 
@@ -125,11 +126,22 @@ public class AccountFormWindow {
         allFields.setPadding(new Insets(20));
         allFields.setAlignment(Pos.CENTER);
 
-        BorderPane root = new BorderPane(allFields);
-        root.setStyle("-fx-background-color: #f8f8f8;");
-        BorderPane.setAlignment(allFields, Pos.CENTER);
+        ScrollPane mainScroll = new ScrollPane(allFields);
+        mainScroll.setFitToWidth(true);
+        VBox mainContainer = new VBox(allFields, mainScroll);
 
-        Scene scene = new Scene(root, 400, 750);
+        BorderPane root = new BorderPane(mainContainer);
+        BorderPane.setAlignment(mainContainer, Pos.CENTER);
+
+        Scene scene = new Scene(root, 400, 550);
+
+        if (theme.getThemeMode()) {
+            allFields.setBackground(ui.unifiedRootBgDark);
+            root.setBackground(ui.unifiedRootBgDark);
+        } else {
+            allFields.setBackground(ui.unifiedRootBgLight);
+            root.setBackground(ui.unifiedRootBgLight);
+        }
 
         myStage = new Stage();
         myStage.setTitle("Dodawanie konta");
@@ -137,33 +149,16 @@ public class AccountFormWindow {
         myStage.show();
     }
 
-    // Tworzy kartę z etykietą i polem wejściowym
-    private VBox createInputCard(String labelText, Control inputField) {
-        Label label = new Label(labelText);
-        label.setStyle("-fx-font-weight: bold;");
-
-        VBox box = new VBox(5, label, inputField);
-        box.setPadding(new Insets(10));
-        box.setStyle(
-            "-fx-background-color: white;" +
-            "-fx-border-color: #dddddd;" +
-            "-fx-border-radius: 8;" +
-            "-fx-background-radius: 8;" +
-            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
-        );
-        return box;
-    }
-
     // Tworzy kartę z etykietą oraz wielokrotną listą checkboxów
     private VBox createCheckboxInputCard(String labelText, String[] options) {
         Label label = new Label(labelText);
         label.setStyle("-fx-font-weight: bold;");
 
-        VBox box = new VBox(5);
+        VBox box = ui.createListContainer(theme.getThemeMode());
         box.getChildren().add(label);
 
         for (String opt : options) {
-            CheckBox cb = new CheckBox(opt);
+            CheckBox cb = ui.createFancyCheckBox(theme.getThemeMode(), opt);
             box.getChildren().add(cb);
         }
 
