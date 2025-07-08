@@ -6,6 +6,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -22,8 +23,13 @@ import com.polsl.firmakurierska.dto.PaczkaDTO;
 import com.polsl.firmakurierska.dto.ProduktDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.model.Klient;
+import com.polsl.firmakurierska.view.UIBuilder;
+import com.polsl.firmakurierska.view.UIThemeManager;
 
 public class PackageDescription {
+
+    private UIThemeManager theme = UIThemeManager.getUIThemeManager();
+    private UIBuilder ui = new UIBuilder();
 
     private String imieKlienta = "Imie";
     private String nazwiskoKlienta = "Nazwisko";
@@ -50,13 +56,16 @@ public class PackageDescription {
         zawarteProdukty = getPackageProducts(produktIds);
 
         // Karta z imieniem klienta
-        VBox imieBox = createCard("Imię klienta:", imieKlienta);
+        VBox imieBox = ui.createStyledCard(theme.getThemeMode(), "Imię klienta:", imieKlienta);
 
         // Karta z nazwiskiem klienta
-        VBox nazwiskoBox = createCard("Nazwisko klienta:", nazwiskoKlienta);
+        VBox nazwiskoBox = ui.createStyledCard(theme.getThemeMode(), "Nazwisko klienta:", nazwiskoKlienta);
+
+        HBox klientData = new HBox(imieBox, nazwiskoBox);
+        klientData.setSpacing(10);
 
         // Karta z wagą paczki
-        VBox wagaBox = createCard("Waga paczki:", wagaPaczki + " kg");
+        VBox wagaBox = ui.createStyledCard(theme.getThemeMode(), "Waga paczki:", wagaPaczki + " kg");
 
         // Kontener na karty produktów
         VBox produktyList = new VBox(10);
@@ -84,29 +93,17 @@ public class PackageDescription {
         root.setStyle("-fx-background-color: #f8f8f8;");
         BorderPane.setAlignment(allFields, Pos.CENTER);
 
+        if (theme.getThemeMode()) {
+            allFields.setStyle("-fx-background-color: #2F2F2F");
+        } else {
+            allFields.setStyle("-fx-background-color: #F4F4F4");
+        }
+
         Scene scene = new Scene(root, 450, 600);
         Stage stage = new Stage();
         stage.setTitle("Szczegóły paczki");
         stage.setScene(scene);
         stage.show();
-    }
-
-    /** Tworzy prostą kartę z etykietą i wartością */
-    private VBox createCard(String labelText, String valueText) {
-        Label label = new Label(labelText);
-        label.setStyle("-fx-font-weight: bold;");
-        Label value = new Label(valueText);
-
-        VBox box = new VBox(5, label, value);
-        box.setPadding(new Insets(10));
-        box.setStyle("""
-            -fx-background-color: white;
-            -fx-border-color: #dddddd;
-            -fx-border-radius: 8;
-            -fx-background-radius: 8;
-            -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);
-        """);
-        return box;
     }
 
     /** Tworzy kartę z danymi pojedynczego produktu */
@@ -118,13 +115,23 @@ public class PackageDescription {
             new Label("Nr seryjny: " + p.getNrSeryjny())
         );
         box.setPadding(new Insets(10));
-        box.setStyle("""
+        
+        if (theme.getThemeMode()) {
+            box.setStyle("""
+            -fx-background-color: #dddddd;
+            -fx-border-color: #bbbbbb;
+            -fx-border-radius: 8;
+            -fx-background-radius: 8;
+        """);
+        } else {
+            box.setStyle("""
             -fx-background-color: white;
             -fx-border-color: #dddddd;
             -fx-border-radius: 8;
             -fx-background-radius: 8;
             -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);
         """);
+        }
         return box;
     }
 

@@ -206,7 +206,7 @@ public class ManagerWindow extends Application {
             klienciList.getChildren().add(createKlientItem(klient, refreshBtn));
         });
         
-        VBox klienciCol = ui.createStylizedColumn(theme.getThemeMode(), "Klienci", Integer.MAX_VALUE, klienciScroll);
+        VBox klienciCol = ui.createStylizedColumn(theme.getThemeMode(), "Klienci", Integer.MAX_VALUE, klienciList, klienciScroll);
 
         // ===== GŁÓWNY UKŁAD =====
 
