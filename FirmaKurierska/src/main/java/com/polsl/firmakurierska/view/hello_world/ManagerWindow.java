@@ -115,7 +115,10 @@ public class ManagerWindow extends Application {
             produktyList.getChildren().add(createProduktItem(produkt, refreshBtn));
         });
 
-        VBox produktyCol = ui.createStylizedColumn(theme.getThemeMode(), "Produkty", Integer.MAX_VALUE, produktyScroll);
+        Button dodajProduktBtn = ui.createStylizedButton(theme.getThemeMode(), 120, "Dodaj produkt");
+        dodajProduktBtn.setOnAction(e -> new ProductFormWindow().show(this, refreshBtn));
+
+        VBox produktyCol = ui.createStylizedColumn(theme.getThemeMode(), "Produkty", Integer.MAX_VALUE, produktyScroll, dodajProduktBtn);
 
         // ===== KOL 2: PACZKI =====
         paczkiList = ui.createListContainer(theme.getThemeMode());
@@ -293,7 +296,7 @@ public class ManagerWindow extends Application {
 
         Button itemBtn = ui.createStyledListItem(name, Integer.MAX_VALUE);
         itemBtn.setOnAction(e -> {
-            System.out.println("Ayy");
+            new ProductDescription().show(produktData);
         });
 
         Button delBtn = ui.createStyledDeleteButton();

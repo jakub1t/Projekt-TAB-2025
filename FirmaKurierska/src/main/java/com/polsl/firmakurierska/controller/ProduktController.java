@@ -67,10 +67,13 @@ public class ProduktController {
     }
     
 
-    @PostMapping
+    @PostMapping("/add")
     public ResponseEntity<Object> addProdukt(@RequestBody Produkt produkt) {
         if (produkt.getNazwaProduktu() == null || produkt.getNazwaProduktu().isEmpty()) {
             throw new BadRequestException("Nazwa produktu jest wymagana.");
+        }
+        if (produkt.getWaga() < 0) {
+            throw new BadRequestException("Masa produktu mniejsza od zera.");
         }
         if(produkt.getKategoriaProd() == null || produkt.getKategoriaProd().isEmpty()) {
         	throw new BadRequestException("Kategoria produktu jest wymagana.");

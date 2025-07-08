@@ -1,5 +1,12 @@
 package com.polsl.firmakurierska.view.hello_world;
 
+import java.util.IllegalFormatException;
+
+import com.polsl.firmakurierska.controller.RequestController;
+import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.view.UIBuilder;
+import com.polsl.firmakurierska.view.UIThemeManager;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -16,45 +23,45 @@ import javafx.scene.layout.VBox;
 /** Okno do wprowadzania jednego produktu */
 public class ProductFormWindow {
 
-    public void show() {
-        TextField nameField = new TextField();
-        TextField weightField = new TextField();
-        TextField categoryField = new TextField();
-        TextField serialField = new TextField();
-        TextField producerField = new TextField();
+    private final UIBuilder ui = UIBuilder.getUIBuilder();
+    private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
+    private Stage myStage = null;
+    
+    TextField nameField = new TextField();
+    TextField weightField = new TextField();
+    TextField categoryField = new TextField();
+    TextField serialField = new TextField();
+
+    public void show(ManagerWindow parentManagerWnd, Button parentRfshBtn) {
 
         VBox nameBox     = createInputCard("Nazwa:", nameField);
         VBox weightBox   = createInputCard("Waga:", weightField);
         VBox categoryBox = createInputCard("Kategoria:", categoryField);
         VBox serialBox   = createInputCard("Nr seryjny:", serialField);
-        VBox prodBox     = createInputCard("Producent:", producerField);
 
-        Button saveBtn = new Button("Zapisz produkt");
-        saveBtn.setOnAction(e -> {/*
-            PackageFormWindow.Product p = new PackageFormWindow.Product(
-                nameField.getText(),
-                weightField.getText(),
-                categoryField.getText(),
-                serialField.getText(),
-                producerField.getText()
-            ); 
-            onSave.accept(p);*/
-            ((Stage) saveBtn.getScene().getWindow()).close();
+        Button saveBtn = ui.createStylizedButton(theme.getThemeMode(), 160, "Dodaj produkt");
+        saveBtn.setOnAction(e -> {
+            handleButton();
+            parentManagerWnd.refreshAllData(parentRfshBtn);
+
+            myStage.close();
         });
         HBox btnBox = new HBox(saveBtn);
         btnBox.setAlignment(Pos.CENTER);
 
         VBox root = new VBox(12,
-            nameBox, weightBox, categoryBox, serialBox, prodBox, btnBox
+            nameBox, weightBox, categoryBox, serialBox, btnBox
         );
         root.setPadding(new Insets(20));
         root.setAlignment(Pos.CENTER);
         root.setStyle("-fx-background-color: #f8f8f8;");
 
-        Stage stage = new Stage();
-        stage.setTitle("Nowy produkt");
-        stage.setScene(new Scene(root, 450, 450));
-        stage.show();
+        if (myStage == null) {
+            myStage = new Stage();
+            myStage.setTitle("Nowy produkt");
+            myStage.setScene(new Scene(root, 450, 450));
+            myStage.show();
+        }
     }
 
     private VBox createInputCard(String labelText, Control inputField) {
@@ -69,5 +76,58 @@ public class ProductFormWindow {
             -fx-background-radius: 6;
         """);
         return box;
+    }
+
+    /**
+     * 
+     * @param jsonData - already formatted data
+     * @return True when successful / False otherwise
+     */
+    private boolean addProduct(String jsonData) {
+        RequestController rq = new RequestController("/produkt/add", 1);
+
+        try {
+            rq.sendJsonReq(jsonData);
+        } catch (BadRequestException bre) {
+            System.err.println("addProduct: " + bre.getMessage());
+            return false;
+        }
+        
+        return true;
+    }
+
+    private void handleButton() {
+        String jsonToSend = "";
+        String errorString = "Error overrides this string";
+        boolean noError = true;
+
+        try {
+            double weight = Double.parseDouble(weightField.getText());
+            jsonToSend = String.format("{\"nrSeryjny\": \"%s\", \"waga\": %s, \"nazwaProduktu\": \"%s\", \"kategoriaProd\": \"%s\"}",
+                serialField.getText(),
+                weight,
+                nameField.getText(),
+                categoryField.getText()
+                );
+        } catch (NullPointerException npe) {
+            errorString = npe.getMessage();
+            noError = false;
+        } catch (NumberFormatException nfe) {
+            errorString = nfe.getMessage();
+            noError = false;
+        } catch (IllegalFormatException ife) {
+            errorString = ife.getMessage();
+            noError = false;
+        }
+
+        if (noError) {
+            if (addProduct(jsonToSend)) {
+                myStage.close();
+            } else {
+                System.err.println("handleButton: Błąd dodawania produktu");
+            }
+        } else {
+            System.err.println("handleButton: " + errorString);
+        }
     }
 }
