@@ -6,7 +6,9 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
@@ -18,8 +20,13 @@ import org.springframework.boot.configurationprocessor.json.JSONObject;
 
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.view.UIBuilder;
+import com.polsl.firmakurierska.view.UIThemeManager;
 
 public class DeliveryDescription {
+
+    private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
+    private final UIBuilder ui = new UIBuilder();
 
     private int idDostawy = 0;
     private String pracImie = "";
@@ -46,26 +53,33 @@ public class DeliveryDescription {
     public void show() {
 
         // Karta z nazwą dostawy
-        VBox nazwaBox = createCard("Numer dostawy:", Integer.toString(idDostawy));
+        VBox nazwaBox = ui.createStyledCard(theme.getThemeMode(), "Numer dostawy:", Integer.toString(idDostawy));
         // Karta z imieniem pracownika
-        VBox imieBox = createCard("Imię pracownika:", pracImie);
+        VBox imieBox = ui.createStyledCard(theme.getThemeMode(), "Imię pracownika:", pracImie);
         // Karta z nazwiskiem pracownika
-        VBox nazwiskoBox = createCard("Nazwisko pracownika:", pracNazw);
+        VBox nazwiskoBox = ui.createStyledCard(theme.getThemeMode(), "Nazwisko pracownika:", pracNazw);
         // Karta z nazwą auta
-        VBox autoBox = createCard("Nazwa auta:", vehicleModel);
+        VBox autoBox = ui.createStyledCard(theme.getThemeMode(), "Nazwa auta:", vehicleModel);
         // Karta z datą
-        VBox dateBox = createCard("Data wyruszenia:", dataStart);
+        VBox dateBox = ui.createStyledCard(theme.getThemeMode(), "Data wyruszenia:", dataStart);
         // Karta z godziną
-        VBox timeBox = createCard("Termin:", deadline);
+        VBox timeBox = ui.createStyledCard(theme.getThemeMode(), "Termin:", deadline);
         // Karta z punktem A
-        VBox pointABox = createCard("Punkt A:", punktA);
+        VBox pointABox = ui.createStyledCard(theme.getThemeMode(), "Punkt A:", punktA);
         // Karta z punktem B
-        VBox pointBBox = createCard("Punkt B:", punktB);
+        VBox pointBBox = ui.createStyledCard(theme.getThemeMode(), "Punkt B:", punktB);
+
+        HBox timeStuff = new HBox(dateBox, timeBox);
+        HBox locationStuff = new HBox(pointABox, pointBBox);
+
+        timeStuff.setSpacing(10);
+        locationStuff.setSpacing(10);
 
         // Lista paczek w scrollu
         Label packagesLabel = new Label("Paczki w dostawie:");
         packagesLabel.setStyle("-fx-font-weight: bold;");
         VBox packagesList = new VBox(5);
+        packagesList.setPadding(new Insets(5));
         if (przypisanePaczki.isEmpty() == false) {
             for (Integer box : przypisanePaczki) {
                 String pid = Integer.toString(box);
@@ -82,10 +96,8 @@ public class DeliveryDescription {
             imieBox,
             nazwiskoBox,
             autoBox,
-            dateBox,
-            timeBox,
-            pointABox,
-            pointBBox,
+            timeStuff,
+            locationStuff,
             packagesLabel,
             packagesScroll
         );
@@ -98,8 +110,14 @@ public class DeliveryDescription {
         VBox mainColumn = new VBox(allFields, mainScroll);
 
         BorderPane root = new BorderPane(mainColumn);
-        root.setStyle("-fx-background-color: #f8f8f8;");
         BorderPane.setAlignment(mainColumn, Pos.CENTER);
+
+        if (theme.getThemeMode()) {
+            allFields.setStyle("-fx-background-color: #2F2F2F");
+            packagesLabel.setTextFill(Color.web("#F4F4F4"));
+        } else {
+            allFields.setStyle("-fx-background-color: #F4F4F4");
+        }
 
         // Dostosowana wysokość sceny do nowej zawartości
         Scene scene = new Scene(root, 400, 500);
@@ -109,9 +127,9 @@ public class DeliveryDescription {
         stage.show();
     }
 
-    /**
+    /*
      * Tworzy prostą kartę z etykietą i wartością
-     */
+     *
     private VBox createCard(String labelText, String valueText) {
         Label label = new Label(labelText);
         label.setStyle("-fx-font-weight: bold;");
@@ -127,7 +145,7 @@ public class DeliveryDescription {
             "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
         );
         return box;
-    }
+    }*/
 
     public void open(Integer delivID, String assignedUserName, String assignedUserSurname) {
         this.pracImie = assignedUserName;
