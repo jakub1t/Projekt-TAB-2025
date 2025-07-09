@@ -81,14 +81,14 @@ public class RaportFormWindow {
 
             System.out.println("Ścieżka: " + path);
             System.out.println("Typ: " + type);
-            if ("Trasy".equals(type)) {
+            if (RAPORT_TYPE_2.equals(type)) {
                 System.out.println("Data od: " + startDate.getValue());
                 System.out.println("Data do: " + endDate.getValue());
             }
 
             generateRaport(startDate.getValue(), endDate.getValue(), path, type); // type should be "Stan" or "Trasy"
 
-            ((Stage) generateBtn.getScene().getWindow()).close();
+            // ((Stage) generateBtn.getScene().getWindow()).close();
         });
         HBox btnBox = new HBox(generateBtn);
         btnBox.setAlignment(Pos.CENTER);
@@ -180,9 +180,12 @@ public class RaportFormWindow {
         }
         else {
             for (DostawaDTO elem : allDeliveries) {
+                // System.out.println("start: " + elem.getDataWyruszenia() + ", end: " + elem.getTermin());
                 boolean delieveryAfterStart = elem.getDataWyruszenia().isAfter(startDate) || elem.getDataWyruszenia().equals(startDate);
-                boolean delieveryBeforeEnd = elem.getDataWyruszenia().isBefore(endDate) || elem.getDataWyruszenia().isEqual(endDate);
-                
+                boolean delieveryBeforeEnd = elem.getTermin().isBefore(endDate) || elem.getTermin().isEqual(endDate);
+                // System.out.println("start: " + delieveryAfterStart);
+                // System.out.println("end: " + delieveryBeforeEnd);
+
                 if(delieveryAfterStart && delieveryBeforeEnd){
                     sortedDeliveries.add(elem);
                 }
@@ -241,7 +244,7 @@ public class RaportFormWindow {
         writer.write("   Aktywne dostawy: "+ activeDeliveries +"\n");
         writer.write("   Ukończone dostawy: "+ finishedDeliveries+"\n\n");
 
-        writer.write("   Lista dostaw: "+ finishedDeliveries+"\n\n");
+        writer.write("   Lista dostaw: " + (finishedDeliveries + activeDeliveries) + "\n\n");
         
         for (DostawaDTO elem : selectedDeliveries)
        {
