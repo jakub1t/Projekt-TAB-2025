@@ -24,7 +24,6 @@ import javafx.scene.control.RadioButton;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -53,13 +52,10 @@ public class AccountFormWindow {
         loginField.setPromptText("Login dla pracownika, litery + cyfry");
         hasloField.setPromptText("Hasło dla pracownika, dowolne znaki");
 
-        ui.showAlertDialog(AlertType.INFORMATION, "Test", "Header", "Some message...");
-
         // Dostępne typy prawa jazdy
         List<String> licenseIDs = getAllLicensesIDs();
         
         List<String> licenseNames = getAllLicensesNames(licenseIDs);
-
 
         VBox prawoJazdyBox = createCheckboxInputCard("Prawo jazdy:", licenseNames.toArray(new String[0]));
 

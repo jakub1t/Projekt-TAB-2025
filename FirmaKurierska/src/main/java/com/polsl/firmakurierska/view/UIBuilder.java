@@ -61,12 +61,29 @@ public class UIBuilder {
 
     /**
      * Creates and shows Alert dialog. Should be used to inform user about what occured in application.
-     * @param alertType type of Alert dialog, example values: AlertType.ERROR, AlertType.WARNING, AlertType.CONFIRMATION, AlertType.INFORMATION
      * @param title title for the Alert shown at the top of the dialog, should be short
      * @param header header for Alert shown below title, should be short
      * @param message main content for the Alert dialog
      */
-    public void showAlertDialog(AlertType alertType, String title, String header, String message) {
+    public void showAlertDialog(String title, String header, String message) {
+        AlertType alertType = AlertType.INFORMATION;
+
+        // switch (alertTypeInt) {
+        //     case 1:
+        //         alertType = AlertType.CONFIRMATION;
+        //         break;
+        //     case 2:
+        //         alertType = AlertType.WARNING;
+        //         break;
+        //     case 3:
+        //         alertType = AlertType.ERROR;
+        //         break;
+        
+        //     default:
+        //         alertType = AlertType.INFORMATION;
+        //         break;
+        // }
+
         Alert alert = new Alert(alertType);
         alert.setTitle(title);
         alert.setHeaderText(header);
