@@ -10,6 +10,7 @@ import org.springframework.boot.configurationprocessor.json.JSONObject;
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.model.Konto;
+import com.polsl.firmakurierska.view.RegexMaster;
 import com.polsl.firmakurierska.view.UIBuilder;
 import com.polsl.firmakurierska.view.UIThemeManager;
 
@@ -35,6 +36,7 @@ public class EditAccount {
     
     private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
     private final UIBuilder ui = UIBuilder.getUIBuilder();
+    private final RegexMaster rgx = RegexMaster.getRegexMaster();
     private Stage myStage = null;
 
     private Integer accId = null;
@@ -56,7 +58,7 @@ public class EditAccount {
         imieField.setPromptText("Imię pracownika, tylko litery");
         nazwiskoField.setPromptText("Nazwisko pracownika, tylko litery");
         peselField.setPromptText("PESEL pracownika, tylko cyfry");
-        loginField.setPromptText("Login dla pracownika, litery + cyfry");
+        loginField.setPromptText("Login dla pracownika, zacząć od litery, litery, cyfry, '-' oraz '_'.");
         hasloField.setPromptText("Hasło dla pracownika, dowolne znaki");
 
         // Dostępne typy prawa jazdy
@@ -84,21 +86,6 @@ public class EditAccount {
 
         Button editButton = ui.createStylizedButton(theme.getThemeMode(), 160, "Zapisz konto");
         editButton.setOnAction(e -> {
-            // Zbieranie wybranych typów prawa jazdy
-            List<String> selectedLicenses = new ArrayList<>();
-            for (Node node : prawoJazdyBox.getChildren()) {
-                if (node instanceof CheckBox cb && cb.isSelected()) {
-                    selectedLicenses.add(cb.getText());
-                }
-            }
-        
-            for (Node node : stanowiskoBox.getChildren()) {
-                
-                if (node instanceof CheckBox cb && cb.isSelected()) {
-                    selectedPosition = cb.getText();
-                    break;
-                }
-            }
             
             String imie = imieField.getText();
             String nazwisko = nazwiskoField.getText();
@@ -106,15 +93,37 @@ public class EditAccount {
             String login = loginField.getText();
             String haslo = hasloField.getText();
 
-            // Wypisanie danych do terminala
-           
-            System.out.println("Imię: " + imieField.getText());
-            System.out.println("Nazwisko: " + nazwiskoField.getText());
-            System.out.println("PESEL: " + peselField.getText());
-            System.out.println("Stanowisko: " + selectedPosition);
-            System.out.println("Prawo jazdy: " + selectedLicenses);
-            System.out.println("Login: " + loginField.getText());
-            System.out.println("Hasło: " + hasloField.getText());
+            if (!checkIfDataCorrect(imie, nazwisko, pesel, login, haslo)) return;
+
+            // Zbieranie wybranych typów prawa jazdy
+            List<String> selectedLicenses = new ArrayList<>();
+            for (Node node : prawoJazdyBox.getChildren()) {
+                if (node instanceof CheckBox cb && cb.isSelected()) {
+                    selectedLicenses.add(cb.getText());
+                }
+            }
+
+            if(selectedLicenses.isEmpty()) {
+                ui.showAlertDialog("Błąd", "Nie wybrano żadnej ketegorii prawa jazdy!", 
+                "Należy wybrać przynajmniej jedną kategorię prawa jazdy.");
+                return;
+            }
+        
+            for (Node node : stanowiskoBox.getChildren()) {
+                
+                if (node instanceof RadioButton rb && rb.isSelected()) {
+                    selectedPosition = rb.getText();
+                    break;
+                }
+            }
+            
+            if(selectedPosition.isEmpty()) {
+                ui.showAlertDialog("Błąd", "Nie wybrano żadnego stanowiska!", 
+                "Należy wybrać stanowisko.");
+                return;
+            }
+
+            editButton.setDisable(true);
             
             selectedPositionId = getSelectedPositionsId(selectedPosition);
 
@@ -222,7 +231,6 @@ public class EditAccount {
             }
             rb.setOnMouseClicked(e -> {
                 this.selectedPosition = rb.getText();
-                System.out.println("Selected position: " + this.selectedPosition);
             });
             box.getChildren().add(rb);
         }
@@ -326,7 +334,7 @@ public class EditAccount {
             return ;
         }
 
-        System.out.println("Zaaktualizowano konto i pracownika.");    
+        ui.showAlertDialog("Zaaktualizowano konto i pracownika", null, "Zmieniono dane dla pracownika."); 
     }
 
     public List<String> extractID(String jsonData) {
@@ -362,7 +370,7 @@ public class EditAccount {
         RequestController rq = new RequestController("/stanowisko/szukaj?nazwa=" + selectedPosition, 0);
         try {
             response = rq.sendPathReq();
-            System.out.println(response);
+            // System.out.println(response);
 
         } catch (BadRequestException ex) {
             System.out.println("getSelectedPositionsId: " + ex.getMessage());
@@ -380,6 +388,37 @@ public class EditAccount {
         }
 
         return positionId;
+    }
+
+    private boolean checkIfDataCorrect(String imie, String nazwisko, String pesel, String login, String haslo) {
+
+            if (!rgx.checkStringForNames(imie)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzone imię!", 
+                "Imię nie może być puste, nie może być dłuższe niż 24 znaki, musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
+                return false;
+            }
+            if (!rgx.checkStringForNames(nazwisko)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzone nazwisko!", 
+                "Nazwisko nie może być puste, nie może być dłuższe niż 24 znaki, musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
+                return false;
+            }
+            if(!rgx.checkStringForPESEL(pesel)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzony PESEL!", 
+                "PESEL nie może być pusty, musi się składać tylko i wyłącznie z jedenastu cyfr.");
+                return false;
+            }
+            if(!rgx.checkStringForLettersAndNumbers(login)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzony login!", 
+                "Login nie może być pusty, nie może być dłuższy niż 24 znaki, musi się składać tylko z liter, cyfr, znaku '-' oraz znaku '_', a także zaczynać się od litery.");
+                return false;
+            }
+            if(!rgx.checkStringForPassword(haslo)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzone hasło!", 
+                "Hasło nie może być puste, nie może zawierać pustego znaku, nie może być dłuższe niż 24 znaki.");
+                return false;
+            }
+
+        return true;
     }
 }
 

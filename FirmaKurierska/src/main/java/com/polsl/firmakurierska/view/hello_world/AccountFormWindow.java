@@ -51,7 +51,7 @@ public class AccountFormWindow {
         imieField.setPromptText("Imię pracownika, tylko litery");
         nazwiskoField.setPromptText("Nazwisko pracownika, tylko litery");
         peselField.setPromptText("PESEL pracownika, tylko cyfry");
-        loginField.setPromptText("Login dla pracownika, litery + cyfry");
+        loginField.setPromptText("Login dla pracownika, zacząć od litery, litery, cyfry, '-' oraz '_'.");
         hasloField.setPromptText("Hasło dla pracownika, dowolne znaki");
 
         // Dostępne typy prawa jazdy
@@ -78,21 +78,6 @@ public class AccountFormWindow {
 
         Button dodajButton = ui.createStylizedButton(theme.getThemeMode(), 160, "Dodaj konto");
         dodajButton.setOnAction(e -> {
-            // Zbieranie wybranych typów prawa jazdy
-            List<String> selectedLicenses = new ArrayList<>();
-            for (Node node : prawoJazdyBox.getChildren()) {
-                if (node instanceof CheckBox cb && cb.isSelected()) {
-                    selectedLicenses.add(cb.getText());
-                }
-            }
-        
-            for (Node node : stanowiskoBox.getChildren()) {
-                
-                if (node instanceof CheckBox cb && cb.isSelected()) {
-                    selectedPosition = cb.getText();
-                    break;
-                }
-            }
             
             String imie = imieField.getText();
             String nazwisko = nazwiskoField.getText();
@@ -100,15 +85,37 @@ public class AccountFormWindow {
             String login = loginField.getText();
             String haslo = hasloField.getText();
 
-            // Wypisanie danych do terminala
-           
-            System.out.println("Imię: " + imieField.getText());
-            System.out.println("Nazwisko: " + nazwiskoField.getText());
-            System.out.println("PESEL: " + peselField.getText());
-            System.out.println("Stanowisko: " + selectedPosition);
-            System.out.println("Prawo jazdy: " + selectedLicenses);
-            System.out.println("Login: " + loginField.getText());
-            System.out.println("Hasło: " + hasloField.getText());
+            if (!checkIfDataCorrect(imie, nazwisko, pesel, login, haslo)) return;
+
+            // Zbieranie wybranych typów prawa jazdy
+            List<String> selectedLicenses = new ArrayList<>();
+            for (Node node : prawoJazdyBox.getChildren()) {
+                if (node instanceof CheckBox cb && cb.isSelected()) {
+                    selectedLicenses.add(cb.getText());
+                }
+            }
+
+            if(selectedLicenses.isEmpty()) {
+                ui.showAlertDialog("Błąd", "Nie wybrano żadnej ketegorii prawa jazdy!", 
+                "Należy wybrać przynajmniej jedną kategorię prawa jazdy.");
+                return;
+            }
+        
+            for (Node node : stanowiskoBox.getChildren()) {
+                
+                if (node instanceof RadioButton rb && rb.isSelected()) {
+                    selectedPosition = rb.getText();
+                    break;
+                }
+            }
+            
+            if(selectedPosition.isEmpty()) {
+                ui.showAlertDialog("Błąd", "Nie wybrano żadnego stanowiska!", 
+                "Należy wybrać stanowisko.");
+                return;
+            }
+
+            dodajButton.setDisable(true);
             
             String selectedPositionId = getSelectedPositionsId(selectedPosition);
 
@@ -119,8 +126,6 @@ public class AccountFormWindow {
                     selectedLicensesIDs.add(index+1);
                 }
             }
-
-            if (!checkIfDataCorrect(imie, nazwisko, pesel, login, haslo)) return;
             
             addNewWorker(imie, nazwisko, pesel, login, selectedPositionId, haslo, selectedLicensesIDs);
             
@@ -207,7 +212,6 @@ public class AccountFormWindow {
             rb.setPrefHeight(25);
             rb.setOnMouseClicked(e -> {
                 this.selectedPosition = rb.getText();
-                System.out.println("Selected position: " + this.selectedPosition);
             });
             box.getChildren().add(rb);
         }
@@ -311,7 +315,7 @@ public class AccountFormWindow {
             return ;
         }
 
-        System.out.println("Dodano konto i pracownika.");    
+        ui.showAlertDialog("Dodano pracownika", null, "Dodano pracownika.");
     }
 
     public List<String> extractID(String jsonData) {
@@ -347,7 +351,7 @@ public class AccountFormWindow {
         RequestController rq = new RequestController("/stanowisko/szukaj?nazwa=" + selectedPosition, 0);
         try {
             response = rq.sendPathReq();
-            System.out.println(response);
+            // System.out.println(response);
 
         } catch (BadRequestException ex) {
             System.out.println("getSelectedPositionsId: " + ex.getMessage());
@@ -369,15 +373,29 @@ public class AccountFormWindow {
 
     private boolean checkIfDataCorrect(String imie, String nazwisko, String pesel, String login, String haslo) {
 
-        
-            if (!rgx.checkStringForNames(imie)){
+            if (!rgx.checkStringForNames(imie)) {
                 ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzone imię!", 
-                "Imię musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
+                "Imię nie może być puste, nie może być dłuższe niż 24 znaki, musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
                 return false;
             }
-            if (!rgx.checkStringForNames(nazwisko)){
+            if (!rgx.checkStringForNames(nazwisko)) {
                 ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzone nazwisko!", 
-                "Nazwisko musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
+                "Nazwisko nie może być puste, nie może być dłuższe niż 24 znaki, musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
+                return false;
+            }
+            if(!rgx.checkStringForPESEL(pesel)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzony PESEL!", 
+                "PESEL nie może być pusty, musi się składać tylko i wyłącznie z jedenastu cyfr.");
+                return false;
+            }
+            if(!rgx.checkStringForLettersAndNumbers(login)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzony login!", 
+                "Login nie może być pusty, nie może być dłuższy niż 24 znaki, musi się składać tylko z liter, cyfr, znaku '-' oraz znaku '_', a także zaczynać się od litery.");
+                return false;
+            }
+            if(!rgx.checkStringForPassword(haslo)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzone hasło!", 
+                "Hasło nie może być puste, nie może zawierać pustego znaku, nie może być dłuższe niż 24 znaki.");
                 return false;
             }
 
