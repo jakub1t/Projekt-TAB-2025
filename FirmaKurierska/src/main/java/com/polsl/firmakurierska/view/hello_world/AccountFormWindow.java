@@ -9,6 +9,7 @@ import org.springframework.boot.configurationprocessor.json.JSONObject;
 
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.view.RegexMaster;
 import com.polsl.firmakurierska.view.UIBuilder;
 import com.polsl.firmakurierska.view.UIThemeManager;
 
@@ -34,6 +35,7 @@ public class AccountFormWindow {
 
     private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
     private final UIBuilder ui = UIBuilder.getUIBuilder();
+    private final RegexMaster rgx = RegexMaster.getRegexMaster();
     private Stage myStage = null;
 
     private String selectedPosition = "";
@@ -117,9 +119,10 @@ public class AccountFormWindow {
                     selectedLicensesIDs.add(index+1);
                 }
             }
+
+            if (!checkIfDataCorrect(imie, nazwisko, pesel, login, haslo)) return;
             
             addNewWorker(imie, nazwisko, pesel, login, selectedPositionId, haslo, selectedLicensesIDs);
-            
             
             parent.refreshAllData(accountContainer, rfshBtn);
             myStage.close();
@@ -362,6 +365,23 @@ public class AccountFormWindow {
         }
 
         return positionId;
+    }
+
+    private boolean checkIfDataCorrect(String imie, String nazwisko, String pesel, String login, String haslo) {
+
+        
+            if (!rgx.checkStringForNames(imie)){
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzone imię!", 
+                "Imię musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
+                return false;
+            }
+            if (!rgx.checkStringForNames(nazwisko)){
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzone nazwisko!", 
+                "Nazwisko musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
+                return false;
+            }
+
+        return true;
     }
 }
 
