@@ -70,11 +70,14 @@ public class DeliveryFormWindow {
 
         // Data startu
         startDatePicker = new DatePicker();
+        startDatePicker.setPromptText("Przewidywana data rozpoczęcia");
+        startDatePicker.getEditor().setDisable(true);
         VBox startDateBox = ui.createFormInputCard(theme.getThemeMode(),"Data wyjazdu:", startDatePicker);
 
         // Termin
         endDatePicker = new DatePicker();
-        endDatePicker.setPromptText("Przewidywana data zakończenia dostawy");
+        endDatePicker.setPromptText("Przewidywana data zakończenia");
+        endDatePicker.getEditor().setDisable(true);
         VBox endDateBox = ui.createFormInputCard(theme.getThemeMode(), "Termin:", endDatePicker);
 
         HBox datesRow = new HBox(startDateBox, endDateBox);
@@ -84,6 +87,10 @@ public class DeliveryFormWindow {
         // Punkty A i B
         pointAField = new TextField();
         pointBField = new TextField();
+
+        pointAField.setPromptText("Miejsce rozpoczęcia, tylko litery");
+        pointBField.setPromptText("Miejsce zakończenia, tylko litery");
+
         VBox pointABox = ui.createFormInputCard(theme.getThemeMode(),"Punkt A:", pointAField);
         VBox pointBBox = ui.createFormInputCard(theme.getThemeMode(),"Punkt B:", pointBField);
 

@@ -24,6 +24,7 @@ import javafx.scene.control.RadioButton;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -45,6 +46,14 @@ public class AccountFormWindow {
         TextField peselField       = new TextField();
         TextField loginField       = new TextField();
         PasswordField hasloField   = new PasswordField();
+
+        imieField.setPromptText("Imię pracownika, tylko litery");
+        nazwiskoField.setPromptText("Nazwisko pracownika, tylko litery");
+        peselField.setPromptText("PESEL pracownika, tylko cyfry");
+        loginField.setPromptText("Login dla pracownika, litery + cyfry");
+        hasloField.setPromptText("Hasło dla pracownika, dowolne znaki");
+
+        ui.showAlertDialog(AlertType.INFORMATION, "Test", "Header", "Some message...");
 
         // Dostępne typy prawa jazdy
         List<String> licenseIDs = getAllLicensesIDs();

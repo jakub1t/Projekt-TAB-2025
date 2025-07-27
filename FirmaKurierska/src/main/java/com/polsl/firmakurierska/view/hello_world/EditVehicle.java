@@ -35,6 +35,12 @@ public class EditVehicle {
         pojemnoscField = new TextField(Double.toString(vehicleData.getPojemnosc()));
         numerRejField  = new TextField(vehicleData.getNrRejestr());
 
+        typField.setPromptText("Typ pojazdu, tylko litery");
+        markaField.setPromptText("Marka pojazdu, tylko litery");
+        modelField.setPromptText("Model pojazdu, litery + cyfry");
+        pojemnoscField.setPromptText("Pojemność pojazdu w litrach, cyfry, miejsca dziesiętne po kropce");
+        numerRejField.setPromptText("Numer rejestracyjny pojazdu, litery + cyfry");
+
         // Karty wejściowe
         VBox typBox       = createInputCard("Typ pojazdu:", typField);
         VBox markaBox     = createInputCard("Marka:", markaField);

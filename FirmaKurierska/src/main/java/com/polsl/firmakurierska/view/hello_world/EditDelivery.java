@@ -81,12 +81,15 @@ public class EditDelivery {
         // Data startu
         startDatePicker = new DatePicker();
         startDatePicker.setValue(dostawaData.getDataWyruszenia());
+        startDatePicker.setPromptText("Przewidywana data rozpoczęcia");
+        startDatePicker.getEditor().setDisable(true);
         VBox startDateBox = createInputCard("Data wyjazdu:", startDatePicker);
 
         // Termin
         endDatePicker = new DatePicker();
         endDatePicker.setValue(dostawaData.getTermin());
-        endDatePicker.setPromptText("Przewidywana data zakończenia dostawy");
+        endDatePicker.setPromptText("Przewidywana data zakończenia");
+        endDatePicker.getEditor().setDisable(true);
         VBox endDateBox = createInputCard("Termin:", endDatePicker);
 
         HBox datesRow = new HBox(startDateBox, endDateBox);
@@ -95,6 +98,9 @@ public class EditDelivery {
         // Punkty A i B
         pointAField = new TextField(dostawaData.getPunktA());
         pointBField = new TextField(dostawaData.getPunktB());
+        pointAField.setPromptText("Miejsce rozpoczęcia, tylko litery");
+        pointBField.setPromptText("Miejsce zakończenia, tylko litery");
+
         VBox pointABox = createInputCard("Punkt A:", pointAField);
         VBox pointBBox = createInputCard("Punkt B:", pointBField);
 

@@ -33,6 +33,10 @@ public class ProductFormWindow {
     TextField serialField = new TextField();
 
     public void show(ManagerWindow parentManagerWnd, Button parentRfshBtn) {
+        nameField.setPromptText("Nazwa produktu, tylko litery");
+        weightField.setPromptText("Waga produktu w kg, cyfry, miejsca dziesiętne po kropce");
+        categoryField.setPromptText("Kategoria produktu, tylko litery");
+        serialField.setPromptText("Numer seryjny produktu, dowolne znaki");
 
         VBox nameBox     = createInputCard("Nazwa:", nameField);
         VBox weightBox   = createInputCard("Waga:", weightField);
