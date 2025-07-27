@@ -28,6 +28,8 @@ public class ClientFormWindow {
     TextField surnameField = new TextField();
 
     public void show(ManagerWindow parentManagerWnd, Button parentRfshBtn) {
+        nameField.setPromptText("Imię klienta, tylko litery");
+        surnameField.setPromptText("Nazwisko klienta, tylko litery");
 
         VBox nameBox     = createInputCard("Imię:", nameField);
         VBox surnameBox   = createInputCard("Nazwisko:", surnameField);

@@ -53,6 +53,12 @@ public class EditAccount {
         PasswordField hasloField   = new PasswordField();
         hasloField.setText(accData.getHaslo());
 
+        imieField.setPromptText("Imię pracownika, tylko litery");
+        nazwiskoField.setPromptText("Nazwisko pracownika, tylko litery");
+        peselField.setPromptText("PESEL pracownika, tylko cyfry");
+        loginField.setPromptText("Login dla pracownika, litery + cyfry");
+        hasloField.setPromptText("Hasło dla pracownika, dowolne znaki");
+
         // Dostępne typy prawa jazdy
         List<String> licenseIDs = getAllLicensesIDs();
         
