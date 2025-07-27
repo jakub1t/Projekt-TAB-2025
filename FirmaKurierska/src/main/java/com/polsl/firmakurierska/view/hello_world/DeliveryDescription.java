@@ -35,7 +35,7 @@ public class DeliveryDescription {
     private String deadline = "9999-99-99";
     private String punktA = "";
     private String punktB = "";
-    private String vehicleModel = ""; // "Rolvo" lmao
+    private String vehicleModel = "Nie przypisano"; // "Rolvo" lmao
     private List<Integer> przypisanePaczki = new ArrayList<>();
 
     /**
@@ -126,26 +126,6 @@ public class DeliveryDescription {
         stage.setScene(scene);
         stage.show();
     }
-
-    /*
-     * Tworzy prostą kartę z etykietą i wartością
-     *
-    private VBox createCard(String labelText, String valueText) {
-        Label label = new Label(labelText);
-        label.setStyle("-fx-font-weight: bold;");
-        Label value = new Label(valueText);
-
-        VBox box = new VBox(5, label, value);
-        box.setPadding(new Insets(10));
-        box.setStyle(
-            "-fx-background-color: white;" +
-            "-fx-border-color: #dddddd;" +
-            "-fx-border-radius: 8;" +
-            "-fx-background-radius: 8;" +
-            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
-        );
-        return box;
-    }*/
 
     public void open(Integer delivID, String assignedUserName, String assignedUserSurname) {
         this.pracImie = assignedUserName;

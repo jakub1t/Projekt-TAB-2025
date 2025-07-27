@@ -11,6 +11,7 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +27,7 @@ import com.polsl.firmakurierska.dto.PaczkaDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.model.Pojazd;
 import com.polsl.firmakurierska.model.Pracownik;
+import com.polsl.firmakurierska.view.RegexMaster;
 import com.polsl.firmakurierska.view.UIBuilder;
 import com.polsl.firmakurierska.view.UIThemeManager;
 
@@ -33,6 +35,7 @@ public class DeliveryFormWindow {
 
     private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
     private final UIBuilder ui = UIBuilder.getUIBuilder();
+    private final RegexMaster rgx = RegexMaster.getRegexMaster();
 
     private List<PaczkaDTO> availablePackages = null;
     private List<Pojazd> availableVehicles = null;
@@ -47,8 +50,8 @@ public class DeliveryFormWindow {
     private ManagerWindow myManager = null;
     private Button myRfsh = null;
 
-    private Integer selectedVehicleId = 1;
-    private Integer selectedDriverId = 1;
+    private Integer selectedVehicleId = null;
+    private Integer selectedDriverId = null;
     private List<Integer> selectedPackagesIds = new ArrayList<>();
     
     /**
@@ -176,6 +179,15 @@ public class DeliveryFormWindow {
         // Przycisk zapisu
         Button saveBtn = ui.createStylizedButton(theme.getThemeMode(), 150, "Zapisz dostawe");
         saveBtn.setOnAction(e -> {
+            if(!checkIfDataCorrect(
+                startDatePicker.getValue(), 
+                endDatePicker.getValue(), 
+                pointAField.getText(), 
+                pointBField.getText())
+            ) return;
+
+            saveBtn.setDisable(true);
+
             handleButton();
         });
         HBox btnBox = new HBox(saveBtn);
@@ -340,5 +352,36 @@ public class DeliveryFormWindow {
         } else {
             this.selectedPackagesIds.remove(this.selectedPackagesIds.indexOf(packageId));
         }
+    }
+
+    private boolean checkIfDataCorrect(LocalDate startDate, LocalDate endDate, String pointA, String pointB) {
+
+            if (startDate == null) {
+                ui.showAlertDialog("Błąd", "Nie wybrano daty początkowej!", 
+                "Należy uzupełnić wszystkie daty.");
+                return false;
+            }
+            if (endDate == null) {
+                ui.showAlertDialog("Błąd", "Nie wybrano daty końcowej!", 
+                "Należy uzupełnić wszystkie daty.");
+                return false;
+            }
+            if (startDate.isAfter(endDate)) {
+                ui.showAlertDialog("Błąd", "Zły dobór dat!", 
+                "Data końcowa nie może być wcześniej niż data początkowa.");
+                return false;
+            }
+            if (!rgx.checkStringForNames(pointA)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzony punkt startowy!", 
+                "Punkt startowy nie może być pusty, nie może być dłuższy niż 24 znaki, musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
+                return false;
+            }
+            if (!rgx.checkStringForNames(pointA)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzony punkt końcowy!", 
+                "Punkt końcowy nie może być pusty, nie może być dłuższy niż 24 znaki, musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
+                return false;
+            }
+
+        return true;
     }
 }

@@ -5,7 +5,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.Control;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.RadioButton;
@@ -15,9 +14,11 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,8 +35,15 @@ import com.polsl.firmakurierska.dto.PaczkaDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.model.Pojazd;
 import com.polsl.firmakurierska.model.Pracownik;
+import com.polsl.firmakurierska.view.RegexMaster;
+import com.polsl.firmakurierska.view.UIBuilder;
+import com.polsl.firmakurierska.view.UIThemeManager;
 
 public class EditDelivery {
+
+    private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
+    private final UIBuilder ui = UIBuilder.getUIBuilder();
+    private final RegexMaster rgx = RegexMaster.getRegexMaster();
 
     private List<PaczkaDTO> availablePackages = null;
     private List<Pojazd> availableVehicles = null;
@@ -50,15 +58,15 @@ public class EditDelivery {
     private ManagerWindow myManager = null;
     private Button myRfsh = null;
 
-    private Integer selectedVehicleId = 1;
-    private Integer selectedDriverId = 1;
+    private Integer selectedVehicleId = null;
+    private Integer selectedDriverId = null;
     private List<Integer> selectedPackagesIds = new ArrayList<>();
     
     /**
      * Otwiera formularz dodawania nowej dostawy.
      */
     public void show(ManagerWindow managerWindow, Button rfshBtn, DostawaDTO dostawaData, List<Pojazd> pojazdy, 
-        List<PaczkaDTO> paczki, List<PaczkaDTO> packsInCurrentDelivery, int driverId) {
+        List<PaczkaDTO> paczki, List<PaczkaDTO> packsInCurrentDelivery, Integer driverId) {
 
         boolean noDrivers = false;
         myStage = new Stage();
@@ -68,12 +76,15 @@ public class EditDelivery {
         availablePackages = paczki;
         availableDrivers = getAllDrivers();
         selectedVehicleId = dostawaData.getIdPojazdu();
-        if (driverId > 0)
-            selectedDriverId = driverId;
-        else if (!availableDrivers.isEmpty()){
-            Pracownik temp = availableDrivers.getFirst();
-            selectedDriverId = temp.getIdOsoby();
-        } else {
+        selectedDriverId = driverId;
+
+        // if (driverId > 0)
+        //     selectedDriverId = driverId;
+        // else if (!availableDrivers.isEmpty()){
+        //     Pracownik temp = availableDrivers.getFirst();
+        //     selectedDriverId = temp.getIdOsoby();
+        // } 
+        if (availableDrivers.isEmpty()) {
             System.out.println("Nie ma dostępnych kierowców!!!");
             noDrivers = true;
         }
@@ -83,14 +94,14 @@ public class EditDelivery {
         startDatePicker.setValue(dostawaData.getDataWyruszenia());
         startDatePicker.setPromptText("Przewidywana data rozpoczęcia");
         startDatePicker.getEditor().setDisable(true);
-        VBox startDateBox = createInputCard("Data wyjazdu:", startDatePicker);
+        VBox startDateBox = ui.createFormInputCard(theme.getThemeMode(),"Data wyjazdu:", startDatePicker);
 
         // Termin
         endDatePicker = new DatePicker();
         endDatePicker.setValue(dostawaData.getTermin());
         endDatePicker.setPromptText("Przewidywana data zakończenia");
         endDatePicker.getEditor().setDisable(true);
-        VBox endDateBox = createInputCard("Termin:", endDatePicker);
+        VBox endDateBox = ui.createFormInputCard(theme.getThemeMode(), "Termin:", endDatePicker);
 
         HBox datesRow = new HBox(startDateBox, endDateBox);
         datesRow.setAlignment(Pos.CENTER);
@@ -101,8 +112,8 @@ public class EditDelivery {
         pointAField.setPromptText("Miejsce rozpoczęcia, tylko litery");
         pointBField.setPromptText("Miejsce zakończenia, tylko litery");
 
-        VBox pointABox = createInputCard("Punkt A:", pointAField);
-        VBox pointBBox = createInputCard("Punkt B:", pointBField);
+        VBox pointABox = ui.createFormInputCard(theme.getThemeMode(),"Punkt A:", pointAField);
+        VBox pointBBox = ui.createFormInputCard(theme.getThemeMode(),"Punkt B:", pointBField);
 
         HBox pointsRow = new HBox(pointABox, pointBBox);
         pointsRow.setAlignment(Pos.CENTER);
@@ -110,8 +121,7 @@ public class EditDelivery {
         // Checkboxy paczek (wielokrotny wybór)
         Label pkgLabel = new Label("Wybierz paczki do dostawy:");
         pkgLabel.setStyle("-fx-font-weight: bold;");
-        VBox pkgContainer = new VBox(5);
-        pkgContainer.setStyle("-fx-background-color: white;");
+        VBox pkgContainer = ui.createListContainer(theme.getThemeMode());
 
         List<PaczkaDTO> freePacks = new ArrayList<>();
         for (PaczkaDTO pk : availablePackages) {
@@ -126,7 +136,7 @@ public class EditDelivery {
             pkgContainer.getChildren().add(emptyPkgAlert);
         } else {
             for (PaczkaDTO pk : availablePackages) {    
-                CheckBox cb = new CheckBox(pk.getIdPaczki().toString() + "| Waga: " + pk.getWagaPaczki().toString());
+                CheckBox cb = ui.createFancyCheckBox(theme.getThemeMode(), pk.getIdPaczki().toString() + "| Waga: " + pk.getWagaPaczki().toString());
                 cb.setPrefHeight(25);
                 cb.setOnMouseClicked(e -> {
                     int pkId = pk.getIdPaczki();
@@ -141,8 +151,8 @@ public class EditDelivery {
             }
         } 
         if (packsInCurrentDelivery.size() == 0) {
-            Label emptyPkgAlert = new Label("Dostawa nie ma paczek...");
-            pkgContainer.getChildren().add(emptyPkgAlert);
+            // Label emptyPkgAlert = new Label("Dostawa nie ma paczek...");
+            // pkgContainer.getChildren().add(emptyPkgAlert);
         } else {
             for (PaczkaDTO pk : packsInCurrentDelivery) {    
                 CheckBox cb = new CheckBox(pk.getIdPaczki().toString() + "| Waga: " + pk.getWagaPaczki().toString());
@@ -170,12 +180,11 @@ public class EditDelivery {
         Label vehLabel = new Label("Wybierz pojazd:");
         vehLabel.setStyle("-fx-font-weight: bold;");
         ToggleGroup vehGroup = new ToggleGroup();
-        VBox vehContainer = new VBox(5);
-        vehContainer.setStyle("-fx-background-color: white;");
+        VBox vehContainer = ui.createListContainer(theme.getThemeMode());
 
         for (Pojazd v : availableVehicles) {
             String vLabel = v.getIdPojazdu().toString() + ' ' + v.getMarka();
-            RadioButton rb = new RadioButton(vLabel);
+            RadioButton rb = ui.createFancyRadioButton(theme.getThemeMode(), vLabel);
             rb.setToggleGroup(vehGroup);
             rb.setPrefHeight(25);
             if (v.getIdPojazdu() == selectedVehicleId) {
@@ -194,12 +203,11 @@ public class EditDelivery {
         Label empLabel = new Label("Wybierz kierowcę:");
         empLabel.setStyle("-fx-font-weight: bold;");
         ToggleGroup empGroup = new ToggleGroup();
-        VBox empContainer = new VBox(5);
-        empContainer.setStyle("-fx-background-color: white;");
+        VBox empContainer = ui.createListContainer(theme.getThemeMode());
 
         for (Pracownik dr : availableDrivers) {
             String drLabel = dr.getIdOsoby().toString() + ' ' + dr.getNazwisko();
-            RadioButton rb = new RadioButton(drLabel);
+            RadioButton rb = ui.createFancyRadioButton(theme.getThemeMode(), drLabel);
             rb.setToggleGroup(empGroup);
             rb.setPrefHeight(25);
             if (dr.getIdOsoby() == selectedDriverId) {
@@ -215,8 +223,17 @@ public class EditDelivery {
         empScroll.setPrefHeight(60);
 
         // Przycisk zapisu
-        Button saveBtn = new Button("Zapisz dostawę");
+        Button saveBtn = ui.createStylizedButton(theme.getThemeMode(), 150, "Zapisz dostawę");
         saveBtn.setOnMouseClicked(e -> {
+            if(!checkIfDataCorrect(
+                startDatePicker.getValue(), 
+                endDatePicker.getValue(), 
+                pointAField.getText(), 
+                pointBField.getText())
+            ) return;
+
+            saveBtn.setDisable(true);
+
             handleButton(dostawaData.getIdDostawy(), dostawaData.getPaczki());
         });
         HBox btnBox = new HBox(saveBtn);
@@ -240,26 +257,19 @@ public class EditDelivery {
         VBox mainContainer = new VBox(formContainer, mainScroll);
 
         BorderPane root = new BorderPane(mainContainer);
-        root.setStyle("-fx-background-color: #f8f8f8;");
+        
+        if (theme.getThemeMode()) {
+            formContainer.setBackground(ui.unifiedRootBgDark);
+            empLabel.setTextFill(Color.web("#5FD38D"));
+            pkgLabel.setTextFill(Color.web("#5FD38D"));
+            vehLabel.setTextFill(Color.web("#5FD38D"));
+        } else {
+            formContainer.setBackground(ui.unifiedRootBgLight);
+        }
 
         myStage.setTitle("Formularz dostawy");
         myStage.setScene(new Scene(root, 400, 500));
         if (noDrivers == false) myStage.show();
-    }
-
-    private VBox createInputCard(String labelText, Control inputField) {
-        Label label = new Label(labelText);
-        label.setStyle("-fx-font-weight: bold;");
-        VBox box = new VBox(5, label, inputField);
-        box.setPadding(new Insets(10));
-        box.setStyle(
-            "-fx-background-color: white;" +
-            "-fx-border-color: #dddddd;" +
-            "-fx-border-radius: 8;" +
-            "-fx-background-radius: 8;" +
-            "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);"
-        );
-        return box;
     }
 
     private List<Pracownik> getAllDrivers() {
@@ -390,5 +400,36 @@ public class EditDelivery {
         }
 
         return roles;
+    }
+
+    private boolean checkIfDataCorrect(LocalDate startDate, LocalDate endDate, String pointA, String pointB) {
+
+            if (startDate == null) {
+                ui.showAlertDialog("Błąd", "Nie wybrano daty początkowej!", 
+                "Należy uzupełnić wszystkie daty.");
+                return false;
+            }
+            if (endDate == null) {
+                ui.showAlertDialog("Błąd", "Nie wybrano daty końcowej!", 
+                "Należy uzupełnić wszystkie daty.");
+                return false;
+            }
+            if (startDate.isAfter(endDate)) {
+                ui.showAlertDialog("Błąd", "Zły dobór dat!", 
+                "Data końcowa nie może być wcześniej niż data początkowa.");
+                return false;
+            }
+            if (!rgx.checkStringForNames(pointA)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzony punkt startowy!", 
+                "Punkt startowy nie może być pusty, nie może być dłuższy niż 24 znaki, musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
+                return false;
+            }
+            if (!rgx.checkStringForNames(pointA)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzony punkt końcowy!", 
+                "Punkt końcowy nie może być pusty, nie może być dłuższy niż 24 znaki, musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
+                return false;
+            }
+
+        return true;
     }
 }
