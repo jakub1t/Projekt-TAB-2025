@@ -72,7 +72,7 @@ public class RegexMaster {
     /**
      * Validates string with letters and numbers.
      * @param textToCheck string to check with regex pattern.
-     * @return true when string consists of letters, numbers, '-' and '_'.
+     * @return true when string consists of letters and numbers.
      */
     public boolean checkStringForLettersAndNumbers(String textToCheck) {
         

@@ -4,6 +4,7 @@ import java.util.IllegalFormatException;
 
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.view.RegexMaster;
 import com.polsl.firmakurierska.view.UIBuilder;
 import com.polsl.firmakurierska.view.UIThemeManager;
 
@@ -18,6 +19,7 @@ public class VehicleFormWindow {
 
     private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
     private final UIBuilder ui = UIBuilder.getUIBuilder();
+    private final RegexMaster rgx = RegexMaster.getRegexMaster();
 
     private TextField typField = null;
     private TextField markaField = null;
@@ -55,6 +57,16 @@ public class VehicleFormWindow {
         // Przycisk zapisu
         Button saveBtn = ui.createStylizedButton(theme.getThemeMode(), 150, "Zapisz pojazd");
         saveBtn.setOnMouseClicked(e -> {
+            if(!checkIfDataCorrect(typField.getText(), 
+                markaField.getText(),
+                modelField.getText(),
+                pojemnoscField.getText(),
+                numerRejField.getText()
+                )
+            ) return;
+            
+            saveBtn.setDisable(true);
+
             handleButton();
             managerWindow.refreshAllData(rfshBtn);
         });
@@ -142,5 +154,36 @@ public class VehicleFormWindow {
         } else {
             System.err.println("handleButton: " + errorString);
         }
+    }
+
+    private boolean checkIfDataCorrect(String typ, String marka, String model, String pojemnosc, String rej) {
+
+            if (!rgx.checkStringForNames(typ)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzony typ pojazdu!", 
+                "Typ pojazdu nie może być pusty, nie może być dłuższy niż 24 znaki, musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
+                return false;
+            }
+            if (!rgx.checkStringForNames(marka)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzona marka pojazdu!", 
+                "Marka pojazdu nie może być pusta, nie może być dłuższa niż 24 znaki, musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
+                return false;
+            }
+            if (!rgx.checkStringForLettersAndNumbers(model)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzony model pojazdu!", 
+                "Model pojazdu nie może być pusty, musi się składać wyłącznie z liter i cyfr, nie może przekraczać długości 32 znaków.");
+                return false;
+            }
+            if (!rgx.checkStringForDouble(pojemnosc)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzona pojemnosc pojazdu!", 
+                "Pojemność pojazdu nie może być pusta, musi być liczbą dodatnią, przecinek musi być kropką, nie może mieć więcej niż 5 cyfr przed przecinkiem i po przecinku.");
+                return false;
+            }
+            if (!rgx.checkStringForLettersAndNumbers(rej)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzony numer rejestracyjny pojazdu!", 
+                "Numer rejestracyjny nie może być pusty, musi się składać wyłącznie z liter i cyfr, nie może przekraczać długości 32 znaków.");
+                return false;
+            }
+
+        return true;
     }
 }
