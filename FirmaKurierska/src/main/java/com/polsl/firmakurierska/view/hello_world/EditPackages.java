@@ -21,8 +21,13 @@ import com.polsl.firmakurierska.dto.PaczkaDTO;
 import com.polsl.firmakurierska.dto.ProduktDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.model.Klient;
+import com.polsl.firmakurierska.view.UIBuilder;
+import com.polsl.firmakurierska.view.UIThemeManager;
 
 public class EditPackages {
+
+    private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
+    private final UIBuilder ui = UIBuilder.getUIBuilder();
 
     private List<ProduktDTO> produkty = null;
     private List<Klient> klienci = null;
@@ -32,7 +37,7 @@ public class EditPackages {
 
     private TextField weightField = null;
 
-    private Integer selectedKlientId = 1;
+    private Integer selectedKlientId = -1;
     private double currentWeight = 0;
     private List<Integer> selectedProductIDs = null;
 
@@ -56,7 +61,6 @@ public class EditPackages {
         myStage.setTitle("Formularz paczki");
 
         klientsList = createKlientRadioList();
-        klientsList.setStyle("-fx-background-color: white");
         klientsList.setMinHeight(75);
 
         ScrollPane klientScroll = new ScrollPane(klientsList);
@@ -68,12 +72,12 @@ public class EditPackages {
         weightField.setPromptText("Uzupełnione automatycznie");
         weightField.setEditable(false);
         weightField.setDisable(true);
-        VBox weightBox = createInputCard("Waga paczki:", weightField);
+        VBox weightBox = ui.createFormInputCard(theme.getThemeMode(), "Waga paczki:", weightField);
 
         // --- Lista produktów do wyboru ---
-        productsList = new VBox(8);
+        productsList = ui.createListContainer(theme.getThemeMode());
         productsList.setPadding(new Insets(5));
-        productsList.setStyle("-fx-background-color: white");
+
         ScrollPane productsScroll = new ScrollPane(productsList);
         productsScroll.setFitToWidth(true);
         productsScroll.setPrefHeight(250);
@@ -130,56 +134,40 @@ public class EditPackages {
             productsList.getChildren().add(prBox);
         }
 
-        // --- Przycisk dodawania nowego produktu ---
-        Button addProductBtn = new Button("Dodaj nowy produkt");
-        addProductBtn.setOnMouseClicked(e -> {
-            //new ProductFormWindow().show(product -> {
-            //    products.add(product);
-            //    productsList.getChildren().add(createProductCard(product));
-            //});
-        });
-        HBox addProdBox = new HBox(addProductBtn);
-        addProdBox.setAlignment(Pos.CENTER);
-
         // --- Przycisk zapisania całej paczki ---
-        Button savePackageBtn = new Button("Zapisz paczkę");
+        Button savePackageBtn = ui.createStylizedButton(theme.getThemeMode(), 200, "Zapisz paczkę");
         savePackageBtn.setOnMouseClicked(e -> {
+            if(!checkIfDataCorrect()) return;
+
+            savePackageBtn.setDisable(true);
+
             handleButton(paczkaData.getIdPaczki(), paczkaData.getProduktIds());
         });
         HBox saveBox = new HBox(savePackageBtn);
         saveBox.setAlignment(Pos.CENTER);
 
         // --- Układ wszystkich elementów ---
+        VBox selectProdBox = ui.createStylizedColumn(theme.getThemeMode(), "Produkty", Integer.MAX_VALUE, productsScroll, saveBox);
+
         VBox container = new VBox(15,
             klientsList, klientScroll,
             weightBox,
-            new Label("Produkty:"), productsScroll, addProdBox,
-            saveBox
+            selectProdBox
         );
         container.setPadding(new Insets(20));
         container.setAlignment(Pos.TOP_CENTER);
 
         BorderPane root = new BorderPane(container);
-        root.setStyle("-fx-background-color: #f8f8f8;");
+
+        if (theme.getThemeMode()) {
+            root.setBackground(ui.unifiedRootBgDark);
+            container.setStyle("-fx-background-color: #3A3A3A");
+        } else {
+            root.setBackground(ui.unifiedRootBgLight);
+        }
 
         myStage.setScene(new Scene(root, 400, 600));
         myStage.show();
-    }
-
-    /** Karta wejściowa z etykietą i polem */
-    private VBox createInputCard(String labelText, Control inputField) {
-        Label label = new Label(labelText);
-        label.setStyle("-fx-font-weight: bold;");
-        VBox box = new VBox(5, label, inputField);
-        box.setPadding(new Insets(10));
-        box.setStyle("""
-            -fx-background-color: white;
-            -fx-border-color: #dddddd;
-            -fx-border-radius: 8;
-            -fx-background-radius: 8;
-            -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 1);
-        """);
-        return box;
     }
 
     /** Karta wyświetlająca dane produktu na liście */
@@ -201,12 +189,12 @@ public class EditPackages {
     }
 
     private VBox createKlientRadioList() {
-        VBox klientContainer = new VBox();
+        VBox klientContainer = ui.createListContainer(theme.getThemeMode());
         ToggleGroup kGroup = new ToggleGroup();
 
         for (Klient kl : klienci) {
             String klLabel = kl.getIdKlienta().toString() + " | " + kl.getImieK() + ' ' + kl.getNazwiskoK();
-            RadioButton rb = new RadioButton(klLabel);
+            RadioButton rb = ui.createFancyRadioButton(theme.getThemeMode(), klLabel);
             rb.setToggleGroup(kGroup);
             rb.setPrefHeight(25);
             if (kl.getIdKlienta() == selectedKlientId) {
@@ -352,5 +340,22 @@ public class EditPackages {
         } else {
             System.err.println("handleButton: " + errorString);
         }
+    }
+
+    private boolean checkIfDataCorrect() {
+
+        if(selectedKlientId == -1) {
+            ui.showAlertDialog("Błąd", "Nie wybrano żadnego klienta!", 
+            "Należy wybrać klienta dla paczki.");
+            return false;
+        }
+
+        if(selectedProductIDs.size() == 0) {
+            ui.showAlertDialog("Błąd", "Nie wybrano żadnych produktów!", 
+            "Paczka musi zawierać przynajmniej jeden produkt.");
+            return false;
+        }
+
+        return true;
     }
 }

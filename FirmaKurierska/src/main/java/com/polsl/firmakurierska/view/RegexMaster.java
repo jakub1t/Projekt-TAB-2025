@@ -44,11 +44,11 @@ public class RegexMaster {
     }
 
     /**
-     * Validates string with letters, numbers, '-' and '_'.
+     * Validates for login.
      * @param textToCheck string to check with regex pattern.
-     * @return true when string consists of letters, numbers, '-' and '_'.
+     * @return true when string starts with letter and consists of letters, numbers, '-' and '_' symbols.
      */
-    public boolean checkStringForLettersAndNumbers(String textToCheck) {
+    public boolean checkStringForLogin(String textToCheck) {
         
         Pattern pattern = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_-]{1,23}$");
         Matcher matcher = pattern.matcher(textToCheck);
@@ -70,13 +70,26 @@ public class RegexMaster {
     }
 
     /**
+     * Validates string with letters and numbers.
+     * @param textToCheck string to check with regex pattern.
+     * @return true when string consists of letters, numbers, '-' and '_'.
+     */
+    public boolean checkStringForLettersAndNumbers(String textToCheck) {
+        
+        Pattern pattern = Pattern.compile("^[a-zA-Z0-9]{1,24}$");
+        Matcher matcher = pattern.matcher(textToCheck);
+
+        return matcher.find();
+    }
+
+    /**
      * Validates string for weight, vehicle capacity and other real numbers.
      * @param textToCheck string to check with regex pattern.
      * @return true when string can be converted to double.
      */
     public boolean checkStringForDouble(String textToCheck) {
         
-        Pattern pattern = Pattern.compile("^[0-9]{5}(\\.[0-9]{5})?$");
+        Pattern pattern = Pattern.compile("^\\d{1,5}(\\.\\d{1,5})?$");
         Matcher matcher = pattern.matcher(textToCheck);
 
         return matcher.find();

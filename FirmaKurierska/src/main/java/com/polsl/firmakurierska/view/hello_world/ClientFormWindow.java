@@ -4,6 +4,7 @@ import java.util.IllegalFormatException;
 
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.view.RegexMaster;
 import com.polsl.firmakurierska.view.UIBuilder;
 import com.polsl.firmakurierska.view.UIThemeManager;
 
@@ -22,6 +23,7 @@ public class ClientFormWindow {
     
     private final UIBuilder ui = UIBuilder.getUIBuilder();
     private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
+    private final RegexMaster rgx = RegexMaster.getRegexMaster();
     private Stage myStage = null;
     
     TextField nameField = new TextField();
@@ -36,6 +38,10 @@ public class ClientFormWindow {
 
         Button saveBtn = ui.createStylizedButton(theme.getThemeMode(), 160, "Dodaj klienta");
         saveBtn.setOnAction(e -> {
+            if (!checkIfDataCorrect(nameField.getText(), surnameField.getText())) return;
+            
+            saveBtn.setDisable(true);
+
             handleButton();
             parentManagerWnd.refreshAllData(parentRfshBtn);
 
@@ -118,5 +124,21 @@ public class ClientFormWindow {
         } else {
             System.err.println("handleButton: " + errorString);
         }
+    }
+
+    private boolean checkIfDataCorrect(String imie, String nazwisko) {
+
+            if (!rgx.checkStringForNames(imie)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzone imię!", 
+                "Imię nie może być puste, nie może być dłuższe niż 24 znaki, musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
+                return false;
+            }
+            if (!rgx.checkStringForNames(nazwisko)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzone nazwisko!", 
+                "Nazwisko nie może być puste, nie może być dłuższe niż 24 znaki, musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
+                return false;
+            }
+
+        return true;
     }
 }

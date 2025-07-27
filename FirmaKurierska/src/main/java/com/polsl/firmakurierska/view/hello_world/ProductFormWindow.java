@@ -4,6 +4,7 @@ import java.util.IllegalFormatException;
 
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.view.RegexMaster;
 import com.polsl.firmakurierska.view.UIBuilder;
 import com.polsl.firmakurierska.view.UIThemeManager;
 
@@ -25,6 +26,7 @@ public class ProductFormWindow {
 
     private final UIBuilder ui = UIBuilder.getUIBuilder();
     private final UIThemeManager theme = UIThemeManager.getUIThemeManager();
+    private final RegexMaster rgx = RegexMaster.getRegexMaster();
     private Stage myStage = null;
     
     TextField nameField = new TextField();
@@ -45,6 +47,12 @@ public class ProductFormWindow {
 
         Button saveBtn = ui.createStylizedButton(theme.getThemeMode(), 160, "Dodaj produkt");
         saveBtn.setOnAction(e -> {
+            if (!checkIfDataCorrect(nameField.getText(), weightField.getText(), 
+                categoryField.getText(), serialField.getText())) 
+            return;
+            
+            saveBtn.setDisable(true);
+
             handleButton();
             parentManagerWnd.refreshAllData(parentRfshBtn);
 
@@ -133,5 +141,31 @@ public class ProductFormWindow {
         } else {
             System.err.println("handleButton: " + errorString);
         }
+    }
+    
+    private boolean checkIfDataCorrect(String nazwa, String waga, String kategoria, String nrSeryjny) {
+
+            if (!rgx.checkStringForNames(nazwa)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzona nazwa produktu!", 
+                "Nazwa nie może być pusta, nie może być dłuższa niż 24 znaki, musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
+                return false;
+            }
+            if (!rgx.checkStringForDouble(waga)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzona waga!", 
+                "Waga nie może być pusta, musi być liczbą dodatnią, przecinek musi być kropką, nie może mieć więcej niż 5 cyfr przed przecinkiem i po przecinku.");
+                return false;
+            }
+            if (!rgx.checkStringForNames(kategoria)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzona kategoria produktu!", 
+                "Kategoria nie może być pusta, nie może być dłuższa niż 24 znaki, musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
+                return false;
+            }
+            if (!rgx.checkStringForLettersAndNumbers(nrSeryjny)) {
+                ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzony numer seryjny produktu!", 
+                "Numer seryjny nie może być pusty, musi się składać wyłącznie z liter i cyfr, nie może przekraczać długości 32 znaków.");
+                return false;
+            }
+
+        return true;
     }
 }

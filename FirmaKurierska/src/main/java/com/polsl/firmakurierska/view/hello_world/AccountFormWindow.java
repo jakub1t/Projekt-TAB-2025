@@ -388,7 +388,7 @@ public class AccountFormWindow {
                 "PESEL nie może być pusty, musi się składać tylko i wyłącznie z jedenastu cyfr.");
                 return false;
             }
-            if(!rgx.checkStringForLettersAndNumbers(login)) {
+            if(!rgx.checkStringForLogin(login)) {
                 ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzony login!", 
                 "Login nie może być pusty, nie może być dłuższy niż 24 znaki, musi się składać tylko z liter, cyfr, znaku '-' oraz znaku '_', a także zaczynać się od litery.");
                 return false;

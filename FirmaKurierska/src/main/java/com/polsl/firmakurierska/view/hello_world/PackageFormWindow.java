@@ -36,7 +36,7 @@ public class PackageFormWindow {
 
     private TextField weightField = null;
 
-    private Integer selectedKlientId = 1;
+    private Integer selectedKlientId = -1;
     private double currentWeight = 0;
     private List<Integer> selectedProductIDs = null;
 
@@ -106,6 +106,10 @@ public class PackageFormWindow {
         // --- Przycisk zapisania całej paczki ---
         Button savePackageBtn = ui.createStylizedButton(theme.getThemeMode(), 200, "Dodaj paczkę");
         savePackageBtn.setOnMouseClicked(e -> {
+            if(!checkIfDataCorrect()) return;
+
+            savePackageBtn.setDisable(true);
+
             handleButton();
         });
         HBox saveBox = new HBox(savePackageBtn);
@@ -164,7 +168,6 @@ public class PackageFormWindow {
             rb.setPrefHeight(25);
             rb.setOnMouseClicked(e -> {
                 this.selectedKlientId = kl.getIdKlienta();
-                System.out.println("Selected client: " + this.selectedKlientId.toString());
             });
             klientContainer.getChildren().add(rb);
         }
@@ -299,5 +302,22 @@ public class PackageFormWindow {
         } else {
             System.err.println("handleButton: " + errorString);
         }
+    }
+
+    private boolean checkIfDataCorrect() {
+
+        if(selectedKlientId == -1) {
+            ui.showAlertDialog("Błąd", "Nie wybrano żadnego klienta!", 
+            "Należy wybrać klienta dla paczki.");
+            return false;
+        }
+
+        if(selectedProductIDs.size() == 0) {
+            ui.showAlertDialog("Błąd", "Nie wybrano żadnych produktów!", 
+            "Paczka musi zawierać przynajmniej jeden produkt.");
+            return false;
+        }
+
+        return true;
     }
 }
