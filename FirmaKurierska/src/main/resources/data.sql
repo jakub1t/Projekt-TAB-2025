@@ -1,3 +1,5 @@
+
+
 -- Klient
 INSERT INTO klient (imiek, nazwiskok) VALUES ('Piotr', 'Zielinski');	
 INSERT INTO klient (imiek, nazwiskok) VALUES ('Anna', 'Nowak');
@@ -61,7 +63,7 @@ VALUES ('2025-04-10', 1, 1, '2025-04-11', 'Katowice', 'Warszawa', 'W_TRAKCIE'),
 ('2025-04-14', 2, 2, '2025-04-15', 'Warszawa', 'Łodz', 'W_TRAKCIE'),
 ('2025-04-16', 1, 1, '2025-04-17', 'Zabrze', 'Gdansk', 'ZREALIZOWANA');
 
---Paczka
+-- Paczka
 INSERT INTO paczka (waga_paczki, fk_dostawa_id, fk_klient_id) VALUES (5.2, 1, 1);
 INSERT INTO paczka (waga_paczki, fk_dostawa_id, fk_klient_id) VALUES (3.8, 2, 1);
 INSERT INTO paczka (waga_paczki, fk_dostawa_id, fk_klient_id) VALUES (10.3,3, 2);
@@ -69,7 +71,7 @@ INSERT INTO paczka (waga_paczki, fk_dostawa_id, fk_klient_id) VALUES (4.5, 4, 2)
 INSERT INTO paczka (waga_paczki, fk_dostawa_id, fk_klient_id) VALUES (6.5, 5, 2);
 INSERT INTO paczka (waga_paczki, fk_dostawa_id, fk_klient_id) VALUES (7.8, 1, 3);
 
---Produkty
+-- Produkty
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
 VALUES (1,2, 2.5, 'Elektronika', 'Sluchawki bezprzewodowe', 'SN12345');
 INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
@@ -96,7 +98,7 @@ INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_p
 VALUES (null,5, 666, 'kat', 'przed', 'SN2');
 
 
---pracownik_prawojazdy
+-- pracownik_prawojazdy
 INSERT INTO pracownik_prawojazdy (pracownik_id, prawojazdy_id) VALUES (1, 1);
 INSERT INTO pracownik_prawojazdy (pracownik_id, prawojazdy_id) VALUES (1, 2);
 INSERT INTO pracownik_prawojazdy (pracownik_id, prawojazdy_id) VALUES (2, 1);
