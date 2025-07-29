@@ -101,7 +101,7 @@ public class ProductFormWindow {
         try {
             rq.sendJsonReq(jsonData);
         } catch (BadRequestException bre) {
-            System.err.println("addProduct: " + bre.getMessage());
+            ui.showAlertDialog("Błąd", "Błąd podczas dodawania produktu!", bre.getMessage());
             return false;
         }
         

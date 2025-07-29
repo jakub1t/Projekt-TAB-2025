@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.dto.PaczkaDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Pojazd;
 import com.polsl.firmakurierska.model.Pracownik;
 import com.polsl.firmakurierska.view.RegexMaster;
@@ -237,7 +238,10 @@ public class DeliveryFormWindow {
             resp = rq.sendPathReq();
             goFurther = true;
         } catch (BadRequestException bre) {
-            System.err.println(bre.getMessage());
+            ui.showAlertDialog("Błąd", "Błąd podczas ładowania kierowców!", bre.getMessage());
+            goFurther = false;
+        } catch (ResourceNotFoundException rex) {
+            ui.showAlertDialog("Błąd", "Błąd podczas ładowania kierowców!", rex.getMessage());
             goFurther = false;
         }
 
@@ -282,7 +286,10 @@ public class DeliveryFormWindow {
             rq.sendJsonReq(jsonData);
 
         } catch (BadRequestException bre) {
-            System.out.println("addDostawa: " + bre.getMessage());
+            ui.showAlertDialog("Błąd", "Błąd podczas dodawania dostawy!", bre.getMessage());
+            return false;
+        } catch (ResourceNotFoundException rex) {
+            ui.showAlertDialog("Błąd", "Błąd podczas dodawania dostawy!", rex.getMessage());
             return false;
         }
 

@@ -112,7 +112,7 @@ public class VehicleFormWindow {
                 return true; 
             }
         } catch (BadRequestException bre) {
-            System.err.println("addDostawa: " + bre.getMessage());
+            ui.showAlertDialog("Błąd", "Błąd podczas dodawania pojazdu!", bre.getMessage());
             return false;
         }
         

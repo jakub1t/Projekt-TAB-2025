@@ -18,6 +18,7 @@ import com.polsl.firmakurierska.dto.DostawaDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
 import com.polsl.firmakurierska.model.Konto;
 import com.polsl.firmakurierska.model.Pojazd;
+import com.polsl.firmakurierska.view.UIBuilder;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -37,6 +38,7 @@ import javafx.stage.Stage;
 
 public class RaportFormWindow {
 
+    private final UIBuilder ui = UIBuilder.getUIBuilder();
     final String RAPORT_TYPE_1 = "Stan";
     final String RAPORT_TYPE_2 = "Trasy";
 
@@ -277,7 +279,7 @@ public class RaportFormWindow {
         try {
             response = rq.sendPathReq();
         } catch (BadRequestException e) {
-            System.out.println(e.getMessage());
+            ui.showAlertDialog("Błąd", "Błąd podczas ładowania dostaw!", e.getMessage());
             goFurther = false;
         }
         if (goFurther) {
@@ -306,7 +308,7 @@ public class RaportFormWindow {
             response = rq.sendPathReq();
         }
         catch (BadRequestException e) {
-            System.out.println(e.getMessage());
+            ui.showAlertDialog("Błąd", "Błąd podczas ładowania kont!", e.getMessage());
         }
 
         // Map JSON string into List<Konto>
@@ -333,7 +335,7 @@ public class RaportFormWindow {
         try {
             response = rq.sendPathReq();
         } catch (BadRequestException e) {
-            System.out.println(e.getMessage());
+            ui.showAlertDialog("Błąd", "Błąd podczas ładowania pojazdów!", e.getMessage());
             goFurther = false;
         }
         if (goFurther) {

@@ -90,7 +90,7 @@ public class ClientFormWindow {
         try {
             rq.sendJsonReq(jsonData);
         } catch (BadRequestException bre) {
-            System.err.println("addKlient: " + bre.getMessage());
+            ui.showAlertDialog("Błąd", "Błąd podczas dodawania klienta!", bre.getMessage());
             return false;
         }
         

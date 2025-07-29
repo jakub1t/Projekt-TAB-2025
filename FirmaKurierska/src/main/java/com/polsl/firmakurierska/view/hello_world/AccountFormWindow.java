@@ -9,6 +9,7 @@ import org.springframework.boot.configurationprocessor.json.JSONObject;
 
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.view.RegexMaster;
 import com.polsl.firmakurierska.view.UIBuilder;
 import com.polsl.firmakurierska.view.UIThemeManager;
@@ -258,7 +259,7 @@ public class AccountFormWindow {
         return licenses_names;
     }
 
-      private List<String> getAllPositionsIDs(){ // do poprawy
+    private List<String> getAllPositionsIDs() { // do poprawy
 
         List<String> positions_id = new ArrayList<>();
         
@@ -310,9 +311,14 @@ public class AccountFormWindow {
         RequestController rqPracownik = new RequestController("/pracownik/create", 1);
         try{
             rqPracownik.sendJsonReq(pracownikJson);
-        }catch(BadRequestException ex){
-            System.out.println("Błąd podczas dodawania konta lub pracownika: " + ex.getMessage());
+        }catch (BadRequestException ex){
+            ui.showAlertDialog("Błąd", "Błąd podczas dodawania konta lub pracownika!", 
+            ex.getMessage());
             return ;
+        }catch (ResourceNotFoundException rex) {
+            ui.showAlertDialog("Błąd", "Błąd podczas dodawania konta lub pracownika!", 
+            rex.getMessage());
+            return;
         }
 
         ui.showAlertDialog("Dodano pracownika", null, "Dodano pracownika.");
