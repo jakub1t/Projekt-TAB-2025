@@ -376,7 +376,7 @@ public class DeliveryFormWindow {
                 "Punkt startowy nie może być pusty, nie może być dłuższy niż 24 znaki, musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
                 return false;
             }
-            if (!rgx.checkStringForNames(pointA)) {
+            if (!rgx.checkStringForNames(pointB)) {
                 ui.showAlertDialog("Błąd", "Niepoprawnie wprowadzony punkt końcowy!", 
                 "Punkt końcowy nie może być pusty, nie może być dłuższy niż 24 znaki, musi się składać tylko z liter oraz musi się zaczynać z dużej litery.");
                 return false;
