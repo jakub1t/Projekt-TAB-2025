@@ -149,7 +149,7 @@ public class VehicleFormWindow {
             if (addVehicle(jsonToSend)) {
                 myStage.close();
             } else {
-                System.err.println("handleButton: Błąd dodawania pojazdu");
+                System.err.println("handleButton: Błąd dodawania pojazdu, prawdopodobnie duplikat numeru rejestracyjnego.");
             }
         } else {
             System.err.println("handleButton: " + errorString);

@@ -75,6 +75,11 @@ public class ProduktController {
 
     @PostMapping("/add")
     public ResponseEntity<Object> addProdukt(@RequestBody Produkt produkt) {
+        
+        if (produktRepository.existsByNrSeryjny(produkt.getNrSeryjny())) {
+            throw new BadRequestException("Produkt o podanym numerze seryjnym już istnieje.");
+        }
+
         if (produkt.getNazwaProduktu() == null || produkt.getNazwaProduktu().isEmpty()) {
             throw new BadRequestException("Nazwa produktu jest wymagana.");
         }

@@ -99,6 +99,17 @@ public class PracownikController {
         Konto konto = new Konto();
         konto.setLogin(dto.getKonto().getLogin());
         konto.setHaslo(dto.getKonto().getHaslo());
+
+        if (kontoRepository.existsByLogin(konto.getLogin())) {
+            throw new BadRequestException("Ten login jest już używany. Wybierz inny.");
+        }
+        if (kontoRepository.existsByHaslo(konto.getHaslo())) {
+            throw new BadRequestException("To hasło jest już używane. Wybierz inne.");
+        }
+        if (pracownikRepository.existsByPesel(dto.getPesel())) {
+            throw new BadRequestException("Pracownik o danym peselu już istnieje.");
+        }
+
         konto = kontoRepository.save(konto);
 
         // Szukamy stanowiska
@@ -142,6 +153,18 @@ public class PracownikController {
             konto.setLogin(dto.getKonto().getLogin());
         if (dto.getKonto().getHaslo() != null)
             konto.setHaslo(dto.getKonto().getHaslo());
+
+        
+        if (kontoRepository.existsByLogin(konto.getLogin())) {
+            throw new BadRequestException("Ten login jest już używany. Wybierz inny.");
+        }
+        if (kontoRepository.existsByHaslo(konto.getHaslo())) {
+            throw new BadRequestException("To hasło jest już używane. Wybierz inne.");
+        }
+        if (pracownikRepository.existsByPesel(dto.getPesel())) {
+            throw new BadRequestException("Pracownik o danym peselu już istnieje.");
+        }
+        
         // Save account
         konto = kontoRepository.save(konto);
 

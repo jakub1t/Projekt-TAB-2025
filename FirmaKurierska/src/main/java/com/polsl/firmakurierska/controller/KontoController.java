@@ -73,6 +73,9 @@ public class KontoController {
             throw new BadRequestException("Login i hasło nie mogą być puste");
         }
 
+        if (kontoRepository.existsByLogin(konto.getLogin())) {
+            throw new BadRequestException("Ten login jest już używany. Wybierz inny.");
+        }
         if (kontoRepository.existsByHaslo(konto.getHaslo())) {
             throw new BadRequestException("To hasło jest już używane. Wybierz inne.");
         }

@@ -38,6 +38,10 @@ public class PojazdController {
     	if(pojazd == null) {
     		throw new BadRequestException("Pojazd nie może być pusty");
     	}
+        if (pojazdRepository.existsByNrRejestr(pojazd.getNrRejestr())) {
+            throw new BadRequestException("Pojazd o podanym numerze rejestracyjnym już istnieje.");
+        }
+
         int pId = pojazdRepository.save(pojazd).getIdPojazdu();
 
         return "Dodano pojazd o ID: " + Integer.toString(pId);
@@ -55,6 +59,9 @@ public class PojazdController {
     	if(updated == null) {
     		throw new BadRequestException("Dane pojazdu nie mogą być puste");
     	}
+        if (pojazdRepository.existsByNrRejestr(updated.getNrRejestr())) {
+            throw new BadRequestException("Pojazd o podanym numerze rejestracyjnym już istnieje.");
+        }
     	Pojazd pojazd = pojazdRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Nie znaleziono pojazdu o ID " + id));
         pojazd.setTypPojazdu(updated.getTypPojazdu());
