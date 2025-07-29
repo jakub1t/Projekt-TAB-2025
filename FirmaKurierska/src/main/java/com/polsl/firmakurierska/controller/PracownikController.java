@@ -137,7 +137,7 @@ public class PracownikController {
 
         // Find account by id and change its attributes
         Konto konto = kontoRepository.findById(id).orElseThrow(
-        () -> new RuntimeException("Konto z id " + id + " nie istnieje"));
+        () -> new ResourceNotFoundException("Konto z id " + id + " nie istnieje"));
         if (dto.getKonto().getLogin() != null)
             konto.setLogin(dto.getKonto().getLogin());
         if (dto.getKonto().getHaslo() != null)

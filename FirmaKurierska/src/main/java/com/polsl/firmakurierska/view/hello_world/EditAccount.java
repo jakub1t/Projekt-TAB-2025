@@ -9,6 +9,7 @@ import org.springframework.boot.configurationprocessor.json.JSONObject;
 
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Konto;
 import com.polsl.firmakurierska.view.RegexMaster;
 import com.polsl.firmakurierska.view.UIBuilder;
@@ -330,8 +331,11 @@ public class EditAccount {
         try{
             rqPracownik.sendJsonReq(pracownikJson);
         }catch(BadRequestException ex){
-            System.out.println("Błąd podczas dodawania konta lub pracownika: " + ex.getMessage());
-            return ;
+            ui.showAlertDialog("Błąd", "Błąd podczas edytowania konta!", ex.getMessage());
+            return;
+        } catch (ResourceNotFoundException rex) {
+            ui.showAlertDialog("Błąd", "Błąd podczas edytowania konta!", rex.getMessage());
+            return;
         }
 
         ui.showAlertDialog("Zaaktualizowano konto i pracownika", null, "Zmieniono dane dla pracownika."); 
@@ -373,7 +377,9 @@ public class EditAccount {
             // System.out.println(response);
 
         } catch (BadRequestException ex) {
-            System.out.println("getSelectedPositionsId: " + ex.getMessage());
+            ui.showAlertDialog("Błąd", "Błąd podczas ładowania stanowisk!", ex.getMessage());
+        } catch (ResourceNotFoundException rex) {
+            ui.showAlertDialog("Błąd", "Błąd podczas ładowania stanowisk!", rex.getMessage());
         }
 
         String positionId = "";

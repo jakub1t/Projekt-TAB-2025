@@ -20,6 +20,7 @@ import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.dto.PaczkaDTO;
 import com.polsl.firmakurierska.dto.ProduktDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Klient;
 import com.polsl.firmakurierska.view.UIBuilder;
 import com.polsl.firmakurierska.view.UIThemeManager;
@@ -219,7 +220,7 @@ public class EditPackages {
         try {
             response = rq.sendPathReq();
         } catch (BadRequestException e) {
-            System.out.println(e.getMessage());
+            ui.showAlertDialog("Błąd", "Błąd podczas ładowania klientów!", e.getMessage());
             goFurther = false;
         }
         if (goFurther) {
@@ -244,7 +245,10 @@ public class EditPackages {
         try {
             response = rq.sendPathReq();
         } catch (BadRequestException e) {
-            System.out.println(e.getMessage());
+            ui.showAlertDialog("Błąd", "Błąd podczas ładowania produktów!", e.getMessage());
+            goFurther = false;
+        } catch (ResourceNotFoundException rex) {
+            ui.showAlertDialog("Błąd", "Błąd podczas ładowania produktów!", rex.getMessage());
             goFurther = false;
         }
         if (goFurther) {
@@ -280,7 +284,10 @@ public class EditPackages {
         try {
             rq.sendJsonReq(jsonData);
         } catch (BadRequestException bre) {
-            System.out.println("addPackage: " + bre.getMessage());
+            ui.showAlertDialog("Błąd", "Błąd podczas edycji paczki!", bre.getMessage());
+            return false;
+        } catch (ResourceNotFoundException rex) {
+            ui.showAlertDialog("Błąd", "Błąd podczas edycji paczki!", rex.getMessage());
             return false;
         }
 

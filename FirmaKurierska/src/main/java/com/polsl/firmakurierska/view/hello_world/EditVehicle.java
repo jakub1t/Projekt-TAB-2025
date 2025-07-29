@@ -4,6 +4,7 @@ import java.util.IllegalFormatException;
 
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Pojazd;
 import com.polsl.firmakurierska.view.RegexMaster;
 import com.polsl.firmakurierska.view.UIBuilder;
@@ -108,7 +109,10 @@ public class EditVehicle {
         try {
             rq.sendJsonReq(jsonData);
         } catch (BadRequestException bre) {
-            System.err.println("addDostawa: " + bre.getMessage());
+            ui.showAlertDialog("Błąd", "Błąd podczas edycji pojazdu!", bre.getMessage());
+            return false;
+        } catch (ResourceNotFoundException rex) {
+            ui.showAlertDialog("Błąd", "Błąd podczas edycji pojazdu!", rex.getMessage());
             return false;
         }
         

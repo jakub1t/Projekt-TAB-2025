@@ -33,6 +33,7 @@ import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.dto.DostawaDTO;
 import com.polsl.firmakurierska.dto.PaczkaDTO;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.model.Pojazd;
 import com.polsl.firmakurierska.model.Pracownik;
 import com.polsl.firmakurierska.view.RegexMaster;
@@ -328,7 +329,10 @@ public class EditDelivery {
             rq.sendJsonReq(jsonData);
 
         } catch (BadRequestException bre) {
-            System.out.println("addDostawa: " + bre.getMessage());
+            ui.showAlertDialog("Błąd", "Błąd podczas edytowania dostawy!", bre.getMessage());
+            return false;
+        } catch (ResourceNotFoundException rex) {
+            ui.showAlertDialog("Błąd", "Błąd podczas edytowania dostawy!", rex.getMessage());
             return false;
         }
 

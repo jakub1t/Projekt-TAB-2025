@@ -197,7 +197,7 @@ public class DostawaController {
             }
             if (dto.getIdPojazdu() != null) {
                 var pojazd = pojazdRepository.findById(dto.getIdPojazdu())
-                        .orElseThrow(() -> new BadRequestException("Pojazd o ID " + dto.getIdPojazdu() + " nie istnieje"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Pojazd o ID " + dto.getIdPojazdu() + " nie istnieje"));
                 dostawa.setPojazd(pojazd);;
             }
 
@@ -206,7 +206,7 @@ public class DostawaController {
             if (dto.getUsedPaczki() != null && !dto.getUsedPaczki().isEmpty()) {
                 usedPaczki = dto.getUsedPaczki().stream()
                         .map(pid -> paczkaRepository.findById(pid)
-                                .orElseThrow(() -> new BadRequestException("Paczka o ID " + pid + " nie istnieje")))
+                                .orElseThrow(() -> new ResourceNotFoundException("Paczka o ID " + pid + " nie istnieje")))
                         .collect(Collectors.toList());
 
                 usedPaczki.forEach(p -> p.setDostawa(null));
@@ -218,7 +218,7 @@ public class DostawaController {
             if (dto.getPaczki() != null && !dto.getPaczki().isEmpty()) {
                 paczki = dto.getPaczki().stream()
                         .map(pid -> paczkaRepository.findById(pid)
-                                .orElseThrow(() -> new BadRequestException("Paczka o ID " + pid + " nie istnieje")))
+                                .orElseThrow(() -> new ResourceNotFoundException("Paczka o ID " + pid + " nie istnieje")))
                         .collect(Collectors.toList());
 
                 // ustaw listę produktów w paczce
@@ -231,7 +231,7 @@ public class DostawaController {
             // Add driver link if id present
             if (dto.getDriverId() != null) {
                 var driver = pracownikRepository.findById(dto.getDriverId())
-                        .orElseThrow(() -> new BadRequestException("Kierowca o ID " + dto.getDriverId() + " nie istnieje"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Kierowca o ID " + dto.getDriverId() + " nie istnieje"));
                 dostawa.setPracownik(driver);
             }
 
