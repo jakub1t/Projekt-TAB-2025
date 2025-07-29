@@ -80,14 +80,14 @@ public class PaczkaController {
         if (dto.getKlientId() != null) {
             // musisz mieć klientRepository
             var klient = klientRepository.findById(dto.getKlientId())
-                    .orElseThrow(() -> new BadRequestException("Klient o ID " + dto.getKlientId() + " nie istnieje"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Klient o ID " + dto.getKlientId() + " nie istnieje"));
             paczka.setKlient(klient);
         }
 
         // Ustaw dostawę jeśli podano
         if (dto.getDostawaId() != null) {
             var dostawa = dostawaRepository.findById(dto.getDostawaId())
-                    .orElseThrow(() -> new BadRequestException("Dostawa o ID " + dto.getDostawaId() + " nie istnieje"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Dostawa o ID " + dto.getDostawaId() + " nie istnieje"));
             paczka.setDostawa(dostawa);
         }
 
@@ -96,7 +96,7 @@ public class PaczkaController {
         if (dto.getProduktIds() != null && !dto.getProduktIds().isEmpty()) {
             produkty = dto.getProduktIds().stream()
                     .map(id -> produktRepository.findById(id)
-                            .orElseThrow(() -> new BadRequestException("Produkt o ID " + id + " nie istnieje")))
+                            .orElseThrow(() -> new ResourceNotFoundException("Produkt o ID " + id + " nie istnieje")))
                     .collect(Collectors.toList());
 
             // ustaw listę produktów w paczce
@@ -121,7 +121,7 @@ public class PaczkaController {
         
         if (dto.getKlientId() != null) {
             var klient = klientRepository.findById(dto.getKlientId())
-                        .orElseThrow(() -> new BadRequestException("Klient o ID " + dto.getKlientId() + " nie istnieje"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Klient o ID " + dto.getKlientId() + " nie istnieje"));
             paczka.setKlient(klient);
         }
 
@@ -136,7 +136,7 @@ public class PaczkaController {
         if (dto.getUsedProduktIds() != null && !dto.getUsedProduktIds().isEmpty()) {
             usedProdukty = dto.getUsedProduktIds().stream()
                     .map(prId -> produktRepository.findById(prId)
-                            .orElseThrow(() -> new BadRequestException("Użyty produkt o ID " + prId + " nie istnieje")))
+                            .orElseThrow(() -> new ResourceNotFoundException("Użyty produkt o ID " + prId + " nie istnieje")))
                     .collect(Collectors.toList());
 
             usedProdukty.forEach(p -> p.setPaczka(null));
@@ -148,7 +148,7 @@ public class PaczkaController {
         if (dto.getProduktIds() != null && !dto.getProduktIds().isEmpty()) {
             produkty = dto.getProduktIds().stream()
                     .map(prId -> produktRepository.findById(prId)
-                            .orElseThrow(() -> new BadRequestException("Produkt o ID " + prId + " nie istnieje")))
+                            .orElseThrow(() -> new ResourceNotFoundException("Produkt o ID " + prId + " nie istnieje")))
                     .collect(Collectors.toList());
 
             // ustaw listę produktów w paczce

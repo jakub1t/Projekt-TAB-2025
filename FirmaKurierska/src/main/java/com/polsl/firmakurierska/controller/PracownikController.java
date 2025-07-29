@@ -103,14 +103,14 @@ public class PracownikController {
 
         // Szukamy stanowiska
         Stanowisko stanowisko = stanowiskoRepository.findById(dto.getStanowiskoId())
-                .orElseThrow(() -> new BadRequestException("Stanowisko o ID " + dto.getStanowiskoId() + " nie istnieje"));
+                .orElseThrow(() -> new ResourceNotFoundException("Stanowisko o ID " + dto.getStanowiskoId() + " nie istnieje"));
 
         // Szukamy praw jazdy
         Set<PrawoJazdy> prawaJazdy = null;
         if (dto.getPrawaJazdyIds() != null && !dto.getPrawaJazdyIds().isEmpty()) {
             prawaJazdy = dto.getPrawaJazdyIds().stream()
                     .map(id -> prawoJazdyRepository.findById(id)
-                            .orElseThrow(() -> new BadRequestException("Prawo jazdy o ID " + id + " nie istnieje")))
+                            .orElseThrow(() -> new ResourceNotFoundException("Prawo jazdy o ID " + id + " nie istnieje")))
                     .collect(Collectors.toSet());
         }
 
@@ -149,7 +149,7 @@ public class PracownikController {
         Stanowisko stanowisko = null;
         if (dto.getStanowiskoId() != null) {
         stanowisko = stanowiskoRepository.findById(dto.getStanowiskoId())
-                .orElseThrow(() -> new BadRequestException("Stanowisko o ID " + dto.getStanowiskoId() + " nie istnieje"));
+                .orElseThrow(() -> new ResourceNotFoundException("Stanowisko o ID " + dto.getStanowiskoId() + " nie istnieje"));
         }
 
         // Szukamy praw jazdy
@@ -157,12 +157,12 @@ public class PracownikController {
         if (dto.getPrawaJazdyIds() != null && !dto.getPrawaJazdyIds().isEmpty()) {
             prawaJazdy = dto.getPrawaJazdyIds().stream()
                     .map(pid -> prawoJazdyRepository.findById(pid)
-                            .orElseThrow(() -> new BadRequestException("Prawo jazdy o ID " + pid + " nie istnieje")))
+                            .orElseThrow(() -> new ResourceNotFoundException("Prawo jazdy o ID " + pid + " nie istnieje")))
                     .collect(Collectors.toSet());
         }
         
         Pracownik pracownik = pracownikRepository.findById(id).orElseThrow(
-        () -> new RuntimeException("Pracownik z id " + id + " nie istnieje"));
+        () -> new ResourceNotFoundException("Pracownik z id " + id + " nie istnieje"));
 
         if (dto.getImie() != null)
             pracownik.setImie(dto.getImie());
