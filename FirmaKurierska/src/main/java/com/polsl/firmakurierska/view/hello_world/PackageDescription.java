@@ -150,7 +150,7 @@ public class PackageDescription {
 
                 resp = rq.sendPathReq();
             } catch (BadRequestException bre) {
-                System.err.println("getPackageProducts: " + bre.getMessage());
+                ui.showAlertDialog("Błąd", "Błąd podczas ładowania produktów!", bre.getMessage());
             }
 
             ObjectMapper mapper = new ObjectMapper().configure(

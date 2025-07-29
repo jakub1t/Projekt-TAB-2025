@@ -20,6 +20,7 @@ import org.springframework.boot.configurationprocessor.json.JSONObject;
 
 import com.polsl.firmakurierska.controller.RequestController;
 import com.polsl.firmakurierska.exception.BadRequestException;
+import com.polsl.firmakurierska.exception.ResourceNotFoundException;
 import com.polsl.firmakurierska.view.UIBuilder;
 import com.polsl.firmakurierska.view.UIThemeManager;
 
@@ -143,10 +144,13 @@ public class DeliveryDescription {
         
         try {
             response = rq.sendPathReq();    
-        } catch (BadRequestException e) {
-            System.out.println(e.getMessage());
+        } catch (BadRequestException bre) {
+            ui.showAlertDialog("Błąd", "Błąd podczas ładowania dostawy!", bre.getMessage());
             return false;
-        } 
+        } catch (ResourceNotFoundException rex) {
+            ui.showAlertDialog("Błąd", "Błąd podczas ładowania dostawy!", rex.getMessage());
+            return false;
+        }
         
         try {
             jason = new JSONObject(response);
