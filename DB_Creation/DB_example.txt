@@ -1,0 +1,112 @@
+CREATE DATABASE firma_kurierska;
+
+-- Klient
+INSERT INTO klient (imiek, nazwiskok) VALUES ('Piotr', 'Zielinski');	
+INSERT INTO klient (imiek, nazwiskok) VALUES ('Anna', 'Nowak');
+INSERT INTO klient (imiek, nazwiskok) VALUES ('Gabriel', 'Dziubak');
+
+-- Procudent
+INSERT INTO producent (nazwa_producenta) VALUES ('Samsung');
+INSERT INTO producent (nazwa_producenta) VALUES ('LG');
+INSERT INTO producent (nazwa_producenta) VALUES ('Sony');
+INSERT INTO producent (nazwa_producenta) VALUES ('Lenovo');
+INSERT INTO producent (nazwa_producenta) VALUES ('Asus');
+
+-- Stanowisko
+INSERT INTO stanowisko (nazwa_stanowiska) VALUES ('Admin');
+INSERT INTO stanowisko (nazwa_stanowiska) VALUES ('Manager');
+INSERT INTO stanowisko (nazwa_stanowiska) VALUES ('Kierowca');
+
+-- Prawojazdy
+INSERT INTO prawojazdy (kategoria) VALUES ('B');
+INSERT INTO prawojazdy (kategoria) VALUES ('C');
+INSERT INTO prawojazdy (kategoria) VALUES ('D');
+INSERT INTO prawojazdy (kategoria) VALUES ('A');
+INSERT INTO prawojazdy (kategoria) VALUES ('E');
+
+-- Pojazd
+INSERT INTO pojazd (pojemnosc, marka, model, nr_rejestr, typ_pojazdu) 
+VALUES (2500.5, 'Mercedes', 'Sprinter', 'WAW12345', 'Dostawczy');
+INSERT INTO pojazd (pojemnosc, marka, model, nr_rejestr, typ_pojazdu) 
+VALUES (2000.0, 'Volkswagen', 'Transporter', 'WAW54321', 'Dostawczy');
+INSERT INTO pojazd (pojemnosc, marka, model, nr_rejestr, typ_pojazdu) 
+VALUES (1500.0, 'Ford', 'Transit', 'KRA11111', 'Dostawczy');
+INSERT INTO pojazd (pojemnosc, marka, model, nr_rejestr, typ_pojazdu) 
+VALUES (1600.0, 'Fiat', 'Ducato', 'KRA22222', 'Dostawczy');
+INSERT INTO pojazd (pojemnosc, marka, model, nr_rejestr, typ_pojazdu) 
+VALUES (1200.0, 'Renault', 'Master', 'POZ33333', 'Dostawczy');
+
+-- Konto
+INSERT INTO konto (haslo, login) VALUES ('password123', 'user1');
+INSERT INTO konto (haslo, login) VALUES ('password456', 'user2');
+INSERT INTO konto (haslo, login) VALUES ('password789', 'user3');
+INSERT INTO konto (haslo, login) VALUES ('securepass', 'admin1');
+INSERT INTO konto (haslo, login) VALUES ('adminpass', 'admin2');
+
+-- Pracownik
+INSERT INTO pracownik (konto_id, stanowisko_id, imie, nazwisko, pesel) 
+VALUES (1, 3, 'Jan', 'Kowalski', '12345678901');  -- Kierowca
+INSERT INTO pracownik (konto_id, stanowisko_id, imie, nazwisko, pesel) 
+VALUES (2, 3, 'Anna', 'Nowak', '98765432109');  -- Kierowca
+INSERT INTO pracownik (konto_id, stanowisko_id, imie, nazwisko, pesel) 
+VALUES (3, 3, 'Marek', 'Wisniewski', '45612378901');  -- Kierowca
+INSERT INTO pracownik (konto_id, stanowisko_id, imie, nazwisko, pesel) 
+VALUES (4, 1, 'Katarzyna', 'Zielinska', '32165498701');  -- Administrator
+INSERT INTO pracownik (konto_id, stanowisko_id, imie, nazwisko, pesel) 
+VALUES (5, 2, 'Piotr', 'Wojcik', '65498732109');  -- Manager
+
+-- Dostawa
+INSERT INTO dostawa (data_wyruszenia, pojazd_id, pracownik_id, termin, punkta, punktb, status)
+VALUES ('2025-04-10', 1, 1, '2025-04-11', 'Katowice', 'Warszawa', 'W_TRAKCIE'),
+('2025-04-09', 2, 2, '2025-04-10', 'Krakow', 'Wroclaw', 'ZREALIZOWANA'),
+('2025-04-15', 1, 1, '2025-04-16', 'Gliwice', 'Poznan', 'W_TRAKCIE'),
+('2025-04-14', 2, 2, '2025-04-15', 'Warszawa', 'Łodz', 'W_TRAKCIE'),
+('2025-04-16', 1, 1, '2025-04-17', 'Zabrze', 'Gdansk', 'ZREALIZOWANA');
+
+-- Paczka
+INSERT INTO paczka (waga_paczki, fk_dostawa_id, fk_klient_id) VALUES (5.2, 1, 1);
+INSERT INTO paczka (waga_paczki, fk_dostawa_id, fk_klient_id) VALUES (3.8, 2, 1);
+INSERT INTO paczka (waga_paczki, fk_dostawa_id, fk_klient_id) VALUES (10.3,3, 2);
+INSERT INTO paczka (waga_paczki, fk_dostawa_id, fk_klient_id) VALUES (4.5, 4, 2);
+INSERT INTO paczka (waga_paczki, fk_dostawa_id, fk_klient_id) VALUES (6.5, 5, 2);
+INSERT INTO paczka (waga_paczki, fk_dostawa_id, fk_klient_id) VALUES (7.8, 1, 3);
+
+-- Produkty
+INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
+VALUES (1,2, 2.5, 'Elektronika', 'Sluchawki bezprzewodowe', 'SN12345');
+INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
+VALUES (2,3, 1.2, 'Ksiazki', 'Harry Potter', 'SN67890');
+INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
+VALUES (3,4, 0.5, 'Kosmetyki', 'Krem do rak', 'SN54321');
+INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
+VALUES (4,1, 5.0, 'Jedzenie', 'Czekolada', 'Wawel');
+INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
+VALUES (1,5, 3, 'Zabawka', 'Pluszak', 'Toys');
+INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
+VALUES (5,3, 10, 'Zabawka', 'Lalka', 'Other');
+INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
+VALUES (6,4, 1, 'Ksiazki', 'Wiosna', 'SN6666');
+INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
+VALUES (5,5, 1.1, 'Elektronika', 'Miernik', 'SN2323');
+INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
+VALUES (5,1, 4.5, 'Elektronika', 'Mikrofon', 'SN6969');
+INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
+VALUES (null,1, 0.2, 'Instrumenty', 'Flet', 'SN1221');
+INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
+VALUES (null,2, 2.5, 'Instrumenty', 'Gitara', 'SN6541');
+INSERT INTO produkt (fk_paczka_id,fk_producent_id, waga, kategoria_prod, nazwa_produktu, nr_seryjny)
+VALUES (null,5, 666, 'kat', 'przed', 'SN2');
+
+
+-- pracownik_prawojazdy
+INSERT INTO pracownik_prawojazdy (pracownik_id, prawojazdy_id) VALUES (1, 1);
+INSERT INTO pracownik_prawojazdy (pracownik_id, prawojazdy_id) VALUES (1, 2);
+INSERT INTO pracownik_prawojazdy (pracownik_id, prawojazdy_id) VALUES (2, 1);
+INSERT INTO pracownik_prawojazdy (pracownik_id, prawojazdy_id) VALUES (2, 4);
+INSERT INTO pracownik_prawojazdy (pracownik_id, prawojazdy_id) VALUES (3, 1);
+INSERT INTO pracownik_prawojazdy (pracownik_id, prawojazdy_id) VALUES (4, 2);
+INSERT INTO pracownik_prawojazdy (pracownik_id, prawojazdy_id) VALUES (4, 1);
+INSERT INTO pracownik_prawojazdy (pracownik_id, prawojazdy_id) VALUES (4, 5);
+INSERT INTO pracownik_prawojazdy (pracownik_id, prawojazdy_id) VALUES (5, 3);
+INSERT INTO pracownik_prawojazdy (pracownik_id, prawojazdy_id) VALUES (5, 2);
+
