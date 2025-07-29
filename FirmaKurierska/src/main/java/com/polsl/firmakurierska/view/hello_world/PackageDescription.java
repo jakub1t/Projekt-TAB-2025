@@ -31,9 +31,9 @@ public class PackageDescription {
     private UIThemeManager theme = UIThemeManager.getUIThemeManager();
     private UIBuilder ui = UIBuilder.getUIBuilder();
 
-    private String imieKlienta = "Imie";
-    private String nazwiskoKlienta = "Nazwisko";
-    private String wagaPaczki = "[404]";
+    private String imieKlienta = "Nie przypisano";
+    private String nazwiskoKlienta = "Nie przypisano";
+    private String wagaPaczki = "Błąd";
 
     private List<ProduktDTO> zawarteProdukty = null;
     
@@ -50,9 +50,11 @@ public class PackageDescription {
         produktIds = paczka.getProduktIds();
         wagaPaczki = paczka.getWagaPaczki().toString();
 
-        imieKlienta = klient.getImieK();
-        nazwiskoKlienta = klient.getNazwiskoK();
-
+        if (klient != null) {
+            imieKlienta = klient.getImieK();
+            nazwiskoKlienta = klient.getNazwiskoK();
+        }
+        
         zawarteProdukty = getPackageProducts(produktIds);
 
         // Karta z imieniem klienta

@@ -291,23 +291,12 @@ public class ManagerWindow extends Application {
         Button itemBtn = ui.createStyledListItem(name, Integer.MAX_VALUE);
         itemBtn.setOnAction(e -> {
             
-            int klientId = paczkaData.getKlientId();
-            //List<Integer> procuktIds = paczkaData.getProduktIds();
-            //RequestController rq_helper = new RequestController("", 0);
+            Integer klientId = paczkaData.getKlientId();
 
-            Klient client = getKlientById(klientId);
-            /*
-            procuktIds.forEach(id -> {
-                ProduktDTO tempProdukt = getProduktById(id);
-
-                Link producentLink = tempProdukt.getLink("producent").get();
-
-                String producentHref = producentLink.getHref();
-
-                String producentId = rq_helper.returnValueFromHref("producent", producentHref);
-
-                Producent producentData = getProducentById(Integer.parseInt(producentId));
-            }); */
+            Klient client = new Klient();
+            
+            if (klientId == null) client = null;
+            else client = getKlientById(klientId);
 
             new PackageDescription().show(
                 paczkaData, client
